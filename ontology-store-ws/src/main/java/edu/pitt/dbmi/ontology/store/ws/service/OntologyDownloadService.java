@@ -18,6 +18,7 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
+import edu.pitt.dbmi.ontology.store.ws.DownloadActionException;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyStoreObject;
 import java.io.IOException;
@@ -50,62 +51,70 @@ public class OntologyDownloadService {
         this.fileSysService = fileSysService;
     }
 
-    public void performDownload(List<OntologyProductAction> actions) throws IOException {
+    public void performDownload(List<OntologyProductAction> actions) throws DownloadActionException {
         // get a list of selected ontologies to download
         List<OntologyProductAction> listOfDownloads = actions.stream()
                 .filter(e -> e.isDownload())
                 .collect(Collectors.toList());
 
         if (!listOfDownloads.isEmpty()) {
-            Path parentDir = fileSysService.getLocalDownloadDirectory();
-            for (OntologyProductAction action : listOfDownloads) {
-                performOntologyProductDownload(action, parentDir);
+            try {
+                Path parentDir = fileSysService.getLocalDownloadDirectory();
+                for (OntologyProductAction action : listOfDownloads) {
+                    performOntologyProductDownload(action, parentDir);
+                }
+            } catch (IOException exception) {
+                throw new DownloadActionException("Unable to get local download directory.");
             }
         }
     }
 
-    private void performOntologyProductDownload(OntologyProductAction action, Path parentDir) throws IOException {
+    private void performOntologyProductDownload(OntologyProductAction action, Path parentDir) throws DownloadActionException {
         String key = action.getKey();
         String dir = key.replaceAll(".json", "");
         Path folder = Paths.get(parentDir.toString(), dir);
         if (Files.exists(folder)) {
-            throw new IOException("Ontology has already been downloaded.");
+            throw new DownloadActionException("Ontology has already been downloaded.");
         }
 
-        OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(key);
-        if (storeObject != null) {
-            try {
-                fileSysService.createDirectory(folder);
-            } catch (IOException exception) {
-                throw new IOException(String.format("Unable to create folder %s.", dir));
-            }
-
-            downloadFile(storeObject.getSchemes(), folder);
-            downloadFile(storeObject.getTableAccess(), folder);
-
-            String[] domainOntologies = storeObject.getListOfDomainOntologies();
-            if (domainOntologies.length > 0) {
-                Path ontologyFolder = Paths.get(folder.toString(), "ontology");
+        try {
+            OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(key);
+            if (storeObject != null) {
                 try {
-                    fileSysService.createDirectory(ontologyFolder);
+                    fileSysService.createDirectory(folder);
                 } catch (IOException exception) {
-                    throw new IOException("Unable to create folder ontology.");
+                    throw new DownloadActionException(String.format("Unable to create folder %s.", dir));
                 }
 
-                for (String uri : domainOntologies) {
-                    downloadFile(uri, ontologyFolder);
+                downloadFile(storeObject.getSchemes(), folder);
+                downloadFile(storeObject.getTableAccess(), folder);
+
+                String[] domainOntologies = storeObject.getListOfDomainOntologies();
+                if (domainOntologies.length > 0) {
+                    Path ontologyFolder = Paths.get(folder.toString(), "ontology");
+                    try {
+                        fileSysService.createDirectory(ontologyFolder);
+                    } catch (IOException exception) {
+                        throw new DownloadActionException("Unable to create folder ontology.");
+                    }
+
+                    for (String uri : domainOntologies) {
+                        downloadFile(uri, ontologyFolder);
+                    }
                 }
             }
+        } catch (IOException exception) {
+            throw new DownloadActionException("Unable to dowload files from Amazon S3.");
         }
     }
 
-    private static void downloadFile(String uri, Path folder) throws IOException {
+    private static void downloadFile(String uri, Path folder) throws DownloadActionException {
         String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
         Path file = Paths.get(folder.toString(), fileName);
         try (InputStream inputStream = URI.create(uri).toURL().openStream()) {
             Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
-            throw new IOException(String.format("Unable to download file %s.", fileName));
+            throw new DownloadActionException(String.format("Unable to download file %s.", fileName));
         }
     }
 

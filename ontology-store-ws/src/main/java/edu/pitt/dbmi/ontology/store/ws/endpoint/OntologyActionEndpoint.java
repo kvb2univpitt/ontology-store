@@ -18,9 +18,9 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.endpoint;
 
+import edu.pitt.dbmi.ontology.store.ws.DownloadActionException;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyDownloadService;
-import java.io.IOException;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -52,7 +52,7 @@ public class OntologyActionEndpoint {
     public Response performAction(List<OntologyProductAction> productActions) {
         try {
             downloadService.performDownload(productActions);
-        } catch (IOException exception) {
+        } catch (DownloadActionException exception) {
             return Response.serverError().entity(exception.getMessage()).build();
         }
 
