@@ -20,10 +20,10 @@ package edu.pitt.dbmi.ontology.store.ws.config;
 
 import javax.sql.DataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 /**
  *
@@ -35,15 +35,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class DatabaseConfig {
 
     @Bean
-    @ConfigurationProperties(prefix = "ontologydemo.datasource")
-    public DataSource ontologyDemoDataSource() {
-        return DataSourceBuilder.create().build();
+    @ConfigurationProperties(prefix = "spring.datasource.ontologydemods")
+    public JNDIName ontologyDemoJNDIName() {
+        return new JNDIName();
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "ontologyact.datasource")
+    @ConfigurationProperties(prefix = "spring.datasource.ontologyactds")
+    public JNDIName ontologyACTJNDIName() {
+        return new JNDIName();
+    }
+
+    @Bean
+    public DataSource ontologyDemoDataSource() {
+        return (new JndiDataSourceLookup()).getDataSource(ontologyDemoJNDIName().getJndiName());
+    }
+
+    @Bean
     public DataSource ontologyACTDataSource() {
-        return DataSourceBuilder.create().build();
+        return (new JndiDataSourceLookup()).getDataSource(ontologyACTJNDIName().getJndiName());
     }
 
     @Bean
@@ -54,6 +64,23 @@ public class DatabaseConfig {
     @Bean
     public JdbcTemplate ontologyDemoJdbcTemplate() {
         return new JdbcTemplate(ontologyDemoDataSource());
+    }
+
+    public class JNDIName {
+
+        private String jndiName;
+
+        public JNDIName() {
+        }
+
+        public String getJndiName() {
+            return jndiName;
+        }
+
+        public void setJndiName(String jndiName) {
+            this.jndiName = jndiName;
+        }
+
     }
 
 }
