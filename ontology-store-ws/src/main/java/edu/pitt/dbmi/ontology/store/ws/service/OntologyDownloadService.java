@@ -30,6 +30,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class OntologyDownloadService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyDownloadService.class);
 
     private final AmazonS3Service amazonS3Service;
     private final FileSysService fileSysService;
@@ -58,63 +62,73 @@ public class OntologyDownloadService {
                 .collect(Collectors.toList());
 
         if (!listOfDownloads.isEmpty()) {
-            try {
-                Path parentDir = fileSysService.getLocalDownloadDirectory();
-                for (OntologyProductAction action : listOfDownloads) {
-                    performOntologyProductDownload(action, parentDir);
-                }
-            } catch (IOException exception) {
-                throw new DownloadActionException("Unable to get local download directory.");
-            }
-        }
-    }
-
-    private void performOntologyProductDownload(OntologyProductAction action, Path parentDir) throws DownloadActionException {
-        String key = action.getKey();
-        String dir = key.replaceAll(".json", "");
-        Path folder = Paths.get(parentDir.toString(), dir);
-        if (Files.exists(folder)) {
-            throw new DownloadActionException("Ontology has already been downloaded.");
-        }
-
-        try {
-            OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(key);
-            if (storeObject != null) {
+            for (OntologyProductAction action : listOfDownloads) {
                 try {
-                    fileSysService.createDirectory(folder);
+                    performProductDownload(action);
                 } catch (IOException exception) {
-                    throw new DownloadActionException(String.format("Unable to create folder %s.", dir));
-                }
+                    String errMsg = String.format("Unable to dowload '%s'.", action.getTitle());
+                    LOGGER.error(errMsg, exception);
 
-                downloadFile(storeObject.getSchemes(), folder);
-                downloadFile(storeObject.getTableAccess(), folder);
-
-                String[] domainOntologies = storeObject.getListOfDomainOntologies();
-                if (domainOntologies.length > 0) {
-                    Path ontologyFolder = Paths.get(folder.toString(), "ontology");
-                    try {
-                        fileSysService.createDirectory(ontologyFolder);
-                    } catch (IOException exception) {
-                        throw new DownloadActionException("Unable to create folder ontology.");
-                    }
-
-                    for (String uri : domainOntologies) {
-                        downloadFile(uri, ontologyFolder);
-                    }
+                    throw new DownloadActionException(errMsg);
                 }
             }
-        } catch (IOException exception) {
-            throw new DownloadActionException("Unable to dowload files from Amazon S3.");
         }
     }
 
-    private static void downloadFile(String uri, Path folder) throws DownloadActionException {
+    private void performProductDownload(OntologyProductAction action) throws DownloadActionException, IOException {
+        String productFolder = action.getKey().replaceAll(".json", "");
+        Path productDir = fileSysService.getProductDirectory(productFolder);
+
+        // check if ontology has already been downloaded
+        if (Files.exists(productDir)) {
+            throw new DownloadActionException(String.format("Ontology '%s' has already been downloaded.", action.getTitle()));
+        }
+
+        OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
+        if (storeObject != null) {
+            // create product folder
+            try {
+                fileSysService.createDirectory(productDir);
+            } catch (IOException exception) {
+                String errMsg = String.format("Unable to create folder to download '%s'.", action.getTitle());
+                LOGGER.error(errMsg, exception);
+
+                throw new DownloadActionException(errMsg);
+            }
+
+            downloadFile(storeObject.getSchemes(), productDir);
+            downloadFile(storeObject.getTableAccess(), productDir);
+
+            String[] domainOntologies = storeObject.getListOfDomainOntologies();
+            if (domainOntologies.length > 0) {
+                Path ontologyFolder = fileSysService.getOntologyDirectory(productDir);
+                try {
+                    fileSysService.createDirectory(ontologyFolder);
+                } catch (IOException exception) {
+                    String errMsg = String.format("Unable to create ontology folder for '%s'.", action.getTitle());
+                    LOGGER.error(errMsg, exception);
+
+                    throw new DownloadActionException(errMsg);
+                }
+
+                for (String domainOntologyURI : domainOntologies) {
+                    downloadFile(domainOntologyURI, ontologyFolder);
+                }
+            }
+        }
+    }
+
+    private static void downloadFile(String uri, Path productDir) throws DownloadActionException {
         String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
-        Path file = Paths.get(folder.toString(), fileName);
+        Path file = Paths.get(productDir.toString(), fileName);
+
         try (InputStream inputStream = URI.create(uri).toURL().openStream()) {
             Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException exception) {
-            throw new DownloadActionException(String.format("Unable to download file %s.", fileName));
+            String errMsg = String.format("Unable to download file %s.", fileName);
+            LOGGER.error(errMsg, exception);
+
+            throw new DownloadActionException(errMsg);
         }
     }
 

@@ -40,13 +40,12 @@ public class FileSysService {
     public FileSysService() {
     }
 
-    public Path getLocalDownloadDirectory() throws IOException {
-        Path dir = Paths.get(downloadDirectory);
-        if (Files.notExists(dir)) {
-            Files.createDirectories(dir);
-        }
+    public Path getOntologyDirectory(Path productDirectory) throws IOException {
+        return Paths.get(productDirectory.toString(), "ontology");
+    }
 
-        return dir;
+    public Path getProductDirectory(String productFolder) throws IOException {
+        return Paths.get(downloadDirectory, productFolder);
     }
 
     public Path createDirectory(Path dir) throws IOException {
@@ -55,10 +54,6 @@ public class FileSysService {
         }
 
         return dir;
-    }
-
-    public Path createDirectory(String dir) throws IOException {
-        return createDirectory(Paths.get(dir));
     }
 
 }

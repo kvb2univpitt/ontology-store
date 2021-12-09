@@ -26,6 +26,8 @@ package edu.pitt.dbmi.ontology.store.ws.model;
  */
 public class OntologyProductAction {
 
+    private String title;
+
     private String key;
 
     private boolean includeNetworkPackage;
@@ -40,13 +42,22 @@ public class OntologyProductAction {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("OntologyProductAction{key=").append(key);
+        sb.append("OntologyProductAction{title=").append(title);
+        sb.append(", key=").append(key);
         sb.append(", includeNetworkPackage=").append(includeNetworkPackage);
         sb.append(", download=").append(download);
         sb.append(", install=").append(install);
         sb.append('}');
 
         return sb.toString();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getKey() {
