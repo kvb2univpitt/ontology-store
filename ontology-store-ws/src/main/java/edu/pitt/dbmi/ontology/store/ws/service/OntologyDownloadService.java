@@ -87,13 +87,8 @@ public class OntologyDownloadService {
         OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
         if (storeObject != null) {
             // create product folder
-            try {
-                fileSysService.createDirectory(productDir);
-            } catch (IOException exception) {
-                String errMsg = String.format("Unable to create folder to download '%s'.", action.getTitle());
-                LOGGER.error(errMsg, exception);
-
-                throw new DownloadActionException(errMsg);
+            if (!fileSysService.createDirectory(productDir)) {
+                throw new DownloadActionException(String.format("Unable to create folder to download '%s'.", action.getTitle()));
             }
 
             downloadFile(storeObject.getSchemes(), productDir);
@@ -101,18 +96,13 @@ public class OntologyDownloadService {
 
             String[] domainOntologies = storeObject.getListOfDomainOntologies();
             if (domainOntologies.length > 0) {
-                Path ontologyFolder = fileSysService.getOntologyDirectory(productDir);
-                try {
-                    fileSysService.createDirectory(ontologyFolder);
-                } catch (IOException exception) {
-                    String errMsg = String.format("Unable to create ontology folder for '%s'.", action.getTitle());
-                    LOGGER.error(errMsg, exception);
-
-                    throw new DownloadActionException(errMsg);
+                Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+                if (!fileSysService.createDirectory(ontologyDir)) {
+                    throw new DownloadActionException(String.format("Unable to create ontology folder for '%s'.", action.getTitle()));
                 }
 
                 for (String domainOntologyURI : domainOntologies) {
-                    downloadFile(domainOntologyURI, ontologyFolder);
+                    downloadFile(domainOntologyURI, ontologyDir);
                 }
             }
         }

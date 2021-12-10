@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,26 +36,48 @@ import org.springframework.stereotype.Service;
 @Service
 public class FileSysService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSysService.class);
+
     @Value("${ontology.dir.download}")
     private String downloadDirectory;
 
     public FileSysService() {
     }
 
-    public Path getOntologyDirectory(Path productDirectory) throws IOException {
-        return Paths.get(productDirectory.toString(), "ontology");
+    public Path getOntologyDirectory(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "ontology");
     }
 
-    public Path getProductDirectory(String productFolder) throws IOException {
+    public Path getProductDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder);
     }
 
-    public Path createDirectory(Path dir) throws IOException {
-        if (Files.notExists(dir)) {
-            Files.createDirectories(dir);
+    public boolean createFile(Path file) {
+        if (Files.notExists(file)) {
+            try {
+                Files.createFile(file);
+            } catch (IOException exception) {
+                LOGGER.error(String.format("Unable to create file '%s'.", file.toString()), exception);
+
+                return false;
+            }
         }
 
-        return dir;
+        return true;
+    }
+
+    public boolean createDirectory(Path dir) {
+        if (Files.notExists(dir)) {
+            try {
+                Files.createDirectory(dir);
+            } catch (IOException exception) {
+                LOGGER.error(String.format("Unable to create directory '%s'.", dir.toString()), exception);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }
