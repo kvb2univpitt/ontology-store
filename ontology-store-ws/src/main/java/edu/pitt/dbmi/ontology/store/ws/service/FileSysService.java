@@ -44,6 +44,26 @@ public class FileSysService {
     public FileSysService() {
     }
 
+    public Path getTableAccessFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "TABLE_ACCESS.tsv");
+    }
+
+    public Path getSchemesFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "SCHEMES.tsv");
+    }
+
+    public Path getInstallStartIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "installation.started");
+    }
+
+    public Path getInstallFailedIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "installation.failed");
+    }
+
+    public Path getInstallFinishedIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "installation.finished");
+    }
+
     public Path getOntologyDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "ontology");
     }

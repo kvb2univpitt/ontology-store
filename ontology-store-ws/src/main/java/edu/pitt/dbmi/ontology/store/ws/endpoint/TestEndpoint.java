@@ -43,6 +43,7 @@ public class TestEndpoint {
     }
 
     @GET
+    @Path("products")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getProducts() throws Exception {
         return Response.ok(schemesTableService.getAll()).build();

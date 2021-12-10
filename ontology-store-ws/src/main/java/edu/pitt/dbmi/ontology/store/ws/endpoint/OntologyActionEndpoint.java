@@ -19,8 +19,10 @@
 package edu.pitt.dbmi.ontology.store.ws.endpoint;
 
 import edu.pitt.dbmi.ontology.store.ws.DownloadActionException;
+import edu.pitt.dbmi.ontology.store.ws.InstallActionException;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyDownloadService;
+import edu.pitt.dbmi.ontology.store.ws.service.OntologyInstallService;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -40,10 +42,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class OntologyActionEndpoint {
 
     private final OntologyDownloadService downloadService;
+    private final OntologyInstallService installService;
 
     @Autowired
-    public OntologyActionEndpoint(OntologyDownloadService downloadService) {
+    public OntologyActionEndpoint(OntologyDownloadService downloadService, OntologyInstallService installService) {
         this.downloadService = downloadService;
+        this.installService = installService;
     }
 
     @POST
@@ -52,7 +56,8 @@ public class OntologyActionEndpoint {
     public Response performAction(List<OntologyProductAction> productActions) {
         try {
             downloadService.performDownload(productActions);
-        } catch (DownloadActionException exception) {
+            installService.performInstallation(productActions);
+        } catch (DownloadActionException | InstallActionException exception) {
             return Response.serverError().entity(exception.getMessage()).build();
         }
 
