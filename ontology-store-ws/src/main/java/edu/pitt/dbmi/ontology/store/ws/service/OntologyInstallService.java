@@ -23,6 +23,7 @@ import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -42,10 +43,12 @@ public class OntologyInstallService {
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyInstallService.class);
 
     private final FileSysService fileSysService;
+    private final SchemesTableService schemesTableService;
 
     @Autowired
-    public OntologyInstallService(FileSysService fileSysService) {
+    public OntologyInstallService(FileSysService fileSysService, SchemesTableService schemesTableService) {
         this.fileSysService = fileSysService;
+        this.schemesTableService = schemesTableService;
     }
 
     public void performInstallation(List<OntologyProductAction> actions) throws InstallActionException {
@@ -56,20 +59,39 @@ public class OntologyInstallService {
 
         if (!listOfInstalls.isEmpty()) {
             for (OntologyProductAction action : listOfInstalls) {
-                try {
-                    performInstallation(action);
-                } catch (IOException exception) {
-                    String errMsg = String.format("Unable to install '%s'.", action.getTitle());
-                    LOGGER.error(errMsg, exception);
-
-                    throw new InstallActionException(errMsg);
-                }
+                performInstallation(action);
             }
         }
     }
 
-    private void performInstallation(OntologyProductAction action) throws IOException, InstallActionException {
+    private void performInstallation(OntologyProductAction action) throws InstallActionException {
         performPreinstallValidation(action);
+
+        String productFolder = action.getKey().replaceAll(".json", "");
+        try {
+            fileSysService.createInstallStartIndicatorFile(productFolder);
+
+            // get files and folders
+            Path productDir = fileSysService.getProductDirectory(productFolder);
+            Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+            Path installStartIndicatorFile = fileSysService.getInstallStartIndicatorFile(productFolder);
+            Path installFailedIndicatorFile = fileSysService.getInstallFailedIndicatorFile(productFolder);
+            Path installFinishedIndicatorFile = fileSysService.getInstallFinishedIndicatorFile(productFolder);
+            Path schemesFile = fileSysService.getSchemesFile(productFolder);
+            Path tableAccessFile = fileSysService.getTableAccessFile(productFolder);
+
+            try {
+                schemesTableService.insert(schemesFile);
+            } catch (SQLException exception) {
+                LOGGER.error("SCHEMES.tsv insertion error.", exception);
+                throw new InstallActionException(exception);
+            }
+
+            fileSysService.createInstallFinishedIndicatorFile(productFolder);
+        } catch (Exception exception) {
+            fileSysService.createInstallFailedIndicatorFile(productFolder);
+            throw exception;
+        }
     }
 
     private void performPreinstallValidation(OntologyProductAction action) throws InstallActionException {
@@ -91,7 +113,7 @@ public class OntologyInstallService {
             throw new InstallActionException(String.format("'%s' installation has already started.", action.getTitle()));
         }
         if (Files.exists(installFailedIndicatorFile)) {
-            throw new InstallActionException(String.format("'%s' installation has previously failed.", action.getTitle()));
+            throw new InstallActionException(String.format("'%s' installation has previously failed.  Please fix it.", action.getTitle()));
         }
         if (Files.exists(installFinishedIndicatorFile)) {
             throw new InstallActionException(String.format("'%s' has already been installed.", action.getTitle()));
@@ -104,6 +126,19 @@ public class OntologyInstallService {
         }
         if (Files.notExists(tableAccessFile)) {
             throw new InstallActionException(String.format("'%s' TABLE_ACCESS.tsv not found on server.", action.getTitle()));
+        }
+
+        try {
+            List<Path> ontologies = Files.list(ontologyDir)
+                    .filter(Files::isRegularFile)
+                    .collect(Collectors.toList());
+            if (ontologies.isEmpty()) {
+                throw new InstallActionException(String.format("No ontology files found for '%s'.", action.getTitle()));
+            }
+        } catch (IOException exception) {
+            String errMsg = String.format("Unable to read '%s' ontology directory.", action.getTitle());
+            LOGGER.error(errMsg, exception);
+            throw new InstallActionException(errMsg);
         }
     }
 

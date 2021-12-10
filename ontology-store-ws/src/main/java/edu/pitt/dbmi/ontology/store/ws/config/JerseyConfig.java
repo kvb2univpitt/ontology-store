@@ -19,7 +19,7 @@
 package edu.pitt.dbmi.ontology.store.ws.config;
 
 import org.glassfish.jersey.server.ResourceConfig;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
 /**
  *
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-@Component
+@Configuration
 public class JerseyConfig extends ResourceConfig {
 
     public JerseyConfig() {

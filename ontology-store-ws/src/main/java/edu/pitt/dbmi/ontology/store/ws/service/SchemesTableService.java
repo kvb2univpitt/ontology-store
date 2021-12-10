@@ -18,12 +18,16 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.ResultSet;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
+import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -37,36 +41,48 @@ import org.springframework.stereotype.Service;
 @Service
 public class SchemesTableService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchemesTableService.class);
+
+    private static final Pattern TAB_DELIM = Pattern.compile("\t");
+
+    private static final String INSERT_QUERY = "INSERT INTO SCHEMES (C_KEY,C_NAME,C_DESCRIPTION) VALUES (?,?,?)";
+
     private final JdbcTemplate ontologyDemoJdbcTemplate;
+    private final JdbcTemplateService jdbcTemplateService;
 
     @Autowired
-    public SchemesTableService(JdbcTemplate ontologyDemoJdbcTemplate) {
+    public SchemesTableService(JdbcTemplate ontologyDemoJdbcTemplate, JdbcTemplateService jdbcTemplateService) {
         this.ontologyDemoJdbcTemplate = ontologyDemoJdbcTemplate;
+        this.jdbcTemplateService = jdbcTemplateService;
     }
 
-    public List<String> getAll() throws SQLException {
-        String sql = String.format("SELECT * FROM %s.schemes", getMetaDataSchemaName());
-        List<String> rows = ontologyDemoJdbcTemplate.query(sql, (ResultSet rs, int row) -> {
-            List<String> list = new LinkedList<>();
-            for (int i = 1; i <= 3; i++) {
-                list.add(rs.getString(i));
+    public void insert(Path file) throws SQLException {
+        DataSource dataSource = ontologyDemoJdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                PreparedStatement stmt = conn.prepareStatement(INSERT_QUERY);
+                try {
+                    Files.lines(file)
+                            .skip(1)
+                            .map(String::trim)
+                            .filter(line -> !line.isEmpty())
+                            .map(TAB_DELIM::split)
+                            .filter(fields -> fields.length == 3)
+                            .forEach(fields -> {
+                                try {
+                                    stmt.setString(1, fields[0]);
+                                    stmt.setString(2, fields[1]);
+                                    stmt.setString(3, fields[2]);
+
+                                    stmt.execute();
+                                } catch (Exception exception) {
+                                    LOGGER.error("", exception);
+                                }
+                            });
+                } catch (IOException exception) {
+                    LOGGER.error("", exception);
+                }
             }
-
-            return list.stream().collect(Collectors.joining(","));
-        });
-
-        return rows;
-    }
-
-    /**
-     * Return metadata schema name.
-     *
-     * @return
-     * @throws SQLException
-     */
-    public String getMetaDataSchemaName() throws SQLException {
-        try (Connection conn = ontologyDemoJdbcTemplate.getDataSource().getConnection()) {
-            return conn.getSchema();
         }
     }
 

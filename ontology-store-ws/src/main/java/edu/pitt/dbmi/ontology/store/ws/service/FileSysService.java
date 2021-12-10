@@ -64,6 +64,39 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder, "installation.finished");
     }
 
+    public void createInstallStartIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getInstallFailedIndicatorFile(productFolder));
+            Files.deleteIfExists(getInstallFinishedIndicatorFile(productFolder));
+
+            createFile(getInstallStartIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create start indicator file.", exception);
+        }
+    }
+
+    public void createInstallFailedIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getInstallStartIndicatorFile(productFolder));
+            Files.deleteIfExists(getInstallFinishedIndicatorFile(productFolder));
+
+            createFile(getInstallFailedIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create failed indicator file.", exception);
+        }
+    }
+
+    public void createInstallFinishedIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getInstallFailedIndicatorFile(productFolder));
+            Files.deleteIfExists(getInstallStartIndicatorFile(productFolder));
+
+            createFile(getInstallFinishedIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create finish indicator file.", exception);
+        }
+    }
+
     public Path getOntologyDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "ontology");
     }
