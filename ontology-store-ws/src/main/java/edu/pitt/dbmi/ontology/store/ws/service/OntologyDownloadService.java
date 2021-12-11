@@ -87,7 +87,7 @@ public class OntologyDownloadService {
         OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
         if (storeObject != null) {
             // create product folder
-            if (!fileSysService.createDirectory(productDir)) {
+            if (!fileSysService.createDirectories(productDir)) {
                 throw new DownloadActionException(String.format("Unable to create folder to download '%s'.", action.getTitle()));
             }
 
@@ -97,7 +97,7 @@ public class OntologyDownloadService {
             String[] domainOntologies = storeObject.getListOfDomainOntologies();
             if (domainOntologies.length > 0) {
                 Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-                if (!fileSysService.createDirectory(ontologyDir)) {
+                if (!fileSysService.createDirectories(ontologyDir)) {
                     throw new DownloadActionException(String.format("Unable to create ontology folder for '%s'.", action.getTitle()));
                 }
 

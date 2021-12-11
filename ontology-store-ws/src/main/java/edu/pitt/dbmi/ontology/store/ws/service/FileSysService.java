@@ -119,10 +119,10 @@ public class FileSysService {
         return true;
     }
 
-    public boolean createDirectory(Path dir) {
+    public boolean createDirectories(Path dir) {
         if (Files.notExists(dir)) {
             try {
-                Files.createDirectory(dir);
+                Files.createDirectories(dir);
             } catch (IOException exception) {
                 LOGGER.error(String.format("Unable to create directory '%s'.", dir.toString()), exception);
 
