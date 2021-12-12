@@ -18,6 +18,8 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.endpoint;
 
+import edu.pitt.dbmi.ontology.store.ws.DownloadActionException;
+import edu.pitt.dbmi.ontology.store.ws.InstallActionException;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyDownloadService;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyInstallService;
@@ -55,7 +57,7 @@ public class OntologyActionEndpoint {
         try {
             downloadService.performDownload(productActions);
             installService.performInstallation(productActions);
-        } catch (Exception exception) {
+        } catch (DownloadActionException | InstallActionException exception) {
             return Response.serverError().entity(exception.getMessage()).build();
         }
 

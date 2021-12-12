@@ -45,22 +45,21 @@ public class SchemesTableService {
 
     private static final Pattern TAB_DELIM = Pattern.compile("\t");
 
-    private static final String INSERT_QUERY = "INSERT INTO SCHEMES (C_KEY,C_NAME,C_DESCRIPTION) VALUES (?,?,?)";
+    private static final String INSERT_QUERY = "INSERT INTO %s.schemes (C_KEY,C_NAME,C_DESCRIPTION) VALUES (?,?,?)";
 
     private final JdbcTemplate ontologyDemoJdbcTemplate;
-    private final JdbcTemplateService jdbcTemplateService;
 
     @Autowired
-    public SchemesTableService(JdbcTemplate ontologyDemoJdbcTemplate, JdbcTemplateService jdbcTemplateService) {
+    public SchemesTableService(JdbcTemplate ontologyDemoJdbcTemplate) {
         this.ontologyDemoJdbcTemplate = ontologyDemoJdbcTemplate;
-        this.jdbcTemplateService = jdbcTemplateService;
     }
 
     public void insert(Path file) throws SQLException {
         DataSource dataSource = ontologyDemoJdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
-                PreparedStatement stmt = conn.prepareStatement(INSERT_QUERY);
+                String sql = String.format(INSERT_QUERY, conn.getSchema());
+                PreparedStatement stmt = conn.prepareStatement(sql);
                 try {
                     Files.lines(file)
                             .skip(1)
