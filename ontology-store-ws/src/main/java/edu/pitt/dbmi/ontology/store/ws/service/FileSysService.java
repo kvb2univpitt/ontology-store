@@ -22,6 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,10 +44,25 @@ public class FileSysService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSysService.class);
 
+    public static final Pattern TAB_DELIM = Pattern.compile("\t");
+
     @Value("${ontology.dir.download}")
     private String downloadDirectory;
 
     public FileSysService() {
+    }
+
+    public List<String> getHeaders(Path file) throws IOException {
+        Optional<String> header = Files.lines(file).findFirst();
+        if (header.isPresent()) {
+            return Arrays.stream(TAB_DELIM.split(header.get()))
+                    .map(String::trim)
+                    .filter(e -> !e.isEmpty())
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.EMPTY_LIST;
+        }
     }
 
     public Path getTableAccessFile(String productFolder) {

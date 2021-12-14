@@ -24,6 +24,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,13 @@ import org.springframework.stereotype.Service;
 public class JdbcTemplateService {
 
     public JdbcTemplateService() {
+    }
+
+    public String createInsertStatement(String schema, String tableName, List<String> columnNames) {
+        String columnList = columnNames.stream().collect(Collectors.joining(","));
+        String placeholderList = IntStream.range(1, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
+
+        return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columnList, placeholderList);
     }
 
     public String[] getColumnNames(JdbcTemplate jdbcTemplate) throws SQLException {

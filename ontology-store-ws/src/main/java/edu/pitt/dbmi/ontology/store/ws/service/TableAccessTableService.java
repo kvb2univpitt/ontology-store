@@ -26,20 +26,20 @@ import org.springframework.stereotype.Service;
 
 /**
  *
- * Dec 8, 2021 2:02:01 AM
+ * Dec 13, 2021 1:49:02 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
 @Service
-public class SchemesTableService {
+public class TableAccessTableService {
 
-    private static final String TABLE_NAME = "schemes";
+    private static final String TABLE_NAME = "table_access";
 
     private final JdbcTemplate ontologyDemoJdbcTemplate;
     private final TableInsertService tableInsertService;
 
     @Autowired
-    public SchemesTableService(JdbcTemplate ontologyDemoJdbcTemplate, TableInsertService tableInsertService) {
+    public TableAccessTableService(JdbcTemplate ontologyDemoJdbcTemplate, TableInsertService tableInsertService) {
         this.ontologyDemoJdbcTemplate = ontologyDemoJdbcTemplate;
         this.tableInsertService = tableInsertService;
     }

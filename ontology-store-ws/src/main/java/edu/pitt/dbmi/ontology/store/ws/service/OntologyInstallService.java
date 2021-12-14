@@ -44,11 +44,13 @@ public class OntologyInstallService {
 
     private final FileSysService fileSysService;
     private final SchemesTableService schemesTableService;
+    private final TableAccessTableService tableAccessTableService;
 
     @Autowired
-    public OntologyInstallService(FileSysService fileSysService, SchemesTableService schemesTableService) {
+    public OntologyInstallService(FileSysService fileSysService, SchemesTableService schemesTableService, TableAccessTableService tableAccessTableService) {
         this.fileSysService = fileSysService;
         this.schemesTableService = schemesTableService;
+        this.tableAccessTableService = tableAccessTableService;
     }
 
     public void performInstallation(List<OntologyProductAction> actions) throws InstallActionException {
@@ -82,6 +84,7 @@ public class OntologyInstallService {
 
             try {
                 schemesTableService.insert(schemesFile);
+                tableAccessTableService.insert(tableAccessFile);
             } catch (SQLException exception) {
                 LOGGER.error("SCHEMES.tsv insertion error.", exception);
                 throw new InstallActionException(exception);
