@@ -45,12 +45,14 @@ public class OntologyInstallService {
     private final FileSysService fileSysService;
     private final SchemesTableService schemesTableService;
     private final TableAccessTableService tableAccessTableService;
+    private final OntologyTableService ontologyTableService;
 
     @Autowired
-    public OntologyInstallService(FileSysService fileSysService, SchemesTableService schemesTableService, TableAccessTableService tableAccessTableService) {
+    public OntologyInstallService(FileSysService fileSysService, SchemesTableService schemesTableService, TableAccessTableService tableAccessTableService, OntologyTableService ontologyTableService) {
         this.fileSysService = fileSysService;
         this.schemesTableService = schemesTableService;
         this.tableAccessTableService = tableAccessTableService;
+        this.ontologyTableService = ontologyTableService;
     }
 
     public void performInstallation(List<OntologyProductAction> actions) throws InstallActionException {
@@ -74,19 +76,28 @@ public class OntologyInstallService {
             fileSysService.createInstallStartIndicatorFile(productFolder);
 
             // get files and folders
-            Path productDir = fileSysService.getProductDirectory(productFolder);
             Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-            Path installStartIndicatorFile = fileSysService.getInstallStartIndicatorFile(productFolder);
-            Path installFailedIndicatorFile = fileSysService.getInstallFailedIndicatorFile(productFolder);
-            Path installFinishedIndicatorFile = fileSysService.getInstallFinishedIndicatorFile(productFolder);
             Path schemesFile = fileSysService.getSchemesFile(productFolder);
             Path tableAccessFile = fileSysService.getTableAccessFile(productFolder);
 
             try {
                 schemesTableService.insert(schemesFile);
-                tableAccessTableService.insert(tableAccessFile);
             } catch (SQLException exception) {
                 LOGGER.error("SCHEMES.tsv insertion error.", exception);
+                throw new InstallActionException(exception);
+            }
+
+            try {
+                tableAccessTableService.insert(tableAccessFile);
+            } catch (SQLException exception) {
+                LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
+                throw new InstallActionException(exception);
+            }
+
+            try {
+                ontologyTableService.install(ontologyDir);
+            } catch (SQLException | IOException exception) {
+                LOGGER.error("Ontology insertion error.", exception);
                 throw new InstallActionException(exception);
             }
 

@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,7 +60,17 @@ public class TableInsertService {
         this.fileSysService = fileSysService;
     }
 
-    public void insert(Path file, String tableName, JdbcTemplate jdbcTemplate) throws SQLException {
+    private String[] getColumnTypes(ParameterMetaData metadata) throws SQLException {
+        int size = metadata.getParameterCount();
+        String[] types = new String[size];
+        for (int i = 0; i < types.length; i++) {
+            types[i] = metadata.getParameterClassName(i + 1);
+        }
+
+        return types;
+    }
+
+    public void insertNew(Path file, String tableName, JdbcTemplate jdbcTemplate) throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
@@ -67,45 +78,13 @@ public class TableInsertService {
                     List<String> columnNames = fileSysService.getHeaders(file);
                     String sql = createInsertStatement(conn.getSchema(), tableName, columnNames);
                     PreparedStatement stmt = conn.prepareStatement(sql);
-                    ParameterMetaData metadata = stmt.getParameterMetaData();
+                    String[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
                     Files.lines(file)
                             .skip(1)
+                            .filter(line -> !line.trim().isEmpty())
                             .forEach(line -> {
-                                String[] fields = FileSysService.TAB_DELIM.split(line);
-                                LOGGER.info(String.format("Inserting: %s", line));
                                 try {
-                                    // set parameters
-                                    for (int i = 0; i < fields.length; i++) {
-                                        int colIndex = i + 1;
-                                        String value = fields[i];
-                                        if (value == null) {
-                                            stmt.setNull(colIndex, Types.NULL);
-                                        } else {
-                                            value = value.trim();
-                                            if (value.isEmpty()) {
-                                                stmt.setNull(colIndex, Types.NULL);
-                                            } else {
-                                                switch (metadata.getParameterClassName(colIndex)) {
-                                                    case "java.lang.String":
-                                                        stmt.setString(colIndex, value);
-                                                        break;
-                                                    case "java.lang.Integer":
-                                                        stmt.setInt(colIndex, Integer.parseInt(value));
-                                                        break;
-                                                    case "java.sql.Timestamp":
-                                                        stmt.setTimestamp(colIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
-                                                        break;
-                                                };
-                                            }
-                                        }
-                                    }
-
-                                    for (int i = fields.length; i < columnNames.size(); i++) {
-                                        stmt.setNull(i + 1, Types.NULL);
-                                    }
-
-                                    // run query
-                                    stmt.execute();
+                                    insertRow(line, columnTypes, stmt);
                                 } catch (Exception exception) {
                                     LOGGER.error("", exception);
                                 }
@@ -117,7 +96,71 @@ public class TableInsertService {
         }
     }
 
-    public String createInsertStatement(String schema, String tableName, List<String> columnNames) {
+    public void insert(Path file, String tableName, JdbcTemplate jdbcTemplate) throws SQLException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                try {
+                    List<String> columnNames = fileSysService.getHeaders(file);
+                    String sql = createInsertStatement(conn.getSchema(), tableName, columnNames);
+                    PreparedStatement stmt = conn.prepareStatement(sql);
+                    String[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+                    Files.lines(file)
+                            .skip(1)
+                            .filter(line -> !line.trim().isEmpty())
+                            .forEach(line -> {
+                                try {
+                                    insertRow(line, columnTypes, stmt);
+                                } catch (Exception exception) {
+                                    LOGGER.error("", exception);
+                                }
+                            });
+                } catch (IOException exception) {
+                    LOGGER.error("", exception);
+                }
+            }
+        }
+    }
+
+    private int insertRow(String line, String[] columnTypes, PreparedStatement stmt) throws SQLException, ParseException {
+        String[] fields = FileSysService.TAB_DELIM.split(line);
+        // set parameters
+        for (int i = 0; i < fields.length; i++) {
+            int colIndex = i + 1;
+            String value = fields[i];
+            if (value == null) {
+                stmt.setNull(colIndex, Types.NULL);
+            } else {
+                value = value.trim();
+                if (value.isEmpty()) {
+                    stmt.setNull(colIndex, Types.NULL);
+                } else {
+                    switch (columnTypes[i]) {
+                        case "java.lang.String":
+                            stmt.setString(colIndex, value);
+                            break;
+                        case "java.lang.Integer":
+                            stmt.setInt(colIndex, Integer.parseInt(value));
+                            break;
+                        case "java.sql.Timestamp":
+                            stmt.setTimestamp(colIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
+                            break;
+                        default:
+                            stmt.setNull(colIndex, Types.NULL);
+                    };
+                }
+            }
+        }
+
+        for (int i = fields.length; i < columnTypes.length; i++) {
+            stmt.setNull(i + 1, Types.NULL);
+        }
+
+        // run query
+        return stmt.executeUpdate();
+    }
+
+    private String createInsertStatement(String schema, String tableName, List<String> columnNames) {
         String columns = columnNames.stream().collect(Collectors.joining(","));
         String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
 

@@ -19,13 +19,7 @@
 package edu.pitt.dbmi.ontology.store.ws.service;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -42,30 +36,29 @@ public class JdbcTemplateService {
     public JdbcTemplateService() {
     }
 
-    public String createInsertStatement(String schema, String tableName, List<String> columnNames) {
-        String columnList = columnNames.stream().collect(Collectors.joining(","));
-        String placeholderList = IntStream.range(1, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
-
-        return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columnList, placeholderList);
-    }
-
-    public String[] getColumnNames(JdbcTemplate jdbcTemplate) throws SQLException {
-        List<String> names = new LinkedList<>();
-
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                DatabaseMetaData metaData = conn.getMetaData();
-                ResultSet columns = metaData.getColumns(null, null, "schemes", null);
-                while (columns.next()) {
-                    names.add(columns.getString("COLUMN_NAME"));
-                }
-            }
-        }
-
-        return names.toArray(new String[names.size()]);
-    }
-
+//    public String createInsertStatement(String schema, String tableName, List<String> columnNames) {
+//        String columnList = columnNames.stream().collect(Collectors.joining(","));
+//        String placeholderList = IntStream.range(1, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
+//
+//        return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columnList, placeholderList);
+//    }
+//
+//    public String[] getColumnNames(JdbcTemplate jdbcTemplate) throws SQLException {
+//        List<String> names = new LinkedList<>();
+//
+//        DataSource dataSource = jdbcTemplate.getDataSource();
+//        if (dataSource != null) {
+//            try (Connection conn = dataSource.getConnection()) {
+//                DatabaseMetaData metaData = conn.getMetaData();
+//                ResultSet columns = metaData.getColumns(null, null, "schemes", null);
+//                while (columns.next()) {
+//                    names.add(columns.getString("COLUMN_NAME"));
+//                }
+//            }
+//        }
+//
+//        return names.toArray(new String[names.size()]);
+//    }
     /**
      * Return metadata schema name.
      *
@@ -81,7 +74,7 @@ public class JdbcTemplateService {
             }
         }
 
-        return "unknown";
+        return "";
     }
 
 }
