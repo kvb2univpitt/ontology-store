@@ -53,7 +53,7 @@ public abstract class AbstractOntologyDBAccess {
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
     protected final JdbcTemplate jdbcTemplate;
-    private final FileSysService fileSysService;
+    protected final FileSysService fileSysService;
 
     public AbstractOntologyDBAccess(JdbcTemplate jdbcTemplate, FileSysService fileSysService) {
         this.jdbcTemplate = jdbcTemplate;

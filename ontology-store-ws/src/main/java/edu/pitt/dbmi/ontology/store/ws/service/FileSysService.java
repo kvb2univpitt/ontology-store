@@ -18,7 +18,9 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +33,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
 /**
@@ -50,10 +55,32 @@ public class FileSysService {
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 
-    @Value("${ontology.dir.download}")
-    private String downloadDirectory;
+    private final String downloadDirectory;
+    private final ResourcePatternResolver resourcePatternResolver;
 
-    public FileSysService() {
+    @Autowired
+    public FileSysService(
+            @Value("${ontology.dir.download}") String downloadDirectory,
+            ResourcePatternResolver resourcePatternResolver) {
+        this.downloadDirectory = downloadDirectory;
+        this.resourcePatternResolver = resourcePatternResolver;
+    }
+
+    public String getResourceFileContents(Path file) throws IOException {
+        List<String> list = new LinkedList<>();
+
+        Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    list.add(line);
+                }
+            }
+        }
+
+        return list.stream()
+                .collect(Collectors.joining());
     }
 
     /**

@@ -48,4 +48,9 @@ public class OracleOntologyDBAccess extends AbstractOntologyDBAccess implements 
         insert(file, TABLE_ACCESS_TABLE_NAME);
     }
 
+    @Override
+    public void createOntologyTable(String tableName) throws SQLException, IOException {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 }

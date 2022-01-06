@@ -21,6 +21,7 @@ package edu.pitt.dbmi.ontology.store.ws.db;
 import edu.pitt.dbmi.ontology.store.ws.service.FileSysService;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -31,6 +32,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
 public class PostgreSQLOntologyDBAccess extends AbstractOntologyDBAccess implements OntologyDBAccess {
+
+    private final Path ontologyTableDDL = Paths.get("sql", "create_postgresql_ontology_table.sql");
 
     public PostgreSQLOntologyDBAccess(JdbcTemplate jdbcTemplate, FileSysService fileSysService) {
         super(jdbcTemplate, fileSysService);
@@ -44,6 +47,11 @@ public class PostgreSQLOntologyDBAccess extends AbstractOntologyDBAccess impleme
     @Override
     public void insertIntoTableAccessTable(Path file) throws SQLException, IOException {
         insert(file, TABLE_ACCESS_TABLE_NAME);
+    }
+
+    @Override
+    public void createOntologyTable(String tableName) throws SQLException, IOException {
+        String sql = fileSysService.getResourceFileContents(ontologyTableDDL);
     }
 
 }
