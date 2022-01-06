@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -53,17 +54,47 @@ public class JDBCTestEndpoint {
     }
 
     @GET
-    @Path("datatype/column/demo")
+    @Path("database")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getMeta() throws Exception {
-        return Response.ok(getColumnDataType(jdbcTemplate)).build();
+    public Response getDatabaseType() throws Exception {
+        Map<String, String> map = new LinkedHashMap<>();
+
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                DatabaseMetaData metadata = conn.getMetaData();
+                map.put("database", metadata.getDatabaseProductName());
+            }
+        }
+
+        return Response.ok(map).build();
     }
 
     @GET
-    @Path("schemes")
+    @Path("{table}/column/datatype")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getSchemesData() throws Exception {
-        String sql = String.format("SELECT * FROM %s.schemes", getMetaDataSchemaName(jdbcTemplate));
+    public Response getColumnDatatype(@PathParam("table") String table) throws Exception {
+        Map<String, String> map = new LinkedHashMap<>();
+
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                DatabaseMetaData metaData = conn.getMetaData();
+                ResultSet columns = metaData.getColumns(null, null, table, null);
+                while (columns.next()) {
+                    map.put(columns.getString("COLUMN_NAME"), columns.getString("TYPE_NAME"));
+                }
+            }
+        }
+
+        return Response.ok(map).build();
+    }
+
+    @GET
+    @Path("table/{table}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSchemesData(@PathParam("table") String table) throws Exception {
+        String sql = String.format("SELECT * FROM %s." + table, getMetaDataSchemaName());
         List<String> rows = jdbcTemplate.query(sql, (ResultSet rs, int row) -> {
             List<String> list = new LinkedList<>();
             for (int i = 1; i <= 3; i++) {
@@ -76,24 +107,7 @@ public class JDBCTestEndpoint {
         return Response.ok(rows).build();
     }
 
-    private Map<String, String> getColumnDataType(JdbcTemplate jdbcTemplate) throws SQLException {
-        Map<String, String> map = new LinkedHashMap<>();
-
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                DatabaseMetaData metaData = conn.getMetaData();
-                ResultSet columns = metaData.getColumns(null, null, "schemes", null);
-                while (columns.next()) {
-                    map.put(columns.getString("COLUMN_NAME"), columns.getString("DATA_TYPE"));
-                }
-            }
-        }
-
-        return map;
-    }
-
-    private String getMetaDataSchemaName(JdbcTemplate jdbcTemplate) throws SQLException {
+    private String getMetaDataSchemaName() throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {

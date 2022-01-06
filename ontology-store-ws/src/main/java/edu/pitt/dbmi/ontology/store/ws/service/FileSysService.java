@@ -56,6 +56,13 @@ public class FileSysService {
     public FileSysService() {
     }
 
+    /**
+     * Get the file header (the first line of the file).
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
     public List<String> getHeaders(Path file) throws IOException {
         Optional<String> header = Files.lines(file).findFirst();
         if (header.isPresent()) {
