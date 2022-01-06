@@ -45,28 +45,26 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Path("test/jdbc")
 public class JDBCTestEndpoint {
 
-    private final JdbcTemplate ontologyDemoJdbcTemplate;
-    private final JdbcTemplate ontologyACTJdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public JDBCTestEndpoint(JdbcTemplate ontologyDemoJdbcTemplate, JdbcTemplate ontologyACTJdbcTemplate) {
-        this.ontologyDemoJdbcTemplate = ontologyDemoJdbcTemplate;
-        this.ontologyACTJdbcTemplate = ontologyACTJdbcTemplate;
+    public JDBCTestEndpoint(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GET
     @Path("datatype/column/demo")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getMeta() throws Exception {
-        return Response.ok(getColumnDataType(ontologyDemoJdbcTemplate)).build();
+        return Response.ok(getColumnDataType(jdbcTemplate)).build();
     }
 
     @GET
     @Path("schemes")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSchemesData() throws Exception {
-        String sql = String.format("SELECT * FROM %s.schemes", getMetaDataSchemaName(ontologyDemoJdbcTemplate));
-        List<String> rows = ontologyDemoJdbcTemplate.query(sql, (ResultSet rs, int row) -> {
+        String sql = String.format("SELECT * FROM %s.schemes", getMetaDataSchemaName(jdbcTemplate));
+        List<String> rows = jdbcTemplate.query(sql, (ResultSet rs, int row) -> {
             List<String> list = new LinkedList<>();
             for (int i = 1; i <= 3; i++) {
                 list.add(rs.getString(i));
