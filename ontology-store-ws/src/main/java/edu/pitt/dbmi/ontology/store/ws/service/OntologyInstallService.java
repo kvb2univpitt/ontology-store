@@ -73,7 +73,7 @@ public class OntologyInstallService {
 
         String productFolder = action.getKey().replaceAll(".json", "");
         try {
-            fileSysService.createInstallStartIndicatorFile(productFolder);
+            fileSysService.createStartedInstallIndicatorFile(productFolder);
 
             // get files and folders
             Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
@@ -101,9 +101,9 @@ public class OntologyInstallService {
                 throw new InstallActionException(exception);
             }
 
-            fileSysService.createInstallFinishedIndicatorFile(productFolder);
+            fileSysService.createFinishedInstallIndicatorFile(productFolder);
         } catch (Exception exception) {
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
+            fileSysService.createFailedInstallIndicatorFile(productFolder);
             throw exception;
         }
     }
@@ -114,9 +114,9 @@ public class OntologyInstallService {
         // get files and folders
         Path productDir = fileSysService.getProductDirectory(productFolder);
         Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-        Path installStartIndicatorFile = fileSysService.getInstallStartIndicatorFile(productFolder);
-        Path installFailedIndicatorFile = fileSysService.getInstallFailedIndicatorFile(productFolder);
-        Path installFinishedIndicatorFile = fileSysService.getInstallFinishedIndicatorFile(productFolder);
+        Path installStartIndicatorFile = fileSysService.getStartedInstallIndicatorFile(productFolder);
+        Path installFailedIndicatorFile = fileSysService.getFailedInstallIndicatorFile(productFolder);
+        Path installFinishedIndicatorFile = fileSysService.getFinishedInstallIndicatorFile(productFolder);
         Path schemesFile = fileSysService.getSchemesFile(productFolder);
         Path tableAccessFile = fileSysService.getTableAccessFile(productFolder);
 

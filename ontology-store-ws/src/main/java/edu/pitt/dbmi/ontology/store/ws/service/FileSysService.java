@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -43,6 +44,9 @@ import org.springframework.stereotype.Service;
 public class FileSysService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSysService.class);
+
+    private static final String TABLE_ACCESS_FILE = "TABLE_ACCESS.tsv";
+    private static final String SCHEMES_FILE = "SCHEMES.tsv";
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 
@@ -66,56 +70,101 @@ public class FileSysService {
     }
 
     public Path getTableAccessFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "TABLE_ACCESS.tsv");
+        return Paths.get(downloadDirectory, productFolder, TABLE_ACCESS_FILE);
     }
 
     public Path getSchemesFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "SCHEMES.tsv");
+        return Paths.get(downloadDirectory, productFolder, SCHEMES_FILE);
     }
 
-    public Path getInstallStartIndicatorFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "installation.started");
-    }
-
-    public Path getInstallFailedIndicatorFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "installation.failed");
-    }
-
-    public Path getInstallFinishedIndicatorFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "installation.finished");
-    }
-
-    public void createInstallStartIndicatorFile(String productFolder) {
+    public void createStartedDownloadIndicatorFile(String productFolder) {
         try {
-            Files.deleteIfExists(getInstallFailedIndicatorFile(productFolder));
-            Files.deleteIfExists(getInstallFinishedIndicatorFile(productFolder));
+            Files.deleteIfExists(getFailedDownloadIndicatorFile(productFolder));
+            Files.deleteIfExists(getFinishedDownloadIndicatorFile(productFolder));
 
-            createFile(getInstallStartIndicatorFile(productFolder));
+            createFile(getStartedDownloadIndicatorFile(productFolder));
         } catch (IOException exception) {
-            LOGGER.error("Unable to create start indicator file.", exception);
+            LOGGER.error("Unable to create download started indicator file.", exception);
         }
     }
 
-    public void createInstallFailedIndicatorFile(String productFolder) {
+    public void createFailedDownloadIndicatorFile(String productFolder) {
         try {
-            Files.deleteIfExists(getInstallStartIndicatorFile(productFolder));
-            Files.deleteIfExists(getInstallFinishedIndicatorFile(productFolder));
+            Files.deleteIfExists(getStartedDownloadIndicatorFile(productFolder));
+            Files.deleteIfExists(getFinishedDownloadIndicatorFile(productFolder));
 
-            createFile(getInstallFailedIndicatorFile(productFolder));
+            createFile(getFailedDownloadIndicatorFile(productFolder));
         } catch (IOException exception) {
-            LOGGER.error("Unable to create failed indicator file.", exception);
+            LOGGER.error("Unable to create download failed indicator file.", exception);
         }
     }
 
-    public void createInstallFinishedIndicatorFile(String productFolder) {
+    public void createFinishedDownloadIndicatorFile(String productFolder) {
         try {
-            Files.deleteIfExists(getInstallFailedIndicatorFile(productFolder));
-            Files.deleteIfExists(getInstallStartIndicatorFile(productFolder));
+            Files.deleteIfExists(getStartedDownloadIndicatorFile(productFolder));
+            Files.deleteIfExists(getFailedDownloadIndicatorFile(productFolder));
 
-            createFile(getInstallFinishedIndicatorFile(productFolder));
+            createFile(getFinishedDownloadIndicatorFile(productFolder));
         } catch (IOException exception) {
-            LOGGER.error("Unable to create finish indicator file.", exception);
+            LOGGER.error("Unable to create download finished indicator file.", exception);
         }
+    }
+
+    public void createStartedInstallIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getFailedInstallIndicatorFile(productFolder));
+            Files.deleteIfExists(getFinishedInstallIndicatorFile(productFolder));
+
+            createFile(getStartedInstallIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create download started indicator file.", exception);
+        }
+    }
+
+    public void createFailedInstallIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getStartedInstallIndicatorFile(productFolder));
+            Files.deleteIfExists(getFinishedInstallIndicatorFile(productFolder));
+
+            createFile(getFailedInstallIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create download failed indicator file.", exception);
+        }
+    }
+
+    public void createFinishedInstallIndicatorFile(String productFolder) {
+        try {
+            Files.deleteIfExists(getStartedInstallIndicatorFile(productFolder));
+            Files.deleteIfExists(getFailedInstallIndicatorFile(productFolder));
+
+            createFile(getFinishedInstallIndicatorFile(productFolder));
+        } catch (IOException exception) {
+            LOGGER.error("Unable to create download finished indicator file.", exception);
+        }
+    }
+
+    public Path getStartedDownloadIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "download.started");
+    }
+
+    public Path getFinishedDownloadIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "download.finished");
+    }
+
+    public Path getFailedDownloadIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "download.failed");
+    }
+
+    public Path getStartedInstallIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "install.started");
+    }
+
+    public Path getFinishedInstallIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "install.finished");
+    }
+
+    public Path getFailedInstallIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "install.failed");
     }
 
     public Path getOntologyDirectory(String productFolder) {
@@ -124,6 +173,20 @@ public class FileSysService {
 
     public Path getProductDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder);
+    }
+
+    public List<Path> getOntologies(String productFolder) {
+        List<Path> ontologies = new LinkedList<>();
+
+        try {
+            Files.list(getOntologyDirectory(productFolder))
+                    .filter(Files::isRegularFile)
+                    .forEach(ontologies::add);
+        } catch (IOException exception) {
+            LOGGER.error("Unable to get ontology files.", exception);
+        }
+
+        return ontologies;
     }
 
     public boolean createFile(Path file) {
@@ -145,7 +208,7 @@ public class FileSysService {
             try {
                 Files.createDirectories(dir);
             } catch (IOException exception) {
-                LOGGER.error(String.format("Unable to create directory '%s'.", dir.toString()), exception);
+                LOGGER.error("", exception);
 
                 return false;
             }
