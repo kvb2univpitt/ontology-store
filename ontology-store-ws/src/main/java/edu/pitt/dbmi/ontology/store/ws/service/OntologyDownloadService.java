@@ -57,54 +57,55 @@ public class OntologyDownloadService {
 
     public void performDownload(List<OntologyProductAction> actions) throws DownloadActionException {
         // get a list of selected ontologies to download
-        List<OntologyProductAction> listOfDownloads = actions.stream()
+        List<OntologyProductAction> ontologiesToDownload = actions.stream()
                 .filter(e -> e.isDownload())
                 .collect(Collectors.toList());
 
-        if (!listOfDownloads.isEmpty()) {
-            for (OntologyProductAction action : listOfDownloads) {
+        // download ontologies, if any
+        if (!ontologiesToDownload.isEmpty()) {
+            for (OntologyProductAction action : ontologiesToDownload) {
+                performValidation(action);
+
+                String productFolder = action.getKey().replaceAll(".json", "");
                 try {
                     performProductDownload(action);
-                } catch (IOException exception) {
-                    String errMsg = String.format("Unable to dowload '%s'.", action.getTitle());
-                    LOGGER.error(errMsg, exception);
-
-                    throw new DownloadActionException(errMsg);
+                } catch (DownloadActionException exception) {
+                    fileSysService.createFailedDownloadIndicatorFile(productFolder);
+                    throw exception;
                 }
+                fileSysService.createFinishedDownloadIndicatorFile(productFolder);
             }
         }
     }
 
-    private void performProductDownload(OntologyProductAction action) throws DownloadActionException, IOException {
+    private void performProductDownload(OntologyProductAction action) throws DownloadActionException {
         String productFolder = action.getKey().replaceAll(".json", "");
         Path productDir = fileSysService.getProductDirectory(productFolder);
+        try {
+            OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
+            if (storeObject != null) {
+                downloadFile(storeObject.getSchemes(), productDir);
+                downloadFile(storeObject.getTableAccess(), productDir);
 
-        // check if ontology has already been downloaded
-        if (Files.exists(productDir)) {
-            throw new DownloadActionException(String.format("Ontology '%s' has already been downloaded.", action.getTitle()));
-        }
-
-        OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
-        if (storeObject != null) {
-            // create product folder
-            if (!fileSysService.createDirectories(productDir)) {
-                throw new DownloadActionException(String.format("Unable to create folder to download '%s'.", action.getTitle()));
-            }
-
-            downloadFile(storeObject.getSchemes(), productDir);
-            downloadFile(storeObject.getTableAccess(), productDir);
-
-            String[] domainOntologies = storeObject.getListOfDomainOntologies();
-            if (domainOntologies.length > 0) {
-                Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-                if (!fileSysService.createDirectories(ontologyDir)) {
-                    throw new DownloadActionException(String.format("Unable to create ontology folder for '%s'.", action.getTitle()));
-                }
-
-                for (String domainOntologyURI : domainOntologies) {
-                    downloadFile(domainOntologyURI, ontologyDir);
+                String[] domainOntologies = storeObject.getListOfDomainOntologies();
+                if (domainOntologies.length > 0) {
+                    Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+                    for (String domainOntologyURI : domainOntologies) {
+                        downloadFile(domainOntologyURI, ontologyDir);
+                    }
                 }
             }
+        } catch (IOException exception) {
+            fileSysService.createFailedDownloadIndicatorFile(productFolder);
+
+            String errMsg = String.format("Unable to dowload '%s'.", action.getTitle());
+            LOGGER.error(errMsg, exception);
+
+            throw new DownloadActionException(errMsg);
+        } catch (DownloadActionException exception) {
+            fileSysService.createFailedDownloadIndicatorFile(productFolder);
+
+            throw exception;
         }
     }
 
@@ -119,6 +120,34 @@ public class OntologyDownloadService {
             LOGGER.error(errMsg, exception);
 
             throw new DownloadActionException(errMsg);
+        }
+    }
+
+    private synchronized void performValidation(OntologyProductAction action) throws DownloadActionException {
+        String productFolder = action.getKey().replaceAll(".json", "");
+        Path productDir = fileSysService.getProductDirectory(productFolder);
+        if (Files.exists(productDir)) {
+            if (Files.exists(fileSysService.getStartedDownloadIndicatorFile(productFolder))) {
+                String errMsg = String.format("Download is in progress for '%s'.", action.getTitle());
+                throw new DownloadActionException(errMsg);
+            } else if (Files.exists(fileSysService.getFinishedDownloadIndicatorFile(productFolder))) {
+                String errMsg = String.format("Ontology'%s' has already been downloaded.", action.getTitle());
+                throw new DownloadActionException(errMsg);
+            } else if (Files.exists(fileSysService.getFailedDownloadIndicatorFile(productFolder))) {
+                String errMsg = String.format("Download has previously failed for '%s'.  Please fix this.", action.getTitle());
+                throw new DownloadActionException(errMsg);
+            } else {
+                String errMsg = String.format("Unable to determine download status for '%s'.", action.getTitle());
+                throw new DownloadActionException(errMsg);
+            }
+        } else {
+            Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+            if (fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir)) {
+                fileSysService.createStartedDownloadIndicatorFile(productFolder);
+            } else {
+                String errMsg = String.format("Unable to create download folder for '%s'.", action.getTitle());
+                throw new DownloadActionException(errMsg);
+            }
         }
     }
 
