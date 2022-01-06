@@ -19,7 +19,9 @@
 package edu.pitt.dbmi.ontology.store.ws.config;
 
 import edu.pitt.dbmi.ontology.store.ws.db.OntologyDBAccess;
+import edu.pitt.dbmi.ontology.store.ws.db.OracleOntologyDBAccess;
 import edu.pitt.dbmi.ontology.store.ws.db.PostgreSQLOntologyDBAccess;
+import edu.pitt.dbmi.ontology.store.ws.db.SQLServerOntologyDBAccess;
 import edu.pitt.dbmi.ontology.store.ws.service.FileSysService;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -52,6 +54,10 @@ public class DatabaseConfig {
                 switch (metadata.getDatabaseProductName()) {
                     case "PostgreSQL":
                         return new PostgreSQLOntologyDBAccess(jdbcTemplate, fileSysService);
+                    case "Oracle":
+                        return new OracleOntologyDBAccess(jdbcTemplate, fileSysService);
+                    case "Microsoft SQL Server":
+                        return new SQLServerOntologyDBAccess(jdbcTemplate, fileSysService);
                 }
             } catch (SQLException exception) {
                 exception.printStackTrace(System.err);
