@@ -64,13 +64,14 @@ public class OntologyInstallService {
                 performValidation(action);
 
                 String productFolder = action.getKey().replaceAll(".json", "");
+                fileSysService.createStartedInstallIndicatorFile(productFolder);
                 try {
                     performInstallation(action);
                 } catch (InstallActionException exception) {
-//                    fileSysService.createFailedInstallIndicatorFile(productFolder);
+                    fileSysService.createFailedInstallIndicatorFile(productFolder);
                     throw exception;
                 }
-//                fileSysService.createFinishedInstallIndicatorFile(productFolder);
+                fileSysService.createFinishedInstallIndicatorFile(productFolder);
             }
         }
     }
@@ -85,33 +86,32 @@ public class OntologyInstallService {
 
             try {
                 ontologyDBAccess.createOntologyTable(tableName);
+                ontologyDBAccess.insertIntoOntologyTable(ontology, tableName);
             } catch (SQLException | IOException exception) {
                 LOGGER.error("SCHEMES.tsv insertion error.", exception);
                 throw new InstallActionException(exception);
             }
         }
 
-//        try {
-//            ontologyDBAccess.insertIntoSchemesTable(fileSysService.getSchemesFile(productFolder));
-//        } catch (SQLException | IOException exception) {
-//            LOGGER.error("SCHEMES.tsv insertion error.", exception);
-//            throw new InstallActionException(exception);
-//        }
-//        try {
-//            ontologyDBAccess.insertIntoTableAccessTable(fileSysService.getTableAccessFile(productFolder));
-//        } catch (SQLException | IOException exception) {
-//            LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
-//            throw new InstallActionException(exception);
-//        }
+        try {
+            ontologyDBAccess.insertIntoSchemesTable(fileSysService.getSchemesFile(productFolder));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("SCHEMES.tsv insertion error.", exception);
+            throw new InstallActionException(exception);
+        }
+
+        try {
+            ontologyDBAccess.insertIntoTableAccessTable(fileSysService.getTableAccessFile(productFolder));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
+            throw new InstallActionException(exception);
+        }
     }
 
     private synchronized void performValidation(OntologyProductAction action) throws InstallActionException {
         performDownloadStatusValidation(action);
         performInstallationStatusValidation(action);
         performDownloadFileValidation(action);
-
-        String productFolder = action.getKey().replaceAll(".json", "");
-//        fileSysService.createStartedInstallIndicatorFile(productFolder);
     }
 
     private void performDownloadFileValidation(OntologyProductAction action) throws InstallActionException {

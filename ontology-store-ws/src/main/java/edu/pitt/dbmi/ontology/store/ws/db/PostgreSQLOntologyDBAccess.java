@@ -50,8 +50,13 @@ public class PostgreSQLOntologyDBAccess extends AbstractOntologyDBAccess impleme
     }
 
     @Override
-    public void createOntologyTable(String tableName) throws SQLException, IOException {
-        String sql = fileSysService.getResourceFileContents(ontologyTableDDL);
+    public void insertIntoOntologyTable(Path file, String tableName) throws SQLException, IOException {
+        batchInsert(file, tableName, 5000);
+    }
+
+    @Override
+    public void createOntologyTable(String table) throws SQLException, IOException {
+        createOntologyTable(ontologyTableDDL, table);
     }
 
 }

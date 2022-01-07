@@ -60,6 +60,11 @@ public abstract class AbstractOntologyDBAccess {
         this.fileSysService = fileSysService;
     }
 
+    protected void createOntologyTable(Path file, String tableName) throws SQLException, IOException {
+        String sql = fileSysService.getResourceFileContents(file);
+        jdbcTemplate.execute(sql.replace("I2B2", tableName));
+    }
+
     protected void insert(Path file, String table) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {

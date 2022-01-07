@@ -23,6 +23,7 @@ import static edu.pitt.dbmi.ontology.store.ws.db.AbstractOntologyDBAccess.TABLE_
 import edu.pitt.dbmi.ontology.store.ws.service.FileSysService;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -33,6 +34,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
 public class SQLServerOntologyDBAccess extends AbstractOntologyDBAccess implements OntologyDBAccess {
+
+    private final Path ontologyTableDDL = Paths.get("sql", "create_sqlserver_ontology_table.sql");
 
     public SQLServerOntologyDBAccess(JdbcTemplate jdbcTemplate, FileSysService fileSysService) {
         super(jdbcTemplate, fileSysService);
@@ -49,8 +52,13 @@ public class SQLServerOntologyDBAccess extends AbstractOntologyDBAccess implemen
     }
 
     @Override
-    public void createOntologyTable(String tableName) throws SQLException, IOException {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void insertIntoOntologyTable(Path file, String tableName) throws SQLException, IOException {
+        batchInsert(file, tableName, 5000);
+    }
+
+    @Override
+    public void createOntologyTable(String table) throws SQLException, IOException {
+        createOntologyTable(ontologyTableDDL, table);
     }
 
 }

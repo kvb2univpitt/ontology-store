@@ -34,6 +34,8 @@ public interface OntologyDBAccess {
 
     public void insertIntoTableAccessTable(Path file) throws SQLException, IOException;
 
+    public void insertIntoOntologyTable(Path file, String tableName) throws SQLException, IOException;
+
     public void createOntologyTable(String tableName) throws SQLException, IOException;
 
 }
