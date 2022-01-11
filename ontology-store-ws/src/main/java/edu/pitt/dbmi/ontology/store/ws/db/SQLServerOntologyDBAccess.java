@@ -61,4 +61,9 @@ public class SQLServerOntologyDBAccess extends AbstractOntologyDBAccess implemen
         createOntologyTable(ontologyTableDDL, table);
     }
 
+    @Override
+    public void createOntologyTableIndices(String tableName) throws SQLException, IOException {
+        createIndicesForOntologyTable(tableName);
+    }
+
 }

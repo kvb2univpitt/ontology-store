@@ -38,4 +38,6 @@ public interface OntologyDBAccess {
 
     public void createOntologyTable(String tableName) throws SQLException, IOException;
 
+    public void createOntologyTableIndices(String tableName) throws SQLException, IOException;
+
 }

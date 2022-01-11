@@ -87,6 +87,7 @@ public class OntologyInstallService {
             try {
                 ontologyDBAccess.createOntologyTable(tableName);
                 ontologyDBAccess.insertIntoOntologyTable(ontology, tableName);
+                ontologyDBAccess.createOntologyTableIndices(tableName);
             } catch (SQLException | IOException exception) {
                 LOGGER.error("SCHEMES.tsv insertion error.", exception);
                 throw new InstallActionException(exception);

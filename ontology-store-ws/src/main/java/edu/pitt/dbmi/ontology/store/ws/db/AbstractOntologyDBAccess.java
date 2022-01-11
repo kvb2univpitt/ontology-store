@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -52,6 +53,8 @@ public abstract class AbstractOntologyDBAccess {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
+    private final Path ontologyTableIndicesFile = Paths.get("sql", "ontology_table_indices.sql");
+
     protected final JdbcTemplate jdbcTemplate;
     protected final FileSysService fileSysService;
 
@@ -62,7 +65,16 @@ public abstract class AbstractOntologyDBAccess {
 
     protected void createOntologyTable(Path file, String tableName) throws SQLException, IOException {
         String sql = fileSysService.getResourceFileContents(file);
-        jdbcTemplate.execute(sql.replace("I2B2", tableName));
+
+        jdbcTemplate.execute(sql.replaceAll("I2B2", tableName));
+    }
+
+    protected void createIndicesForOntologyTable(String tableName) throws SQLException, IOException {
+        String sql = fileSysService.getResourceFileContents(ontologyTableIndicesFile);
+        sql = sql.replaceAll("i2b2", tableName.toLowerCase());
+        sql = sql.replaceAll("I2B2", tableName);
+
+        jdbcTemplate.execute(sql);
     }
 
     protected void insert(Path file, String table) throws SQLException, IOException {

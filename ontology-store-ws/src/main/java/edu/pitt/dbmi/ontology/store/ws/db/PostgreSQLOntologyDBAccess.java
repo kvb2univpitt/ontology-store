@@ -59,4 +59,9 @@ public class PostgreSQLOntologyDBAccess extends AbstractOntologyDBAccess impleme
         createOntologyTable(ontologyTableDDL, table);
     }
 
+    @Override
+    public void createOntologyTableIndices(String tableName) throws SQLException, IOException {
+        createIndicesForOntologyTable(tableName);
+    }
+
 }
