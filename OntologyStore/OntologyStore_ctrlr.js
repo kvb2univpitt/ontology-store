@@ -63,31 +63,43 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 "Install"
             ],
             clear: function () {
-                // clear table
-                let htmlTable = document.getElementById("ontology-product-table");
-                while (htmlTable.rows.length > 0) {
-                    htmlTable.deleteRow(-1);
+                let table = document.getElementById("ontology-product-table");
+
+                //create headers if none exists
+                let tHead = table.tHead;
+                if (!tHead) {
+                    tHead = table.createTHead();
+                    let row = tHead.insertRow(-1);
+                    for (let i = 0; i < this.headers.length; i++) {
+                        let th = document.createElement('th');
+                        th.innerHTML = this.headers[i];
+                        row.appendChild(th);
+                    }
                 }
 
-                // add headers
-                let header = htmlTable.createTHead();
-                let row = header.insertRow(-1);
-                for (let i = 0; i < this.headers.length; i++) {
-                    let th = document.createElement('th');
-                    th.innerHTML = this.headers[i];
-                    row.appendChild(th);
+                // remove existing data
+                let tBodies = table.tBodies;
+                if (tBodies.length > 0) {
+                    for (let i = 0; i < tBodies.length; i++) {
+                        table.removeChild(tBodies[i]);
+                    }
                 }
+                table.createTBody();
             },
             addEmptyRow: function () {
+                let table = document.getElementById("ontology-product-table");
+                let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
+
                 // add empty row to show no data
-                let row = table.insertRow(-1);
+                let row = tBody.insertRow(-1);
                 for (let i = 0; i < this.headers.length; i++) {
                     row.insertCell(i);
                 }
             },
             addRow: function (index, product) {
-                let htmlTable = document.getElementById("ontology-product-table");
-                let row = htmlTable.insertRow(-1);
+                let table = document.getElementById("ontology-product-table");
+                let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
+                let row = tBody.insertRow(-1);
 
                 // add columns
                 let columns = [];
