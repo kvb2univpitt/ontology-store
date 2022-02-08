@@ -120,9 +120,11 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
 
                 // style columns
-                columns[4].width = "15%";
+                columns[4].style = 'width: 150px; max-width: 150px';
                 columns[4].className = "text-center";
+                columns[6].style = 'width: 70px; max-width: 70px';
                 columns[6].className = "text-center";
+                columns[7].style = 'width: 50px; max-width: 50px';
                 columns[7].className = "text-center";
             }
         },
