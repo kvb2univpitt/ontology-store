@@ -1,6 +1,40 @@
 if (undefined === i2b2.OntologyStore.ontology) {
     i2b2.OntologyStore.ontology = {
         message: {
+            createSummaryTable: function (data) {
+                let table = document.createElement('table');
+                table.id = 'action-summary';
+
+                //create headers
+                let headers = ["Ontology", "Action", "Status", "Detail"];
+                let tHead = table.createTHead();
+                let row = tHead.insertRow(-1);
+                for (let i = 0; i < headers.length; i++) {
+                    let th = document.createElement('th');
+                    th.innerHTML = headers[i];
+                    row.appendChild(th);
+                }
+
+                let tBody = table.createTBody()
+                for (let i = 0; i < data.length; i++) {
+                    let columns = [];
+                    row = tBody.insertRow(-1);
+                    for (let i = 0; i < headers.length; i++) {
+                        columns[i] = row.insertCell(i);
+                    }
+
+                    let summary = data[i];
+                    columns[0].innerHTML = summary.title;
+                    columns[1].innerHTML = summary.actionType;
+                    columns[2].innerHTML = summary.success ? '<span class="text-success">Success</span>' : '<span class="text-fail">Failed</span>';
+                    columns[3].innerHTML = summary.detail;
+
+                    columns[2].className = "text-center";
+                }
+
+                return table;
+            },
+            panel: {},
             show: function (data) {
                 document.getElementById("download-message-title").innerHTML = data.statusText;
                 document.getElementById("download-message-body").innerHTML = data.responseText;
@@ -20,10 +54,25 @@ if (undefined === i2b2.OntologyStore.ontology) {
 
                 i2b2.OntologyStore.ontology.message.panel.show();
             },
-            hide: function () {
-                if (i2b2.OntologyStore.ontology.message.panel) {
-                    i2b2.OntologyStore.ontology.message.panel.hide();
+            showSummary: function (data) {
+                document.getElementById("download-message-title").innerHTML = "Download/Install Summary";
+                document.getElementById("download-message-body").innerHTML = null;
+                document.getElementById("download-message-body").appendChild(this.createSummaryTable(data));
+
+                if (!this.panel.summary) {
+                    let panel = new YAHOO.widget.Panel("download-message", {
+                        width: "600px",
+                        fixedcenter: true,
+                        close: true,
+                        draggable: true,
+                        zindex: 4,
+                        modal: true,
+                        visible: false
+                    });
+                    panel.render(document.body);
+                    this.panel.summary = panel;
                 }
+                this.panel.summary.show();
             }
         },
         modal: {
@@ -201,6 +250,8 @@ if (undefined === i2b2.OntologyStore.ontology) {
                         data: JSON.stringify(data)
                     }).fail(function (data) {
                         i2b2.OntologyStore.ontology.message.show(data);
+                    }).done(function (data) {
+                        i2b2.OntologyStore.ontology.message.showSummary(data);
                     }).always(function () {
                         i2b2.OntologyStore.ontology.button.enable();
                         i2b2.OntologyStore.ontology.modal.hide();

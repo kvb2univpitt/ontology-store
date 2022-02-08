@@ -47,3 +47,38 @@ table#ontology-product-table {
     text-decoration: none;
     font: 12px Arial, Helvetica, sans-serif;
 }
+
+table#action-summary {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    font-size:13px;
+    margin-bottom:20px;
+    margin-top:20px;
+}
+
+table#action-summary td, th {
+    border: 1px solid dimgrey;
+    text-align: middle;
+    padding: 5px;
+}
+
+table#action-summary th {
+    background-color: #003366;
+    color: #FFFFFF;
+    text-align: left;
+}
+
+table#action-summary tr:hover td {
+    background-color: #DCDCDC;
+}
+
+.text-fail {
+    font-weight: bold;
+    color: red
+}
+
+.text-success {
+    font-weight: bold;
+    color: green
+}
