@@ -5,7 +5,7 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 let table = document.createElement('table');
                 table.id = 'action-summary';
 
-                //create headers
+                // create headers
                 let headers = ["Ontology", "Action", "Status", "Detail"];
                 let tHead = table.createTHead();
                 let row = tHead.insertRow(-1);
@@ -26,7 +26,7 @@ if (undefined === i2b2.OntologyStore.ontology) {
                     let summary = data[i];
                     columns[0].innerHTML = summary.title;
                     columns[1].innerHTML = summary.actionType;
-                    columns[2].innerHTML = summary.success ? '<span class="text-success">Success</span>' : '<span class="text-fail">Failed</span>';
+                    columns[2].innerHTML = summary.inProgress ? '<span class="text-in-progress">In Progress</span>' : summary.success ? '<span class="text-success">Success</span>' : '<span class="text-fail">Failed</span>';
                     columns[3].innerHTML = summary.detail;
 
                     columns[2].className = "text-center";
@@ -109,7 +109,8 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 "Include Network Ontology Artifacts",
                 "Included Terminologies",
                 "Download",
-                "Install"
+                "Install",
+                "Status"
             ],
             clear: function () {
                 let table = document.getElementById("ontology-product-table");
@@ -165,8 +166,35 @@ if (undefined === i2b2.OntologyStore.ontology) {
                         ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
                         : `<input id="network-${index}" type="checkbox" name="network" />`;
                 columns[5].innerHTML = product.terminologies.join(',');
-                columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
-                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+
+                if (product.downloaded) {
+                    columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+
+                    if (product.installed) {
+                        columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                        columns[8].innerHTML = '<span class="text-success">Completed</span>';
+                    } else if (product.failed) {
+                        columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                        columns[8].innerHTML = '<span class="text-fail">Installation Failed</span>';
+                    } else if (product.started) {
+                        columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                        columns[8].innerHTML = '<span class="text-in-progress">Installation In Progress</span>';
+                    } else {
+                        columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+                        columns[8].innerHTML = 'Ready To Be Installed';
+                    }
+                } else if (product.failed) {
+                    columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+                    columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                    columns[8].innerHTML = '<span class="text-fail">Download Failed</span>';
+                } else if (product.started) {
+                    columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+                    columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                    columns[8].innerHTML = '<span class="text-in-progress">Download In Progress</span>';
+                } else {
+                    columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
+                    columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+                }
 
                 // style columns
                 columns[4].style = 'width: 150px; max-width: 150px';
@@ -175,6 +203,7 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 columns[6].className = "text-center";
                 columns[7].style = 'width: 50px; max-width: 50px';
                 columns[7].className = "text-center";
+                columns[8].style = 'width: 80px; max-width: 80px';
             }
         },
         button: {
@@ -252,10 +281,13 @@ if (undefined === i2b2.OntologyStore.ontology) {
                         i2b2.OntologyStore.ontology.message.show(data);
                     }).done(function (data) {
                         i2b2.OntologyStore.ontology.message.showSummary(data);
+                        jQuery('#ontology-download').click();
                     }).always(function () {
                         i2b2.OntologyStore.ontology.button.enable();
                         i2b2.OntologyStore.ontology.modal.hide();
                     });
+                } else {
+                    alert('Please select an ontology to download/install.');
                 }
             }
         }

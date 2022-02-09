@@ -1,6 +1,7 @@
 #OntologyStore-mainDiv {
     padding: 20px;
 }
+
 #OntologyStore-mainDiv #img-name {
     padding-left:35px;
     font-size:11px;
@@ -81,4 +82,9 @@ table#action-summary tr:hover td {
 .text-success {
     font-weight: bold;
     color: green
+}
+
+.text-in-progress {
+    font-weight: bold;
+    color: royalblue
 }
