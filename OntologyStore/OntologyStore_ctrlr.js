@@ -270,22 +270,26 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 });
 
                 if (data.length > 0) {
-                    i2b2.OntologyStore.ontology.button.disable();
-                    i2b2.OntologyStore.ontology.modal.show();
-                    jQuery.ajax({
-                        type: 'POST',
-                        url: 'http://' + location.host + '/ontology-store/action',
-                        contentType: "application/json; charset=utf-8",
-                        data: JSON.stringify(data)
-                    }).fail(function (data) {
-                        i2b2.OntologyStore.ontology.message.show(data);
-                    }).done(function (data) {
-                        i2b2.OntologyStore.ontology.message.showSummary(data);
-                        jQuery('#ontology-download').click();
-                    }).always(function () {
-                        i2b2.OntologyStore.ontology.button.enable();
-                        i2b2.OntologyStore.ontology.modal.hide();
-                    });
+                    if (i2b2.PM.model.isAdmin) {
+                        i2b2.OntologyStore.ontology.button.disable();
+                        i2b2.OntologyStore.ontology.modal.show();
+                        jQuery.ajax({
+                            type: 'POST',
+                            url: 'http://' + location.host + '/ontology-store/action',
+                            contentType: "application/json; charset=utf-8",
+                            data: JSON.stringify(data)
+                        }).fail(function (data) {
+                            i2b2.OntologyStore.ontology.message.show(data);
+                        }).done(function (data) {
+                            i2b2.OntologyStore.ontology.message.showSummary(data);
+                            jQuery('#ontology-download').click();
+                        }).always(function () {
+                            i2b2.OntologyStore.ontology.button.enable();
+                            i2b2.OntologyStore.ontology.modal.hide();
+                        });
+                    } else {
+                        alert('Administrative privileges required!');
+                    }
                 } else {
                     alert('Please select an ontology to download/install.');
                 }
