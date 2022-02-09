@@ -18,11 +18,11 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.endpoint;
 
-import edu.pitt.dbmi.ontology.store.ws.DownloadActionException;
-import edu.pitt.dbmi.ontology.store.ws.InstallActionException;
+import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyDownloadService;
 import edu.pitt.dbmi.ontology.store.ws.service.OntologyInstallService;
+import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -54,14 +54,11 @@ public class OntologyActionEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response performAction(List<OntologyProductAction> productActions) {
-        try {
-            downloadService.performDownload(productActions);
-            installService.performInstallation(productActions);
-        } catch (DownloadActionException | InstallActionException exception) {
-            return Response.serverError().entity(exception.getMessage()).build();
-        }
+        List<ActionSummary> summaries = new LinkedList<>();
+        downloadService.performDownload(productActions, summaries);
+        installService.performInstallation(productActions, summaries);
 
-        return Response.ok().build();
+        return Response.ok(summaries).build();
     }
 
 }

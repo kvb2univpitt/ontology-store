@@ -36,29 +36,6 @@ public class JdbcTemplateService {
     public JdbcTemplateService() {
     }
 
-//    public String createInsertStatement(String schema, String tableName, List<String> columnNames) {
-//        String columnList = columnNames.stream().collect(Collectors.joining(","));
-//        String placeholderList = IntStream.range(1, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
-//
-//        return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columnList, placeholderList);
-//    }
-//
-//    public String[] getColumnNames(JdbcTemplate jdbcTemplate) throws SQLException {
-//        List<String> names = new LinkedList<>();
-//
-//        DataSource dataSource = jdbcTemplate.getDataSource();
-//        if (dataSource != null) {
-//            try (Connection conn = dataSource.getConnection()) {
-//                DatabaseMetaData metaData = conn.getMetaData();
-//                ResultSet columns = metaData.getColumns(null, null, "schemes", null);
-//                while (columns.next()) {
-//                    names.add(columns.getString("COLUMN_NAME"));
-//                }
-//            }
-//        }
-//
-//        return names.toArray(new String[names.size()]);
-//    }
     /**
      * Return metadata schema name.
      *

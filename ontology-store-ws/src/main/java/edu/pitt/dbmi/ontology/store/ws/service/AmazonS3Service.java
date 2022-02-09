@@ -47,15 +47,18 @@ public class AmazonS3Service {
     private final String keyName;
 
     private final AmazonS3 amazonS3;
+    private final FileSysService fileSysService;
 
     @Autowired
     public AmazonS3Service(
             @Value("${ontology.aws.s3.bucket.name}") String bucketName,
             @Value("${ontology.aws.s3.key.name}") String keyName,
-            AmazonS3 amazonS3) {
+            AmazonS3 amazonS3,
+            FileSysService fileSysService) {
         this.bucketName = bucketName;
         this.keyName = keyName;
         this.amazonS3 = amazonS3;
+        this.fileSysService = fileSysService;
     }
 
     public List<OntologyProduct> getProducts() {
@@ -76,13 +79,17 @@ public class AmazonS3Service {
                         OntologyStoreObject obj = objectMapper.readValue(in, OntologyStoreObject.class);
 
                         // add product to list
-                        OntologyProduct product = new OntologyProduct(objSummary.getKey());
+                        OntologyProduct product = new OntologyProduct();
+                        product.setFileName(objSummary.getKey());
                         product.setTitle(obj.getProductTitle());
                         product.setVersion(obj.getProductVersion());
                         product.setOwner(obj.getProductOwner());
                         product.setType(obj.getProductType());
                         product.setIncludeNetworkPackage(obj.getIncludeNetworkPackage().equals("Y"));
                         product.setTerminologies(obj.getTerminologies());
+
+                        getStatus(product);
+
                         products.add(product);
                     } catch (IOException exception) {
                         exception.printStackTrace(System.err);
@@ -90,6 +97,26 @@ public class AmazonS3Service {
                 });
 
         return products;
+    }
+
+    private void getStatus(OntologyProduct product) {
+        String productFolder = product.getFileName().replaceAll(".json", "");
+
+        if (fileSysService.hasFinshedDownload(productFolder)) {
+            product.setDownloaded(true);
+
+            if (fileSysService.hasFinshedInstall(productFolder)) {
+                product.setInstalled(true);
+            } else if (fileSysService.hasFailedInstall(productFolder)) {
+                product.setFailed(true);
+            } else if (fileSysService.hasStartedInstall(productFolder)) {
+                product.setStarted(true);
+            }
+        } else if (fileSysService.hasFailedDownload(productFolder)) {
+            product.setFailed(true);
+        } else if (fileSysService.hasStartedDownload(productFolder)) {
+            product.setStarted(true);
+        }
     }
 
     public List<OntologyStoreObject> listOntologyStoreObject() {

@@ -18,13 +18,17 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.model;
 
+import java.io.Serializable;
+
 /**
  *
  * Nov 5, 2021 11:06:57 AM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class OntologyProduct {
+public class OntologyProduct implements Serializable {
+
+    private static final long serialVersionUID = -5358966190418279317L;
 
     private String fileName;
 
@@ -40,15 +44,15 @@ public class OntologyProduct {
 
     private String[] terminologies;
 
-    private boolean download;
+    private boolean downloaded;
 
-    private boolean install;
+    private boolean installed;
+
+    private boolean started;
+
+    private boolean failed;
 
     public OntologyProduct() {
-    }
-
-    public OntologyProduct(String fileName) {
-        this.fileName = fileName;
     }
 
     public String getFileName() {
@@ -107,20 +111,36 @@ public class OntologyProduct {
         this.terminologies = terminologies;
     }
 
-    public boolean isDownload() {
-        return download;
+    public boolean isDownloaded() {
+        return downloaded;
     }
 
-    public void setDownload(boolean download) {
-        this.download = download;
+    public void setDownloaded(boolean downloaded) {
+        this.downloaded = downloaded;
     }
 
-    public boolean isInstall() {
-        return install;
+    public boolean isInstalled() {
+        return installed;
     }
 
-    public void setInstall(boolean install) {
-        this.install = install;
+    public void setInstalled(boolean installed) {
+        this.installed = installed;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public void setStarted(boolean started) {
+        this.started = started;
+    }
+
+    public boolean isFailed() {
+        return failed;
+    }
+
+    public void setFailed(boolean failed) {
+        this.failed = failed;
     }
 
 }
