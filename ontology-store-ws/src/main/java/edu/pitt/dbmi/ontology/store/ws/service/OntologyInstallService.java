@@ -108,7 +108,7 @@ public class OntologyInstallService {
             try {
                 ontologyDBAccess.createOntologyTable(tableName);
                 ontologyDBAccess.insertIntoOntologyTable(ontology, tableName);
-//                ontologyDBAccess.createOntologyTableIndices(tableName);
+                ontologyDBAccess.createOntologyTableIndices(tableName);
             } catch (SQLException | IOException exception) {
                 LOGGER.error(
                         String.format("Failed to import ontology from file '%s'.", ontology.toString()),

@@ -21,13 +21,16 @@ package edu.pitt.dbmi.ontology.store.ws.db;
 import edu.pitt.dbmi.ontology.store.ws.service.FileSysService;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
@@ -102,13 +105,47 @@ public abstract class AbstractOntologyDBAccess {
                                         switch (columnTypes[i]) {
                                             case Types.CHAR:
                                             case Types.VARCHAR:
+                                            case Types.LONGVARCHAR:
+                                            case Types.CLOB:
                                                 stmt.setString(colIndex, value);
+                                                break;
+                                            case Types.TINYINT:
+                                                stmt.setByte(colIndex, Byte.parseByte(value));
+                                                break;
+                                            case Types.SMALLINT:
+                                                stmt.setShort(colIndex, Short.parseShort(value));
                                                 break;
                                             case Types.INTEGER:
                                                 stmt.setInt(colIndex, Integer.parseInt(value));
                                                 break;
+                                            case Types.BIGINT:
+                                                stmt.setLong(colIndex, Long.parseLong(value));
+                                                break;
+                                            case Types.REAL:
+                                            case Types.FLOAT:
+                                                stmt.setFloat(colIndex, Float.parseFloat(value));
+                                                break;
+                                            case Types.DOUBLE:
+                                                stmt.setDouble(colIndex, Double.parseDouble(value));
+                                                break;
+                                            case Types.NUMERIC:
+                                                stmt.setBigDecimal(colIndex, new BigDecimal(value));
+                                                break;
+                                            case Types.DATE:
+                                                stmt.setDate(colIndex, new Date(DATE_FORMATTER.parse(value).getTime()));
+                                                break;
+                                            case Types.TIME:
+                                                stmt.setTime(colIndex, new Time(DATE_FORMATTER.parse(value).getTime()));
+                                                break;
                                             case Types.TIMESTAMP:
                                                 stmt.setTimestamp(colIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
+                                                break;
+                                            case Types.BIT:
+                                                stmt.setBoolean(colIndex, value.equals("1"));
+                                                break;
+                                            case Types.VARBINARY:
+                                            case Types.BINARY:
+                                                stmt.setBytes(colIndex, value.getBytes());
                                                 break;
                                         }
                                     }
@@ -163,13 +200,47 @@ public abstract class AbstractOntologyDBAccess {
                                     switch (columnTypes[i]) {
                                         case Types.CHAR:
                                         case Types.VARCHAR:
+                                        case Types.LONGVARCHAR:
+                                        case Types.CLOB:
                                             stmt.setString(colIndex, value);
+                                            break;
+                                        case Types.TINYINT:
+                                            stmt.setByte(colIndex, Byte.parseByte(value));
+                                            break;
+                                        case Types.SMALLINT:
+                                            stmt.setShort(colIndex, Short.parseShort(value));
                                             break;
                                         case Types.INTEGER:
                                             stmt.setInt(colIndex, Integer.parseInt(value));
                                             break;
+                                        case Types.BIGINT:
+                                            stmt.setLong(colIndex, Long.parseLong(value));
+                                            break;
+                                        case Types.REAL:
+                                        case Types.FLOAT:
+                                            stmt.setFloat(colIndex, Float.parseFloat(value));
+                                            break;
+                                        case Types.DOUBLE:
+                                            stmt.setDouble(colIndex, Double.parseDouble(value));
+                                            break;
+                                        case Types.NUMERIC:
+                                            stmt.setBigDecimal(colIndex, new BigDecimal(value));
+                                            break;
+                                        case Types.DATE:
+                                            stmt.setDate(colIndex, new Date(DATE_FORMATTER.parse(value).getTime()));
+                                            break;
+                                        case Types.TIME:
+                                            stmt.setTime(colIndex, new Time(DATE_FORMATTER.parse(value).getTime()));
+                                            break;
                                         case Types.TIMESTAMP:
                                             stmt.setTimestamp(colIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
+                                            break;
+                                        case Types.BIT:
+                                            stmt.setBoolean(colIndex, value.equals("1"));
+                                            break;
+                                        case Types.VARBINARY:
+                                        case Types.BINARY:
+                                            stmt.setBytes(colIndex, value.getBytes());
                                             break;
                                     }
                                 }
