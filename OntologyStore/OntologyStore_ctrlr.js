@@ -35,10 +35,11 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 return table;
             },
             panel: {},
-            show: function (data) {
-                document.getElementById("download-message-title").innerHTML = data.statusText;
-                document.getElementById("download-message-body").innerHTML = data.responseText;
-                if (!i2b2.OntologyStore.ontology.message.panel) {
+            show: function (title, message) {
+                document.getElementById("download-message-title").innerHTML = title;
+                document.getElementById("download-message-body").innerHTML = message;
+
+                if (!this.panel.error) {
                     let panel = new YAHOO.widget.Panel("download-message", {
                         width: "400px",
                         fixedcenter: true,
@@ -49,10 +50,9 @@ if (undefined === i2b2.OntologyStore.ontology) {
                         visible: false
                     });
                     panel.render(document.body);
-                    i2b2.OntologyStore.ontology.message.panel = panel;
+                    this.panel.error = panel;
                 }
-
-                i2b2.OntologyStore.ontology.message.panel.show();
+                this.panel.error.show();
             },
             showSummary: function (data) {
                 document.getElementById("download-message-title").innerHTML = "Download/Install Summary";
@@ -288,10 +288,10 @@ if (undefined === i2b2.OntologyStore.ontology) {
                             i2b2.OntologyStore.ontology.modal.hide();
                         });
                     } else {
-                        alert('Administrative privileges required!');
+                        i2b2.OntologyStore.ontology.message.show('Insufficient Privileges', 'Administrative privileges required!');
                     }
                 } else {
-                    alert('Please select an ontology to download/install.');
+                    i2b2.OntologyStore.ontology.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
                 }
             }
         }
