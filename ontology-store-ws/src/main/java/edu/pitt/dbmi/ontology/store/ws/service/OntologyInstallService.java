@@ -99,8 +99,9 @@ public class OntologyInstallService {
 
     private ActionSummary install(OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
-        List<Path> ontologies = fileSysService.getOntologies(productFolder);
-        for (Path ontology : ontologies) {
+
+        // import ontologies
+        for (Path ontology : fileSysService.getOntologies(productFolder)) {
             String fileName = ontology.getFileName().toString();
             String tableName = fileName.replaceAll(".tsv", "");
 
@@ -116,24 +117,26 @@ public class OntologyInstallService {
 
                 return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
             }
+        }
 
-            try {
-                ontologyDBAccess.insertIntoSchemesTable(fileSysService.getSchemesFile(productFolder));
-            } catch (SQLException | IOException exception) {
-                LOGGER.error("SCHEMES.tsv insertion error.", exception);
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
+        // import schemes data
+        try {
+            ontologyDBAccess.insertIntoSchemesTable(fileSysService.getSchemesFile(productFolder));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("SCHEMES.tsv insertion error.", exception);
+            fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
-            }
+            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
+        }
 
-            try {
-                ontologyDBAccess.insertIntoTableAccessTable(fileSysService.getTableAccessFile(productFolder));
-            } catch (SQLException | IOException exception) {
-                LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
+        // import table access data
+        try {
+            ontologyDBAccess.insertIntoTableAccessTable(fileSysService.getTableAccessFile(productFolder));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
+            fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
-            }
+            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
         }
 
         fileSysService.createInstallFinishedIndicatorFile(productFolder);
