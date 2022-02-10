@@ -43,12 +43,12 @@ public class SQLServerOntologyDBAccess extends AbstractOntologyDBAccess implemen
 
     @Override
     public void insertIntoSchemesTable(Path file) throws SQLException, IOException {
-        insert(file, SCHEMES_TABLE_NAME);
+        insertUnique(file, SCHEMES_TABLE_NAME, SCHEMES_TABLE_PK);
     }
 
     @Override
     public void insertIntoTableAccessTable(Path file) throws SQLException, IOException {
-        insert(file, TABLE_ACCESS_TABLE_NAME);
+        insertUnique(file, TABLE_ACCESS_TABLE_NAME, TABLE_ACCESS_TABLE_PK);
     }
 
     @Override

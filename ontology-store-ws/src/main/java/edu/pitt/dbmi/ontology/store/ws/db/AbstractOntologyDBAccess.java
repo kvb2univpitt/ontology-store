@@ -29,13 +29,17 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -52,6 +56,9 @@ public abstract class AbstractOntologyDBAccess {
 
     protected static final String SCHEMES_TABLE_NAME = "schemes";
     protected static final String TABLE_ACCESS_TABLE_NAME = "table_access";
+
+    protected static final String SCHEMES_TABLE_PK = "c_key";
+    protected static final String TABLE_ACCESS_TABLE_PK = "c_table_cd";
 
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
@@ -268,6 +275,117 @@ public abstract class AbstractOntologyDBAccess {
                 stmt.executeBatch();
             }
         }
+    }
+
+    protected void insertUnique(Path file, String table, String pkColumn) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            Set<String> pkeys = getColumnData(table, pkColumn);
+            List<String> columnNames = fileSysService.getHeaders(file);
+            final int pkIndex = columnNames.indexOf(pkColumn);
+
+            try (Connection conn = dataSource.getConnection()) {
+                // create prepared statement
+                String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
+                PreparedStatement stmt = conn.prepareStatement(sql);
+
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+                Files.lines(file)
+                        .skip(1)
+                        .filter(line -> !line.trim().isEmpty())
+                        .map(TAB_DELIM::split)
+                        .forEach(fields -> {
+                            if (!pkeys.contains(fields[pkIndex].toLowerCase())) {
+                                try {
+                                    for (int i = 0; i < fields.length; i++) {
+                                        int colIndex = i + 1;
+                                        String value = fields[i].trim();
+                                        if (value.isEmpty()) {
+                                            stmt.setNull(colIndex, Types.NULL);
+                                        } else {
+                                            switch (columnTypes[i]) {
+                                                case Types.CHAR:
+                                                case Types.VARCHAR:
+                                                case Types.LONGVARCHAR:
+                                                case Types.CLOB:
+                                                    stmt.setString(colIndex, value);
+                                                    break;
+                                                case Types.TINYINT:
+                                                    stmt.setByte(colIndex, Byte.parseByte(value));
+                                                    break;
+                                                case Types.SMALLINT:
+                                                    stmt.setShort(colIndex, Short.parseShort(value));
+                                                    break;
+                                                case Types.INTEGER:
+                                                    stmt.setInt(colIndex, Integer.parseInt(value));
+                                                    break;
+                                                case Types.BIGINT:
+                                                    stmt.setLong(colIndex, Long.parseLong(value));
+                                                    break;
+                                                case Types.REAL:
+                                                case Types.FLOAT:
+                                                    stmt.setFloat(colIndex, Float.parseFloat(value));
+                                                    break;
+                                                case Types.DOUBLE:
+                                                    stmt.setDouble(colIndex, Double.parseDouble(value));
+                                                    break;
+                                                case Types.NUMERIC:
+                                                    stmt.setBigDecimal(colIndex, new BigDecimal(value));
+                                                    break;
+                                                case Types.DATE:
+                                                    stmt.setDate(colIndex, new Date(DATE_FORMATTER.parse(value).getTime()));
+                                                    break;
+                                                case Types.TIME:
+                                                    stmt.setTime(colIndex, new Time(DATE_FORMATTER.parse(value).getTime()));
+                                                    break;
+                                                case Types.TIMESTAMP:
+                                                    stmt.setTimestamp(colIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
+                                                    break;
+                                                case Types.BIT:
+                                                    stmt.setBoolean(colIndex, value.equals("1"));
+                                                    break;
+                                                case Types.VARBINARY:
+                                                case Types.BINARY:
+                                                    stmt.setBytes(colIndex, value.getBytes());
+                                                    break;
+                                            }
+                                        }
+                                    }
+
+                                    // add null columns not provided
+                                    if (fields.length < columnTypes.length) {
+                                        for (int i = fields.length; i < columnTypes.length; i++) {
+                                            stmt.setNull(i + 1, Types.NULL);
+                                        }
+                                    }
+
+                                    stmt.execute();
+                                } catch (Exception exception) {
+                                }
+                            }
+                        });
+            }
+        }
+    }
+
+    private Set<String> getColumnData(String table, String column) throws SQLException {
+        Set<String> data = new HashSet<>();
+
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                String query = String.format("SELECT %s FROM %s.%s", column, conn.getSchema(), table.toLowerCase());
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                while (rs.next()) {
+                    data.add(rs.getString(1).trim().toLowerCase());
+                }
+            }
+
+        }
+
+        return data;
     }
 
     private int[] getColumnTypes(ParameterMetaData metadata) throws SQLException {
