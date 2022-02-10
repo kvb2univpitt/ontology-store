@@ -28,7 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,30 +59,53 @@ public class OntologyDownloadService {
     }
 
     public synchronized void performDownload(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        actions.stream()
-                .filter(e -> e.isDownload())
-                .forEach(action -> summaries.add(download(action)));
+        actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
+        actions = validate(actions, summaries);
+        actions = prepare(actions, summaries);
+        actions.stream().filter(e -> e.isDownload()).forEach(action -> summaries.add(download(action)));
+    }
+
+    private List<OntologyProductAction> validate(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+        List<OntologyProductAction> downloadActions = new LinkedList<>();
+
+        actions.forEach(action -> {
+            String productFolder = action.getKey().replaceAll(".json", "");
+            if (fileSysService.hasFinshedDownload(productFolder)) {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+            } else if (fileSysService.hasFailedDownload(productFolder)) {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed."));
+            } else if (fileSysService.hasStartedDownload(productFolder)) {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Download already started."));
+            } else {
+                downloadActions.add(action);
+            }
+        });
+
+        return downloadActions;
+    }
+
+    private List<OntologyProductAction> prepare(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+        List<OntologyProductAction> downloadActions = new LinkedList<>();
+
+        actions.forEach(action -> {
+            String productFolder = action.getKey().replaceAll(".json", "");
+            Path productDir = fileSysService.getProductDirectory(productFolder);
+            Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+            if (fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir)) {
+                fileSysService.createDownloadStartedIndicatorFile(productFolder);
+                downloadActions.add(action);
+            } else {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+            }
+        });
+
+        return downloadActions;
     }
 
     private ActionSummary download(OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
-
-        // validation
-        if (fileSysService.hasFinshedDownload(productFolder)) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already downloaded.");
-        } else if (fileSysService.hasFailedDownload(productFolder)) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed.");
-        } else if (fileSysService.hasStartedDownload(productFolder)) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Download already started.");
-        }
-
         Path productDir = fileSysService.getProductDirectory(productFolder);
         Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-        if (!(fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir))) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download.");
-        }
-
-        fileSysService.createDownloadStartedIndicatorFile(productFolder);
         try {
             OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
             if (storeObject != null) {
@@ -94,7 +119,7 @@ public class OntologyDownloadService {
                     }
                 }
             }
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             LOGGER.error("", exception);
             fileSysService.createDownloadFailedIndicatorFile(productFolder);
 

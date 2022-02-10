@@ -24,7 +24,9 @@ import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,33 +55,50 @@ public class OntologyInstallService {
     }
 
     public synchronized void performInstallation(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        actions.stream()
-                .filter(e -> e.isInstall())
-                .forEach(action -> summaries.add(install(action)));
+        actions = actions.stream().filter(e -> e.isInstall()).collect(Collectors.toList());
+        actions = validate(actions, summaries);
+        actions = prepare(actions, summaries);
+        actions.stream().filter(e -> e.isInstall()).forEach(action -> summaries.add(install(action)));
+    }
+
+    private List<OntologyProductAction> validate(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+        List<OntologyProductAction> installActions = new LinkedList<>();
+
+        actions.forEach(action -> {
+            String productFolder = action.getKey().replaceAll(".json", "");
+            if (fileSysService.hasFinshedDownload(productFolder)) {
+                if (fileSysService.hasFinshedInstall(productFolder)) {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already Installed."));
+                } else if (fileSysService.hasFailedInstall(productFolder)) {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation previously failed."));
+                } else if (fileSysService.hasStartedInstall(productFolder)) {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Installation already started."));
+                } else {
+                    installActions.add(action);
+                }
+            } else if (fileSysService.hasFailedDownload(productFolder)) {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed."));
+            } else if (fileSysService.hasStartedDownload(productFolder)) {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download not finished."));
+            } else {
+                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Has not been downloaded."));
+            }
+        });
+
+        return installActions;
+    }
+
+    private List<OntologyProductAction> prepare(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+        actions.forEach(action -> {
+            String productFolder = action.getKey().replaceAll(".json", "");
+            fileSysService.createInstallStartedIndicatorFile(productFolder);
+        });
+
+        return actions;
     }
 
     private ActionSummary install(OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
-
-        // validation
-        if (fileSysService.hasFinshedDownload(productFolder)) {
-            if (fileSysService.hasFinshedInstall(productFolder)) {
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already Installed.");
-            } else if (fileSysService.hasFailedInstall(productFolder)) {
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation previously failed.");
-            } else if (fileSysService.hasStartedInstall(productFolder)) {
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Installation already started.");
-            }
-        } else if (fileSysService.hasFailedDownload(productFolder)) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed.");
-        } else if (fileSysService.hasStartedDownload(productFolder)) {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download not finished.");
-        } else {
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Has not been downloaded.");
-        }
-
-        fileSysService.createInstallStartedIndicatorFile(productFolder);
-
         List<Path> ontologies = fileSysService.getOntologies(productFolder);
         for (Path ontology : ontologies) {
             String fileName = ontology.getFileName().toString();
@@ -88,7 +107,7 @@ public class OntologyInstallService {
             try {
                 ontologyDBAccess.createOntologyTable(tableName);
                 ontologyDBAccess.insertIntoOntologyTable(ontology, tableName);
-                ontologyDBAccess.createOntologyTableIndices(tableName);
+//                ontologyDBAccess.createOntologyTableIndices(tableName);
             } catch (SQLException | IOException exception) {
                 LOGGER.error(
                         String.format("Failed to import ontology from file '%s'.", ontology.toString()),
