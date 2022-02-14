@@ -83,6 +83,22 @@ public class FileSysService {
                 .collect(Collectors.joining());
     }
 
+    public List<String> getResourceFileContents(String file) throws IOException {
+        List<String> list = new LinkedList<>();
+
+        Resource resource = resourcePatternResolver.getResource("classpath:/" + file);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    list.add(line);
+                }
+            }
+        }
+
+        return list;
+    }
+
     /**
      * Get the file header (the first line of the file).
      *

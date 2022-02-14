@@ -80,11 +80,15 @@ public abstract class AbstractOntologyDBAccess {
     }
 
     protected void createIndicesForOntologyTable(String tableName) throws SQLException, IOException {
-        String sql = fileSysService.getResourceFileContents(ontologyTableIndicesFile);
-        sql = sql.replaceAll("i2b2", tableName.toLowerCase());
-        sql = sql.replaceAll("I2B2", tableName);
-
-        jdbcTemplate.execute(sql);
+        List<String> queries = fileSysService.getResourceFileContents(ontologyTableIndicesFile.toString());
+        for (String query : queries) {
+            query = query
+                    .replaceAll(";", "")
+                    .replaceAll("i2b2", tableName.toLowerCase())
+                    .replaceAll("I2B2", tableName)
+                    .trim();
+            jdbcTemplate.execute(query);
+        }
     }
 
     protected void insert(Path file, String table) throws SQLException, IOException {
