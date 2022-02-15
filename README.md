@@ -46,7 +46,7 @@ Assume that the i2b2 web client location on the server is **/var/www/html/webcli
 
 Log into i2b2 web client.  Click on the ***Analysis Tools*** drop-down.  You should see the OntologyStore plug-in:
 
-![Login Page](img/ont-plugin.png)
+![OntologyStore Plug-in](img/ont-plugin.png)
 
 ## Install the Ontology Web Services
 
@@ -132,3 +132,19 @@ aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     The above configuration will take any request to the URL **http://localhost/ontology-store** and foward it to the URL **http://localhost:9090/ontology-store**.
 
 2. Restart the Apache HTTP server.
+
+## Download and Install Ontology
+
+1. Log on to the i2b2 web client as an **administrator**.
+2. Click on the ***Analysis Tools*** drop-down and select the **Ontology Store**.
+    ![Select OntologyStore Plug-in](img/select_ont_plugin.png)
+3. Click on the icon ***Sync From Cloud*** to retrieve a list of ontologies from AWS to download/install.
+    ![Click Sync From Cloud Button](img/click_sync_from_cloud.png)
+4. Select the ontology to download and install by checking the checkboxes and click the ***Execute*** button.
+    ![Download and Install Ontology](img/click_execute_btn.png)
+5. A spinner will show while tasks are in progress.
+    ![Progress](img/progress.png)
+6. Once the task is done, a summary of the task will pop up.
+    ![Summary](img/summary.png)
+7. Log out and log back in.  You will see the installed ontologies.
+    ![Ontology Installed](img/ontology_installed.png)
