@@ -162,9 +162,15 @@ if (undefined === i2b2.OntologyStore.ontology) {
                 columns[1].innerHTML = product.version;
                 columns[2].innerHTML = product.owner;
                 columns[3].innerHTML = product.type;
-                columns[4].innerHTML = product.includeNetworkPackage
-                        ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
-                        : `<input id="network-${index}" type="checkbox" name="network" />`;
+                if (product.downloaded) {
+                    columns[4].innerHTML = product.includeNetworkPackage
+                            ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" disabled="disabled" />`
+                            : `<input id="network-${index}" type="checkbox" name="network" disabled="disabled" />`;
+                } else {
+                    columns[4].innerHTML = product.includeNetworkPackage
+                            ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
+                            : `<input id="network-${index}" type="checkbox" name="network" />`;
+                }
                 columns[5].innerHTML = product.terminologies.join(',');
 
                 if (product.downloaded) {
