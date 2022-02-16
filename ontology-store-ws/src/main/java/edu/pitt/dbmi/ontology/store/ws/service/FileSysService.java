@@ -172,6 +172,10 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder, "ontology");
     }
 
+    public Path getNetworkDirectory(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "network_files");
+    }
+
     public Path getDownloadStartedIndicatorFile(String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "download.started");
     }

@@ -23,11 +23,16 @@ import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProduct;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyStoreObject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,20 +48,27 @@ import org.springframework.stereotype.Service;
 @Service
 public class AmazonS3Service {
 
-    private final String bucketName;
-    private final String keyName;
+    private final String ontologyBucketName;
+    private final String ontologyKeyName;
+
+    private final String networkBucketName;
+    private final String networkKeyName;
 
     private final AmazonS3 amazonS3;
     private final FileSysService fileSysService;
 
     @Autowired
     public AmazonS3Service(
-            @Value("${ontology.aws.s3.bucket.name}") String bucketName,
-            @Value("${ontology.aws.s3.key.name}") String keyName,
+            @Value("${ontology.aws.s3.bucket.name}") String ontologyBucketName,
+            @Value("${ontology.aws.s3.key.name}") String ontologyKeyName,
+            @Value("${network.aws.s3.bucket.name}") String networkBucketName,
+            @Value("${network.aws.s3.key.name}") String networkKeyName,
             AmazonS3 amazonS3,
             FileSysService fileSysService) {
-        this.bucketName = bucketName;
-        this.keyName = keyName;
+        this.ontologyBucketName = ontologyBucketName;
+        this.ontologyKeyName = ontologyKeyName;
+        this.networkBucketName = networkBucketName;
+        this.networkKeyName = networkKeyName;
         this.amazonS3 = amazonS3;
         this.fileSysService = fileSysService;
     }
@@ -65,8 +77,8 @@ public class AmazonS3Service {
         List<OntologyProduct> products = new LinkedList<>();
 
         ListObjectsV2Request request = new ListObjectsV2Request()
-                .withBucketName(bucketName)
-                .withPrefix(keyName + "/")
+                .withBucketName(ontologyBucketName)
+                .withPrefix(ontologyKeyName + "/")
                 .withDelimiter("/");
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -99,6 +111,23 @@ public class AmazonS3Service {
         return products;
     }
 
+    public void downloadNetworkFiles(Path dir) throws IOException {
+        ListObjectsV2Request request = new ListObjectsV2Request()
+                .withBucketName(networkBucketName)
+                .withPrefix(networkKeyName + "/")
+                .withDelimiter("/");
+
+        for (S3ObjectSummary objSummary : amazonS3.listObjectsV2(request).getObjectSummaries()) {
+            S3Object s3Obj = amazonS3.getObject(objSummary.getBucketName(), objSummary.getKey());
+            if (objSummary.getSize() > 0) {
+                Path out = Paths.get(dir.toString(), s3Obj.getKey());
+                try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
+                    Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
     private void getStatus(OntologyProduct product) {
         String productFolder = product.getFileName().replaceAll(".json", "");
 
@@ -124,8 +153,8 @@ public class AmazonS3Service {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ListObjectsV2Request request = new ListObjectsV2Request()
-                .withBucketName(bucketName)
-                .withPrefix(keyName + "/")
+                .withBucketName(ontologyBucketName)
+                .withPrefix(ontologyKeyName + "/")
                 .withDelimiter("/");
         ListObjectsV2Result response = amazonS3.listObjectsV2(request);
         response.getObjectSummaries().stream()
@@ -145,7 +174,7 @@ public class AmazonS3Service {
     }
 
     public OntologyStoreObject getOntologyStoreObject(String key) throws IOException {
-        S3Object s3Obj = amazonS3.getObject(new GetObjectRequest(bucketName, key));
+        S3Object s3Obj = amazonS3.getObject(new GetObjectRequest(ontologyBucketName, key));
         try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
             return (new ObjectMapper()).readValue(in, OntologyStoreObject.class);
         }

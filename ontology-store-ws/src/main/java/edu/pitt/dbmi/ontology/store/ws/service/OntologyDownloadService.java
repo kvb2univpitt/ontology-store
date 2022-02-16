@@ -91,11 +91,24 @@ public class OntologyDownloadService {
             String productFolder = action.getKey().replaceAll(".json", "");
             Path productDir = fileSysService.getProductDirectory(productFolder);
             Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
-            if (fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir)) {
-                fileSysService.createDownloadStartedIndicatorFile(productFolder);
-                downloadActions.add(action);
+            if (action.isIncludeNetworkPackage()) {
+                Path networkDir = fileSysService.getNetworkDirectory(productFolder);
+                if (fileSysService.createDirectories(productDir)
+                        && fileSysService.createDirectories(ontologyDir)
+                        && fileSysService.createDirectories(networkDir)) {
+                    fileSysService.createDownloadStartedIndicatorFile(productFolder);
+                    downloadActions.add(action);
+                } else {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                }
+
             } else {
-                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                if (fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir)) {
+                    fileSysService.createDownloadStartedIndicatorFile(productFolder);
+                    downloadActions.add(action);
+                } else {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                }
             }
         });
 
@@ -111,6 +124,9 @@ public class OntologyDownloadService {
             if (storeObject != null) {
                 downloadFile(storeObject.getSchemes(), productDir);
                 downloadFile(storeObject.getTableAccess(), productDir);
+                if (action.isIncludeNetworkPackage()) {
+                    amazonS3Service.downloadNetworkFiles(fileSysService.getProductDirectory(productFolder));
+                }
 
                 String[] domainOntologies = storeObject.getListOfDomainOntologies();
                 if (domainOntologies.length > 0) {
