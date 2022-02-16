@@ -133,6 +133,7 @@ public class AmazonS3Service {
 
         if (fileSysService.hasFinshedDownload(productFolder)) {
             product.setDownloaded(true);
+            product.setIncludeNetworkPackage(fileSysService.hasNetworkFiles(productFolder));
 
             if (fileSysService.hasFinshedInstall(productFolder)) {
                 product.setInstalled(true);

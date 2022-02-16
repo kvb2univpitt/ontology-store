@@ -164,6 +164,12 @@ public class FileSysService {
         return Files.exists(getInstallFinishedIndicatorFile(productFolder));
     }
 
+    public boolean hasNetworkFiles(String productFolder) {
+        Path networkDir = getNetworkDirectory(productFolder);
+
+        return Files.exists(networkDir) && !listFiles(networkDir).isEmpty();
+    }
+
     public Path getProductDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder);
     }
@@ -240,6 +246,20 @@ public class FileSysService {
         deleteFile(getInstallStartedIndicatorFile(productFolder));
 
         return createFile(getInstallFinishedIndicatorFile(productFolder));
+    }
+
+    public List<Path> listFiles(Path dir) {
+        List<Path> files = new LinkedList<>();
+
+        try {
+            Files.list(dir)
+                    .filter(Files::isRegularFile)
+                    .forEach(files::add);
+        } catch (IOException exception) {
+            LOGGER.error(String.format("Unable to list files in directory '%s'.", dir.toString()), exception);
+        }
+
+        return files;
     }
 
     public boolean deleteFile(Path file) {
