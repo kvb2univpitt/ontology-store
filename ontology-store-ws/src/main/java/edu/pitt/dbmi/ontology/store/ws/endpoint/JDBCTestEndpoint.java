@@ -71,6 +71,22 @@ public class JDBCTestEndpoint {
     }
 
     @GET
+    @Path("schema")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSchema() throws Exception {
+        Map<String, String> map = new LinkedHashMap<>();
+
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                map.put("schema", conn.getSchema());
+            }
+        }
+
+        return Response.ok(map).build();
+    }
+
+    @GET
     @Path("{table}/column/datatype")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getColumnDatatype(@PathParam("table") String table) throws Exception {
