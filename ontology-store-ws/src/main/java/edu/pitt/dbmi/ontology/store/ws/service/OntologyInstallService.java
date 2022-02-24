@@ -18,18 +18,19 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
-import edu.pitt.dbmi.ontology.store.ws.db.OntologyDBAccess;
+import edu.pitt.dbmi.ontology.store.ws.InstallationException;
+import edu.pitt.dbmi.ontology.store.ws.db.HiveDBAccess;
 import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 import org.springframework.stereotype.Service;
 
 /**
@@ -46,19 +47,51 @@ public class OntologyInstallService {
     private static final String ACTION_TYPE = "Install";
 
     private final FileSysService fileSysService;
-    private final OntologyDBAccess ontologyDBAccess;
+    private final HiveDBAccess hiveDBAccess;
+    private final OntInstallerService ontInstallerService;
 
     @Autowired
-    public OntologyInstallService(FileSysService fileSysService, OntologyDBAccess ontologyDBAccess) {
+    public OntologyInstallService(FileSysService fileSysService, HiveDBAccess hiveDBAccess, OntInstallerService ontInstallerService) {
         this.fileSysService = fileSysService;
-        this.ontologyDBAccess = ontologyDBAccess;
+        this.hiveDBAccess = hiveDBAccess;
+        this.ontInstallerService = ontInstallerService;
     }
 
-    public synchronized void performInstallation(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+    public synchronized void performInstallation(String project, List<OntologyProductAction> actions, List<ActionSummary> summaries) throws InstallationException {
         actions = actions.stream().filter(e -> e.isInstall()).collect(Collectors.toList());
         actions = validate(actions, summaries);
-        actions = prepare(actions, summaries);
-        actions.stream().filter(e -> e.isInstall()).forEach(action -> summaries.add(install(action)));
+
+        if (!actions.isEmpty()) {
+            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
+            String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
+            if (ontJNDIName == null || crcJNDIName == null) {
+                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
+            }
+
+            DataSource ontDataSource = getDataSource(ontJNDIName);
+            DataSource crcDataSource = getDataSource(crcJNDIName);
+            if (ontDataSource == null || crcDataSource == null) {
+                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
+            }
+
+            // prepare for installation
+            actions.forEach(action -> {
+                String productFolder = action.getKey().replaceAll(".json", "");
+                fileSysService.createInstallStartedIndicatorFile(productFolder);
+            });
+
+            ontInstallerService.install(new JdbcTemplate(ontDataSource), actions, summaries);
+        }
+    }
+
+    public DataSource getDataSource(String datasourceJNDIName) {
+        try {
+            return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
+        } catch (Exception exception) {
+            String errMsg = String.format("Unable to get datasource for JNDI name '%s'.", datasourceJNDIName);
+            LOGGER.error(errMsg, exception);
+            return null;
+        }
     }
 
     private List<OntologyProductAction> validate(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
@@ -86,62 +119,6 @@ public class OntologyInstallService {
         });
 
         return installActions;
-    }
-
-    private List<OntologyProductAction> prepare(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        actions.forEach(action -> {
-            String productFolder = action.getKey().replaceAll(".json", "");
-            fileSysService.createInstallStartedIndicatorFile(productFolder);
-        });
-
-        return actions;
-    }
-
-    private ActionSummary install(OntologyProductAction action) {
-        String productFolder = action.getKey().replaceAll(".json", "");
-
-        // import ontologies
-        for (Path ontology : fileSysService.getOntologies(productFolder)) {
-            String fileName = ontology.getFileName().toString();
-            String tableName = fileName.replaceAll(".tsv", "");
-
-            try {
-                ontologyDBAccess.createOntologyTable(tableName);
-                ontologyDBAccess.insertIntoOntologyTable(ontology, tableName);
-                ontologyDBAccess.createOntologyTableIndices(tableName);
-            } catch (SQLException | IOException exception) {
-                LOGGER.error(
-                        String.format("Failed to import ontology from file '%s'.", ontology.toString()),
-                        exception);
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
-            }
-        }
-
-        // import schemes data
-        try {
-            ontologyDBAccess.insertIntoSchemesTable(fileSysService.getSchemesFile(productFolder));
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("SCHEMES.tsv insertion error.", exception);
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
-        }
-
-        // import table access data
-        try {
-            ontologyDBAccess.insertIntoTableAccessTable(fileSysService.getTableAccessFile(productFolder));
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
-        }
-
-        fileSysService.createInstallFinishedIndicatorFile(productFolder);
-
-        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Installed.");
     }
 
 }

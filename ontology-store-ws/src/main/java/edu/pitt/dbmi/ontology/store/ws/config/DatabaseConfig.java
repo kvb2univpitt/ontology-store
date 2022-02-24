@@ -18,18 +18,10 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.config;
 
-import edu.pitt.dbmi.ontology.store.ws.db.OntologyDBAccess;
-import edu.pitt.dbmi.ontology.store.ws.db.OracleOntologyDBAccess;
-import edu.pitt.dbmi.ontology.store.ws.db.PostgreSQLOntologyDBAccess;
-import edu.pitt.dbmi.ontology.store.ws.db.SQLServerOntologyDBAccess;
-import edu.pitt.dbmi.ontology.store.ws.service.FileSysService;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
+import edu.pitt.dbmi.ontology.store.ws.db.HiveDBAccess;
 import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
@@ -41,30 +33,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class DatabaseConfig {
 
     @Bean
-    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
-    }
-
-    @Bean
-    public OntologyDBAccess ontologyDBAccess(JdbcTemplate jdbcTemplate, FileSysService fileSysService) {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                DatabaseMetaData metadata = conn.getMetaData();
-                switch (metadata.getDatabaseProductName()) {
-                    case "PostgreSQL":
-                        return new PostgreSQLOntologyDBAccess(jdbcTemplate, fileSysService);
-                    case "Oracle":
-                        return new OracleOntologyDBAccess(jdbcTemplate, fileSysService);
-                    case "Microsoft SQL Server":
-                        return new SQLServerOntologyDBAccess(jdbcTemplate, fileSysService);
-                }
-            } catch (SQLException exception) {
-                exception.printStackTrace(System.err);
-            }
-        }
-
-        return null;
+    public HiveDBAccess hiveDBAccess(DataSource dataSource) {
+        return new HiveDBAccess(dataSource);
     }
 
 }

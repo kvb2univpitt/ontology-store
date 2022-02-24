@@ -16,28 +16,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package edu.pitt.dbmi.ontology.store.ws.db;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.SQLException;
+package edu.pitt.dbmi.ontology.store.ws;
 
 /**
  *
- * Jan 6, 2022 12:56:16 PM
+ * Feb 24, 2022 1:26:49 PM
  *
- * @author Kevin V. Bui (kvb2univpitt@gmail.com)
+ * @author Kevin V. Bui (kvb2@pitt.edu)
  */
-public interface OntologyDBAccess {
+public class InstallationException extends Exception {
 
-    public void insertIntoSchemesTable(Path file) throws SQLException, IOException;
+    private static final long serialVersionUID = -1581825775607254871L;
 
-    public void insertIntoTableAccessTable(Path file) throws SQLException, IOException;
+    public InstallationException() {
+    }
 
-    public void insertIntoOntologyTable(Path file, String tableName) throws SQLException, IOException;
+    public InstallationException(String string) {
+        super(string);
+    }
 
-    public void createOntologyTable(String tableName) throws SQLException, IOException;
+    public InstallationException(String string, Throwable thrwbl) {
+        super(string, thrwbl);
+    }
 
-    public void createOntologyTableIndices(String tableName) throws SQLException, IOException;
+    public InstallationException(Throwable thrwbl) {
+        super(thrwbl);
+    }
+
+    public InstallationException(String string, Throwable thrwbl, boolean bln, boolean bln1) {
+        super(string, thrwbl, bln, bln1);
+    }
 
 }

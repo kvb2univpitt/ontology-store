@@ -31,7 +31,10 @@ import org.springframework.context.annotation.Configuration;
 public class JerseyConfig extends ResourceConfig {
 
     public JerseyConfig() {
-        packages("edu.pitt.dbmi.ontology.store.ws.endpoint");
+        packages(
+                "edu.pitt.dbmi.ontology.store.ws.endpoint",
+                "edu.pitt.dbmi.ontology.store.ws.filter"
+        );
     }
 
 }
