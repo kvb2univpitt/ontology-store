@@ -61,7 +61,7 @@ public class OntInstallerService extends AbstractInstallerService {
     private ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
 
-        // import ontology
+        // import metadata
         for (Path ontology : fileSysService.getMetadata(productFolder)) {
             String fileName = ontology.getFileName().toString();
             String tableName = fileName.replaceAll(".tsv", "");
@@ -76,7 +76,7 @@ public class OntInstallerService extends AbstractInstallerService {
 
                 fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
+                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
             }
         }
 
@@ -87,7 +87,7 @@ public class OntInstallerService extends AbstractInstallerService {
             LOGGER.error("SCHEMES.tsv insertion error.", exception);
             fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
+            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
         }
 
         // import table access data
@@ -97,12 +97,10 @@ public class OntInstallerService extends AbstractInstallerService {
             LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
             fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Installation Failed.");
+            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
         }
 
-        fileSysService.createInstallFinishedIndicatorFile(productFolder);
-
-        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Installed.");
+        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Metadata Installed.");
     }
 
     private void insertIntoTableAccessTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {

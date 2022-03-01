@@ -49,12 +49,14 @@ public class OntologyInstallService {
     private final FileSysService fileSysService;
     private final HiveDBAccess hiveDBAccess;
     private final OntInstallerService ontInstallerService;
+    private final CrcInstallerService crcInstallerService;
 
     @Autowired
-    public OntologyInstallService(FileSysService fileSysService, HiveDBAccess hiveDBAccess, OntInstallerService ontInstallerService) {
+    public OntologyInstallService(FileSysService fileSysService, HiveDBAccess hiveDBAccess, OntInstallerService ontInstallerService, CrcInstallerService crcInstallerService) {
         this.fileSysService = fileSysService;
         this.hiveDBAccess = hiveDBAccess;
         this.ontInstallerService = ontInstallerService;
+        this.crcInstallerService = crcInstallerService;
     }
 
     public synchronized void performInstallation(String project, List<OntologyProductAction> actions, List<ActionSummary> summaries) throws InstallationException {
@@ -81,6 +83,7 @@ public class OntologyInstallService {
             });
 
             ontInstallerService.install(new JdbcTemplate(ontDataSource), actions, summaries);
+            crcInstallerService.install(new JdbcTemplate(crcDataSource), actions, summaries);
         }
     }
 

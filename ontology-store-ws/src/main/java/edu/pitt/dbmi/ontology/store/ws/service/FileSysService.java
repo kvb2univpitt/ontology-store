@@ -52,6 +52,7 @@ public class FileSysService {
 
     private static final String TABLE_ACCESS_FILE = "TABLE_ACCESS.tsv";
     private static final String SCHEMES_FILE = "SCHEMES.tsv";
+    private static final String QT_BREAKDOWN_PATH_FILE = "QT_BREAKDOWN_PATH.tsv";
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 
@@ -127,10 +128,27 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder, SCHEMES_FILE);
     }
 
+    public Path getQtBreakdownPathFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, QT_BREAKDOWN_PATH_FILE);
+    }
+
     public List<Path> getMetadata(String productFolder) {
         List<Path> ontologies = new LinkedList<>();
         try {
             Files.list(getMetadataDirectory(productFolder))
+                    .filter(Files::isRegularFile)
+                    .forEach(ontologies::add);
+        } catch (IOException exception) {
+            LOGGER.error("Unable to get ontology files.", exception);
+        }
+
+        return ontologies;
+    }
+
+    public List<Path> getCrcData(String productFolder) {
+        List<Path> ontologies = new LinkedList<>();
+        try {
+            Files.list(getCRCDirectory(productFolder))
                     .filter(Files::isRegularFile)
                     .forEach(ontologies::add);
         } catch (IOException exception) {
