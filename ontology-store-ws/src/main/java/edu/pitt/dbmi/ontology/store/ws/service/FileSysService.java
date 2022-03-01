@@ -127,10 +127,10 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder, SCHEMES_FILE);
     }
 
-    public List<Path> getOntologies(String productFolder) {
+    public List<Path> getMetadata(String productFolder) {
         List<Path> ontologies = new LinkedList<>();
         try {
-            Files.list(getOntologyDirectory(productFolder))
+            Files.list(getMetadataDirectory(productFolder))
                     .filter(Files::isRegularFile)
                     .forEach(ontologies::add);
         } catch (IOException exception) {
@@ -174,8 +174,12 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder);
     }
 
-    public Path getOntologyDirectory(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, "ontology");
+    public Path getMetadataDirectory(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "metadata");
+    }
+
+    public Path getCRCDirectory(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "crc");
     }
 
     public Path getNetworkDirectory(String productFolder) {
@@ -284,7 +288,7 @@ public class FileSysService {
         return Files.exists(file) && Files.isRegularFile(file);
     }
 
-    public boolean createDirectories(Path dir) {
+    public boolean createDirectory(Path dir) {
         if (Files.notExists(dir)) {
             try {
                 Files.createDirectories(dir);
@@ -294,6 +298,19 @@ public class FileSysService {
         }
 
         return Files.exists(dir) && Files.isDirectory(dir);
+    }
+
+    public boolean createDirectories(Path dir, Path... dirs) {
+        if (dirs == null || dirs.length == 0) {
+            return false;
+        }
+
+        boolean success = createDirectory(dir);
+        for (Path directory : dirs) {
+            success = createDirectory(directory) && success;
+        }
+
+        return success;
     }
 
 }

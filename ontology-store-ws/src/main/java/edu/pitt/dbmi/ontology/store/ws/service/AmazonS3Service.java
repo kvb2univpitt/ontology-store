@@ -27,6 +27,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProduct;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyStoreObject;
+import edu.pitt.dbmi.ontology.store.ws.model.SimpleOntologyStoreObject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -88,7 +89,7 @@ public class AmazonS3Service {
                 .forEach(objSummary -> {
                     S3Object s3Obj = amazonS3.getObject(objSummary.getBucketName(), objSummary.getKey());
                     try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
-                        OntologyStoreObject obj = objectMapper.readValue(in, OntologyStoreObject.class);
+                        SimpleOntologyStoreObject obj = objectMapper.readValue(in, SimpleOntologyStoreObject.class);
 
                         // add product to list
                         OntologyProduct product = new OntologyProduct();

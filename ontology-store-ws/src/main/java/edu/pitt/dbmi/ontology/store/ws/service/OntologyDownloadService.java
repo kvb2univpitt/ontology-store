@@ -90,12 +90,11 @@ public class OntologyDownloadService {
         actions.forEach(action -> {
             String productFolder = action.getKey().replaceAll(".json", "");
             Path productDir = fileSysService.getProductDirectory(productFolder);
-            Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+            Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
+            Path crcDir = fileSysService.getCRCDirectory(productFolder);
             if (action.isIncludeNetworkPackage()) {
                 Path networkDir = fileSysService.getNetworkDirectory(productFolder);
-                if (fileSysService.createDirectories(productDir)
-                        && fileSysService.createDirectories(ontologyDir)
-                        && fileSysService.createDirectories(networkDir)) {
+                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, networkDir)) {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
@@ -103,7 +102,7 @@ public class OntologyDownloadService {
                 }
 
             } else {
-                if (fileSysService.createDirectories(productDir) && fileSysService.createDirectories(ontologyDir)) {
+                if (fileSysService.createDirectories(productDir, metadataDir, crcDir)) {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
@@ -118,21 +117,27 @@ public class OntologyDownloadService {
     private ActionSummary download(OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
         Path productDir = fileSysService.getProductDirectory(productFolder);
-        Path ontologyDir = fileSysService.getOntologyDirectory(productFolder);
+        Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
+        Path crcDir = fileSysService.getCRCDirectory(productFolder);
         try {
             OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
             if (storeObject != null) {
                 downloadFile(storeObject.getSchemes(), productDir);
                 downloadFile(storeObject.getTableAccess(), productDir);
+                downloadFile(storeObject.getBreakdownPath(), productDir);
                 if (action.isIncludeNetworkPackage()) {
-                    amazonS3Service.downloadNetworkFiles(fileSysService.getProductDirectory(productFolder));
+                    Path networkDir = fileSysService.getNetworkDirectory(productFolder);
+                    downloadFile(storeObject.getAdapterMapping(), networkDir);
                 }
 
                 String[] domainOntologies = storeObject.getListOfDomainOntologies();
-                if (domainOntologies.length > 0) {
-                    for (String domainOntologyURI : domainOntologies) {
-                        downloadFile(domainOntologyURI, ontologyDir);
-                    }
+                for (String domainOntologyURI : domainOntologies) {
+                    downloadFile(domainOntologyURI, metadataDir);
+                }
+
+                String[] conceptDimensions = storeObject.getConceptDimensions();
+                for (String conceptDimensionURI : conceptDimensions) {
+                    downloadFile(conceptDimensionURI, crcDir);
                 }
             }
         } catch (Exception exception) {

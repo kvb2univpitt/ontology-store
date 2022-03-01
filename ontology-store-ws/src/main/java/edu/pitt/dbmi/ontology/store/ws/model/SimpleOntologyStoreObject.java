@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 University of Pittsburgh.
+ * Copyright (C) 2022 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,13 +18,20 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serializable;
+
 /**
+ * This class is for retrieving minimal information for displaying to the users.
  *
- * Oct 27, 2021 3:28:09 PM
+ * Feb 28, 2022 11:19:40 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class OntologyStoreObject {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SimpleOntologyStoreObject implements Serializable {
+
+    private static final long serialVersionUID = -6731379323400552329L;
 
     private String productTitle;
 
@@ -36,23 +43,9 @@ public class OntologyStoreObject {
 
     private String includeNetworkPackage;
 
-    private String tableAccess;
-
-    private String schemes;
-
-    private String breakdownPath;
-
-    private String adapterMapping;
-
-    private String shrineIndex;
-
-    private String[] conceptDimensions;
-
     private String[] terminologies;
 
-    private String[] listOfDomainOntologies;
-
-    public OntologyStoreObject() {
+    public SimpleOntologyStoreObject() {
     }
 
     public String getProductTitle() {
@@ -95,68 +88,12 @@ public class OntologyStoreObject {
         this.includeNetworkPackage = includeNetworkPackage;
     }
 
-    public String getTableAccess() {
-        return tableAccess;
-    }
-
-    public void setTableAccess(String tableAccess) {
-        this.tableAccess = tableAccess;
-    }
-
-    public String getSchemes() {
-        return schemes;
-    }
-
-    public void setSchemes(String schemes) {
-        this.schemes = schemes;
-    }
-
-    public String getBreakdownPath() {
-        return breakdownPath;
-    }
-
-    public void setBreakdownPath(String breakdownPath) {
-        this.breakdownPath = breakdownPath;
-    }
-
-    public String getAdapterMapping() {
-        return adapterMapping;
-    }
-
-    public void setAdapterMapping(String adapterMapping) {
-        this.adapterMapping = adapterMapping;
-    }
-
-    public String getShrineIndex() {
-        return shrineIndex;
-    }
-
-    public void setShrineIndex(String shrineIndex) {
-        this.shrineIndex = shrineIndex;
-    }
-
-    public String[] getConceptDimensions() {
-        return conceptDimensions;
-    }
-
-    public void setConceptDimensions(String[] conceptDimensions) {
-        this.conceptDimensions = conceptDimensions;
-    }
-
     public String[] getTerminologies() {
         return terminologies;
     }
 
     public void setTerminologies(String[] terminologies) {
         this.terminologies = terminologies;
-    }
-
-    public String[] getListOfDomainOntologies() {
-        return listOfDomainOntologies;
-    }
-
-    public void setListOfDomainOntologies(String[] listOfDomainOntologies) {
-        this.listOfDomainOntologies = listOfDomainOntologies;
     }
 
 }

@@ -62,7 +62,7 @@ public class OntInstallerService extends AbstractInstallerService {
         String productFolder = action.getKey().replaceAll(".json", "");
 
         // import ontology
-        for (Path ontology : fileSysService.getOntologies(productFolder)) {
+        for (Path ontology : fileSysService.getMetadata(productFolder)) {
             String fileName = ontology.getFileName().toString();
             String tableName = fileName.replaceAll(".tsv", "");
 
