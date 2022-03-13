@@ -50,7 +50,6 @@ public class FileSysService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSysService.class);
 
-    private static final String TABLE_ACCESS_FILE = "TABLE_ACCESS.tsv";
     private static final String SCHEMES_FILE = "SCHEMES.tsv";
     private static final String QT_BREAKDOWN_PATH_FILE = "QT_BREAKDOWN_PATH.tsv";
 
@@ -120,10 +119,6 @@ public class FileSysService {
         }
     }
 
-    public Path getTableAccessFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, TABLE_ACCESS_FILE);
-    }
-
     public Path getSchemesFile(String productFolder) {
         return Paths.get(downloadDirectory, productFolder, SCHEMES_FILE);
     }
@@ -149,6 +144,19 @@ public class FileSysService {
         List<Path> ontologies = new LinkedList<>();
         try {
             Files.list(getCRCDirectory(productFolder))
+                    .filter(Files::isRegularFile)
+                    .forEach(ontologies::add);
+        } catch (IOException exception) {
+            LOGGER.error("Unable to get ontology files.", exception);
+        }
+
+        return ontologies;
+    }
+
+    public List<Path> getTableAccess(String productFolder) {
+        List<Path> ontologies = new LinkedList<>();
+        try {
+            Files.list(getTableAccessDirectory(productFolder))
                     .filter(Files::isRegularFile)
                     .forEach(ontologies::add);
         } catch (IOException exception) {
@@ -202,6 +210,10 @@ public class FileSysService {
 
     public Path getNetworkDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "network_files");
+    }
+
+    public Path getTableAccessDirectory(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "table_access");
     }
 
     public Path getDownloadStartedIndicatorFile(String productFolder) {

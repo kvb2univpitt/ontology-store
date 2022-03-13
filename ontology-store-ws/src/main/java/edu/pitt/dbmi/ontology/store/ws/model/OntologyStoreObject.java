@@ -36,7 +36,7 @@ public class OntologyStoreObject {
 
     private String includeNetworkPackage;
 
-    private String tableAccess;
+    private String[] tableAccess;
 
     private String schemes;
 
@@ -95,11 +95,11 @@ public class OntologyStoreObject {
         this.includeNetworkPackage = includeNetworkPackage;
     }
 
-    public String getTableAccess() {
+    public String[] getTableAccess() {
         return tableAccess;
     }
 
-    public void setTableAccess(String tableAccess) {
+    public void setTableAccess(String[] tableAccess) {
         this.tableAccess = tableAccess;
     }
 

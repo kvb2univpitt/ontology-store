@@ -92,9 +92,10 @@ public class OntologyDownloadService {
             Path productDir = fileSysService.getProductDirectory(productFolder);
             Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
             Path crcDir = fileSysService.getCRCDirectory(productFolder);
+            Path tableAccessDir = fileSysService.getTableAccessDirectory(productFolder);
             if (action.isIncludeNetworkPackage()) {
                 Path networkDir = fileSysService.getNetworkDirectory(productFolder);
-                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, networkDir)) {
+                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, tableAccessDir, networkDir)) {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
@@ -102,7 +103,7 @@ public class OntologyDownloadService {
                 }
 
             } else {
-                if (fileSysService.createDirectories(productDir, metadataDir, crcDir)) {
+                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, tableAccessDir)) {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
@@ -119,25 +120,27 @@ public class OntologyDownloadService {
         Path productDir = fileSysService.getProductDirectory(productFolder);
         Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
         Path crcDir = fileSysService.getCRCDirectory(productFolder);
+        Path tableAccessDir = fileSysService.getTableAccessDirectory(productFolder);
         try {
             OntologyStoreObject storeObject = amazonS3Service.getOntologyStoreObject(action.getKey());
             if (storeObject != null) {
                 downloadFile(storeObject.getSchemes(), productDir);
-                downloadFile(storeObject.getTableAccess(), productDir);
                 downloadFile(storeObject.getBreakdownPath(), productDir);
                 if (action.isIncludeNetworkPackage()) {
                     Path networkDir = fileSysService.getNetworkDirectory(productFolder);
                     downloadFile(storeObject.getAdapterMapping(), networkDir);
                 }
 
-                String[] domainOntologies = storeObject.getListOfDomainOntologies();
-                for (String domainOntologyURI : domainOntologies) {
+                for (String domainOntologyURI : storeObject.getListOfDomainOntologies()) {
                     downloadFile(domainOntologyURI, metadataDir);
                 }
 
-                String[] conceptDimensions = storeObject.getConceptDimensions();
-                for (String conceptDimensionURI : conceptDimensions) {
+                for (String conceptDimensionURI : storeObject.getConceptDimensions()) {
                     downloadFile(conceptDimensionURI, crcDir);
+                }
+
+                for (String tableAccessURI : storeObject.getTableAccess()) {
+                    downloadFile(tableAccessURI, tableAccessDir);
                 }
             }
         } catch (Exception exception) {

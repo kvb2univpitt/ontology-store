@@ -65,7 +65,6 @@ public class OntInstallerService extends AbstractInstallerService {
         for (Path ontology : fileSysService.getMetadata(productFolder)) {
             String fileName = ontology.getFileName().toString();
             String tableName = fileName.replaceAll(".tsv", "");
-
             try {
                 createOntologyTable(jdbcTemplate, tableName);
                 insertIntoOntologyTable(jdbcTemplate, tableName, ontology);
@@ -87,17 +86,19 @@ public class OntInstallerService extends AbstractInstallerService {
             LOGGER.error("SCHEMES.tsv insertion error.", exception);
             fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
+            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Schemes Installation Failed.");
         }
 
         // import table access data
-        try {
-            insertIntoTableAccessTable(jdbcTemplate, fileSysService.getTableAccessFile(productFolder));
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("TABLE_ACCESS.tsv insertion error.", exception);
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
+        for (Path tableAccessFile : fileSysService.getTableAccess(productFolder)) {
+            try {
+                insertIntoTableAccessTable(jdbcTemplate, tableAccessFile);
+            } catch (SQLException | IOException exception) {
+                LOGGER.error(tableAccessFile.toString() + " insertion error.", exception);
+                fileSysService.createInstallFailedIndicatorFile(productFolder);
 
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
+                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Table Access Installation Failed.");
+            }
         }
 
         return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Metadata Installed.");
