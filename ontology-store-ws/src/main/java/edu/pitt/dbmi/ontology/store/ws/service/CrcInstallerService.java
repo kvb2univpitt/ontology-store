@@ -20,10 +20,18 @@ package edu.pitt.dbmi.ontology.store.ws.service;
 
 import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.LinkedList;
 import java.util.List;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,7 +101,84 @@ public class CrcInstallerService extends AbstractInstallerService {
     }
 
     private void insertIntoConceptDimensionTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
-        batchInsert(jdbcTemplate, CONCEPT_DIMENSION_TABLE, file, 5000);
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?;", conn.getSchema(), CONCEPT_DIMENSION_TABLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+
+                try (BufferedReader reader = Files.newBufferedReader(file)) {
+                    final int conceptPathIndex = 0;
+                    boolean isHeader = true;
+                    List<String> dataRows = new LinkedList<>();
+                    for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                        if (isHeader) {
+                            isHeader = false;
+                            continue;
+                        }
+
+                        String[] fields = TAB_DELIM.split(line, 3);
+                        try {
+                            pstmt.setString(1, fields[conceptPathIndex]);
+
+                            ResultSet resultSet = pstmt.executeQuery();
+                            if (!resultSet.next()) {
+                                dataRows.add(line);
+                            }
+                        } catch (SQLException exception) {
+                            exception.printStackTrace(System.err);
+                        }
+
+                        if (dataRows.size() == 5000) {
+                            insertIntoConceptDimensionTable(jdbcTemplate, dataRows, file);
+                        }
+                    }
+
+                    insertIntoConceptDimensionTable(jdbcTemplate, dataRows, file);
+                }
+            }
+        }
+    }
+
+    private void insertIntoConceptDimensionTable(JdbcTemplate jdbcTemplate, List<String> dataRows, Path file) throws SQLException, IOException {
+        if (dataRows.isEmpty()) {
+            return;
+        }
+
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                // create prepared statement
+                String sql = createInsertStatement(conn.getSchema(), CONCEPT_DIMENSION_TABLE, fileSysService.getHeaders(file));
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(pstmt.getParameterMetaData());
+                for (String line : dataRows) {
+                    try {
+                        String[] values = TAB_DELIM.split(line);
+
+                        setColumns(pstmt, columnTypes, values);
+
+                        // add null columns not provided
+                        if (values.length < columnTypes.length) {
+                            for (int i = values.length; i < columnTypes.length; i++) {
+                                pstmt.setNull(i + 1, Types.NULL);
+                            }
+                        }
+                    } catch (Exception exception) {
+                        exception.printStackTrace(System.err);
+                    }
+
+                    pstmt.addBatch();
+                }
+
+                pstmt.executeBatch();
+                pstmt.clearBatch();
+            }
+        }
+
+        dataRows.clear();
     }
 
 }

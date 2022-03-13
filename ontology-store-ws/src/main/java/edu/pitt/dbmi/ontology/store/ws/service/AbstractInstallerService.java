@@ -231,7 +231,7 @@ public abstract class AbstractInstallerService {
         }
     }
 
-    private void setColumns(PreparedStatement stmt, int[] columnTypes, String[] values) throws SQLException, ParseException, NumberFormatException {
+    protected void setColumns(PreparedStatement stmt, int[] columnTypes, String[] values) throws SQLException, ParseException, NumberFormatException {
         for (int i = 0; i < values.length; i++) {
             int columnIndex = i + 1;
             String value = values[i].trim();
@@ -288,7 +288,7 @@ public abstract class AbstractInstallerService {
         }
     }
 
-    private Set<String> getColumnData(JdbcTemplate jdbcTemplate, String table, String column) throws SQLException {
+    protected Set<String> getColumnData(JdbcTemplate jdbcTemplate, String table, String column) throws SQLException {
         Set<String> data = new HashSet<>();
 
         DataSource dataSource = jdbcTemplate.getDataSource();
@@ -307,7 +307,7 @@ public abstract class AbstractInstallerService {
         return data;
     }
 
-    private int[] getColumnTypes(ParameterMetaData metadata) throws SQLException {
+    protected int[] getColumnTypes(ParameterMetaData metadata) throws SQLException {
         int[] types = new int[metadata.getParameterCount()];
         for (int i = 0; i < types.length; i++) {
             types[i] = metadata.getParameterType(i + 1);
@@ -316,7 +316,7 @@ public abstract class AbstractInstallerService {
         return types;
     }
 
-    private String createInsertStatement(String schema, String tableName, List<String> columnNames) {
+    protected String createInsertStatement(String schema, String tableName, List<String> columnNames) {
         String columns = columnNames.stream().collect(Collectors.joining(","));
         String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
 
