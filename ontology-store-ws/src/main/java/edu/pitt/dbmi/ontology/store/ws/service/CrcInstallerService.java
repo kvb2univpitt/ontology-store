@@ -108,15 +108,12 @@ public class CrcInstallerService extends AbstractInstallerService {
                 PreparedStatement pstmt = conn.prepareStatement(sql);
 
                 try (BufferedReader reader = Files.newBufferedReader(file)) {
+                    // skip header
+                    reader.readLine();
+
                     final int conceptPathIndex = 0;
-                    boolean isHeader = true;
                     List<String> dataRows = new LinkedList<>();
                     for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                        if (isHeader) {
-                            isHeader = false;
-                            continue;
-                        }
-
                         String[] fields = TAB_DELIM.split(line, 3);
                         try {
                             pstmt.setString(1, fields[conceptPathIndex]);
@@ -129,7 +126,7 @@ public class CrcInstallerService extends AbstractInstallerService {
                             exception.printStackTrace(System.err);
                         }
 
-                        if (dataRows.size() == 5000) {
+                        if (dataRows.size() == DEFAULT_BATCH_SIZE) {
                             insertIntoConceptDimensionTable(jdbcTemplate, dataRows, file);
                         }
                     }
@@ -175,10 +172,9 @@ public class CrcInstallerService extends AbstractInstallerService {
 
                 pstmt.executeBatch();
                 pstmt.clearBatch();
+                dataRows.clear();
             }
         }
-
-        dataRows.clear();
     }
 
 }

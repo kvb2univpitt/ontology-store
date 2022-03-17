@@ -60,6 +60,8 @@ public abstract class AbstractInstallerService {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
+    protected static final int DEFAULT_BATCH_SIZE = 25000;
+
     protected final FileSysService fileSysService;
 
     public AbstractInstallerService(FileSysService fileSysService) {
@@ -141,20 +143,13 @@ public abstract class AbstractInstallerService {
                 PreparedStatement stmt = conn.prepareStatement(sql);
 
                 // get columnTypes
+                int count = 0;
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
                 try (BufferedReader reader = Files.newBufferedReader(file)) {
-                    int count = 0;
-                    int lineNum = 0;
+                    // skip header
+                    reader.readLine();
+
                     for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                        if (line.trim().isEmpty()) {
-                            continue;
-                        }
-
-                        lineNum++;
-                        if (lineNum == 1) {
-                            continue;
-                        }
-
                         try {
                             String[] values = TAB_DELIM.split(line);
 
@@ -179,7 +174,11 @@ public abstract class AbstractInstallerService {
                         }
                     }
                 }
-                stmt.executeBatch();
+                if (count > 0) {
+                    stmt.executeBatch();
+                    stmt.clearBatch();
+                    count = 0;
+                }
             }
         }
     }

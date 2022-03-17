@@ -117,7 +117,7 @@ public class OntInstallerService extends AbstractInstallerService {
     }
 
     private void insertIntoOntologyTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
-        batchInsert(jdbcTemplate, tableName, file, 5000);
+        batchInsert(jdbcTemplate, tableName, file, DEFAULT_BATCH_SIZE);
     }
 
     private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
