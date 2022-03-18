@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +112,7 @@ public class AmazonS3Service {
     }
 
     private Map<String, SimpleOntologyStoreObject> getSimpleOntologyStoreObjects() throws IOException {
-        Map<String, SimpleOntologyStoreObject> objs = new HashMap<>();
+        Map<String, SimpleOntologyStoreObject> objs = new TreeMap<>();
 
         ObjectMapper objMapper = new ObjectMapper();
         OntologyProductList productList = objMapper.readValue(new URL(productListJsonUrl), OntologyProductList.class);
