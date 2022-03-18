@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 University of Pittsburgh.
+ * Copyright (C) 2022 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,115 +18,75 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.ListObjectsV2Request;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProduct;
+import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductList;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyStoreObject;
 import edu.pitt.dbmi.ontology.store.ws.model.SimpleOntologyStoreObject;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
  *
- * Dec 7, 2021 2:51:12 PM
+ * Mar 18, 2022 2:26:58 PM
  *
- * @author Kevin V. Bui (kvb2univpitt@gmail.com)
+ * @author Kevin V. Bui (kvb2@pitt.edu)
  */
 @Service
 public class AmazonS3Service {
 
-    private final String ontologyBucketName;
-    private final String ontologyKeyName;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AmazonS3Service.class);
 
-    private final String networkBucketName;
-    private final String networkKeyName;
+    private static final Pattern SLASH_DELIMITER = Pattern.compile("/");
 
-    private final AmazonS3 amazonS3;
+    private final String productListJsonUrl;
     private final FileSysService fileSysService;
 
     @Autowired
     public AmazonS3Service(
-            @Value("${ontology.aws.s3.bucket.name}") String ontologyBucketName,
-            @Value("${ontology.aws.s3.key.name}") String ontologyKeyName,
-            @Value("${network.aws.s3.bucket.name}") String networkBucketName,
-            @Value("${network.aws.s3.key.name}") String networkKeyName,
-            AmazonS3 amazonS3,
+            @Value("${aws.s3.json.product.list}") String productListJsonUrl,
             FileSysService fileSysService) {
-        this.ontologyBucketName = ontologyBucketName;
-        this.ontologyKeyName = ontologyKeyName;
-        this.networkBucketName = networkBucketName;
-        this.networkKeyName = networkKeyName;
-        this.amazonS3 = amazonS3;
+        this.productListJsonUrl = productListJsonUrl;
         this.fileSysService = fileSysService;
     }
 
     public List<OntologyProduct> getProducts() {
         List<OntologyProduct> products = new LinkedList<>();
 
-        ListObjectsV2Request request = new ListObjectsV2Request()
-                .withBucketName(ontologyBucketName)
-                .withPrefix(ontologyKeyName + "/")
-                .withDelimiter("/");
+        try {
+            Map<String, SimpleOntologyStoreObject> objs = getSimpleOntologyStoreObjects();
+            for (String fileName : objs.keySet()) {
+                SimpleOntologyStoreObject obj = objs.get(fileName);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        amazonS3.listObjectsV2(request)
-                .getObjectSummaries().stream()
-                .filter(objSummary -> objSummary.getKey().endsWith(".json"))
-                .forEach(objSummary -> {
-                    S3Object s3Obj = amazonS3.getObject(objSummary.getBucketName(), objSummary.getKey());
-                    try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
-                        SimpleOntologyStoreObject obj = objectMapper.readValue(in, SimpleOntologyStoreObject.class);
+                // add product to list
+                OntologyProduct product = new OntologyProduct();
+                product.setFileName(fileName);
+                product.setTitle(obj.getProductTitle());
+                product.setVersion(obj.getProductVersion());
+                product.setOwner(obj.getProductOwner());
+                product.setType(obj.getProductType());
+                product.setIncludeNetworkPackage(obj.getIncludeNetworkPackage().equals("Y"));
+                product.setTerminologies(obj.getTerminologies());
 
-                        // add product to list
-                        OntologyProduct product = new OntologyProduct();
-                        product.setFileName(objSummary.getKey());
-                        product.setTitle(obj.getProductTitle());
-                        product.setVersion(obj.getProductVersion());
-                        product.setOwner(obj.getProductOwner());
-                        product.setType(obj.getProductType());
-                        product.setIncludeNetworkPackage(obj.getIncludeNetworkPackage().equals("Y"));
-                        product.setTerminologies(obj.getTerminologies());
+                getStatus(product);
 
-                        getStatus(product);
-
-                        products.add(product);
-                    } catch (IOException exception) {
-                        exception.printStackTrace(System.err);
-                    }
-                });
+                products.add(product);
+            }
+        } catch (IOException exception) {
+            LOGGER.error("", exception);
+        }
 
         return products;
-    }
-
-    public void downloadNetworkFiles(Path dir) throws IOException {
-        ListObjectsV2Request request = new ListObjectsV2Request()
-                .withBucketName(networkBucketName)
-                .withPrefix(networkKeyName + "/")
-                .withDelimiter("/");
-
-        for (S3ObjectSummary objSummary : amazonS3.listObjectsV2(request).getObjectSummaries()) {
-            S3Object s3Obj = amazonS3.getObject(objSummary.getBucketName(), objSummary.getKey());
-            if (objSummary.getSize() > 0) {
-                Path out = Paths.get(dir.toString(), s3Obj.getKey());
-                try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
-                    Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-        }
     }
 
     private void getStatus(OntologyProduct product) {
@@ -150,36 +110,34 @@ public class AmazonS3Service {
         }
     }
 
-    public List<OntologyStoreObject> listOntologyStoreObject() {
-        List<OntologyStoreObject> ontologyStoreObjects = new LinkedList<>();
+    private Map<String, SimpleOntologyStoreObject> getSimpleOntologyStoreObjects() throws IOException {
+        Map<String, SimpleOntologyStoreObject> objs = new HashMap<>();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ListObjectsV2Request request = new ListObjectsV2Request()
-                .withBucketName(ontologyBucketName)
-                .withPrefix(ontologyKeyName + "/")
-                .withDelimiter("/");
-        ListObjectsV2Result response = amazonS3.listObjectsV2(request);
-        response.getObjectSummaries().stream()
-                .filter(objSummary -> objSummary.getKey().endsWith(".json"))
-                .map(objSummary -> amazonS3.getObject(objSummary.getBucketName(), objSummary.getKey()))
-                .forEach(s3Obj -> {
-                    try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
-                        OntologyStoreObject ontologyStoreObject = objectMapper.readValue(in, OntologyStoreObject.class);
+        ObjectMapper objMapper = new ObjectMapper();
+        OntologyProductList productList = objMapper.readValue(new URL(productListJsonUrl), OntologyProductList.class);
+        for (String productURL : productList.getProducts()) {
+            String[] fields = SLASH_DELIMITER.split(productURL);
+            objs.put(fields[fields.length - 1], objMapper.readValue(new URL(productURL), SimpleOntologyStoreObject.class));
+        }
 
-                        ontologyStoreObjects.add(ontologyStoreObject);
-                    } catch (IOException exception) {
-                        exception.printStackTrace(System.err);
-                    }
-                });
-
-        return ontologyStoreObjects;
+        return objs;
     }
 
     public OntologyStoreObject getOntologyStoreObject(String key) throws IOException {
-        S3Object s3Obj = amazonS3.getObject(new GetObjectRequest(ontologyBucketName, key));
-        try (BufferedInputStream in = new BufferedInputStream(s3Obj.getObjectContent())) {
-            return (new ObjectMapper()).readValue(in, OntologyStoreObject.class);
+        return getOntologyStoreObjects().get(key);
+    }
+
+    private Map<String, OntologyStoreObject> getOntologyStoreObjects() throws IOException {
+        Map<String, OntologyStoreObject> objs = new HashMap<>();
+
+        ObjectMapper objMapper = new ObjectMapper();
+        OntologyProductList productList = objMapper.readValue(new URL(productListJsonUrl), OntologyProductList.class);
+        for (String productURL : productList.getProducts()) {
+            String[] fields = SLASH_DELIMITER.split(productURL);
+            objs.put(fields[fields.length - 1], objMapper.readValue(new URL(productURL), OntologyStoreObject.class));
         }
+
+        return objs;
     }
 
 }

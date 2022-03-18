@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 University of Pittsburgh.
+ * Copyright (C) 2022 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,29 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package edu.pitt.dbmi.ontology.store.ws.config;
+package edu.pitt.dbmi.ontology.store.ws.model;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import java.io.IOException;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
+import java.util.List;
 
 /**
  *
- * Dec 7, 2021 12:52:48 PM
+ * Mar 18, 2022 1:34:16 PM
  *
- * @author Kevin V. Bui (kvb2univpitt@gmail.com)
+ * @author Kevin V. Bui (kvb2@pitt.edu)
  */
-@Component
-public class AWSConfig {
+public class OntologyProductList {
 
-    @Bean
-    public AmazonS3 amazonS3() throws IOException {
-        return AmazonS3ClientBuilder.standard()
-                .withRegion(Regions.US_EAST_1)
-                .build();
+    private List<String> products;
+
+    public OntologyProductList() {
+    }
+
+    public List<String> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<String> products) {
+        this.products = products;
     }
 
 }
