@@ -82,8 +82,11 @@ public class OntologyInstallService {
                 fileSysService.createInstallStartedIndicatorFile(productFolder);
             });
 
-            ontInstallerService.install(new JdbcTemplate(ontDataSource), actions, summaries);
-            crcInstallerService.install(new JdbcTemplate(crcDataSource), actions, summaries);
+            // install
+            actions.forEach(action -> {
+                summaries.add(ontInstallerService.install(new JdbcTemplate(ontDataSource), action));
+                summaries.add(crcInstallerService.install(new JdbcTemplate(crcDataSource), action));
+            });
         }
     }
 

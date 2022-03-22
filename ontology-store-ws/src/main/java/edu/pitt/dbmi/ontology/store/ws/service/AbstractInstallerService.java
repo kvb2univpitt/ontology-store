@@ -68,7 +68,7 @@ public abstract class AbstractInstallerService {
         this.fileSysService = fileSysService;
     }
 
-    public abstract void install(JdbcTemplate jdbcTemplate, List<OntologyProductAction> actions, List<ActionSummary> summaries);
+    public abstract ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action);
 
     protected void createTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         String query = fileSysService.getResourceFileContents(file);

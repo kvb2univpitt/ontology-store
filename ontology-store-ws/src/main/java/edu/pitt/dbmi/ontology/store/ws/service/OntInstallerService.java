@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,11 +53,7 @@ public class OntInstallerService extends AbstractInstallerService {
     }
 
     @Override
-    public void install(JdbcTemplate jdbcTemplate, List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        actions.stream().filter(e -> e.isInstall()).forEach(action -> summaries.add(install(jdbcTemplate, action)));
-    }
-
-    private ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
+    public ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
 
         // import metadata

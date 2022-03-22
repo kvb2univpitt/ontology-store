@@ -60,11 +60,7 @@ public class CrcInstallerService extends AbstractInstallerService {
     }
 
     @Override
-    public void install(JdbcTemplate jdbcTemplate, List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        actions.stream().filter(e -> e.isInstall()).forEach(action -> summaries.add(install(jdbcTemplate, action)));
-    }
-
-    private ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
+    public ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
         String productFolder = action.getKey().replaceAll(".json", "");
 
         // import crc data
