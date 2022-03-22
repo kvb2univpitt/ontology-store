@@ -65,8 +65,12 @@ public class CrcInstallerService extends AbstractInstallerService {
 
         // import crc data
         for (Path crcData : fileSysService.getCrcData(productFolder)) {
+            String fileName = crcData.getFileName().toString();
+            String tableName = fileName.replaceAll("_CD.tsv", "");
             try {
-                insertIntoConceptDimensionTable(jdbcTemplate, crcData);
+                if (!tableExists(jdbcTemplate, tableName)) {
+                    insertIntoConceptDimensionTable(jdbcTemplate, crcData);
+                }
             } catch (SQLException | IOException exception) {
                 String errMsg = String.format("Failed to import ontology from file '%s'.", crcData.toString());
                 LOGGER.error(errMsg, exception);

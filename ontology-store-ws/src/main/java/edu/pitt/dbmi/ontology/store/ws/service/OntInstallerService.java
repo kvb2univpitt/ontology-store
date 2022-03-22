@@ -61,9 +61,11 @@ public class OntInstallerService extends AbstractInstallerService {
             String fileName = ontology.getFileName().toString();
             String tableName = fileName.replaceAll(".tsv", "");
             try {
-                createOntologyTable(jdbcTemplate, tableName);
-                insertIntoOntologyTable(jdbcTemplate, tableName, ontology);
-                createOntologyTableIndices(jdbcTemplate, tableName);
+                if (!tableExists(jdbcTemplate, tableName)) {
+                    createOntologyTable(jdbcTemplate, tableName);
+                    insertIntoOntologyTable(jdbcTemplate, tableName, ontology);
+                    createOntologyTableIndices(jdbcTemplate, tableName);
+                }
             } catch (SQLException | IOException exception) {
                 String errMsg = String.format("Failed to import ontology from file '%s'.", ontology.toString());
                 LOGGER.error(errMsg, exception);

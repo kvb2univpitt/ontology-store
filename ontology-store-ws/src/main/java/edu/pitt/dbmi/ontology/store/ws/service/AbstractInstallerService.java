@@ -70,6 +70,33 @@ public abstract class AbstractInstallerService {
 
     public abstract ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action);
 
+    protected boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                String sql = null;
+                switch (conn.getMetaData().getDatabaseProductName()) {
+                    case "PostgreSQL":
+                        sql = "SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = ? OR tablename = ?)";
+                        break;
+                }
+
+                if (sql != null) {
+                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                    pstmt.setString(1, conn.getSchema());
+                    pstmt.setString(2, tableName);
+                    pstmt.setString(3, tableName.toLowerCase());
+
+                    ResultSet resultSet = pstmt.executeQuery();
+
+                    return resultSet.next();
+                }
+            }
+        }
+
+        return false;
+    }
+
     protected void createTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         String query = fileSysService.getResourceFileContents(file);
 

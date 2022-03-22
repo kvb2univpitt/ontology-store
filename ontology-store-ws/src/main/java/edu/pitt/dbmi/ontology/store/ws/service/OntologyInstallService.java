@@ -83,9 +83,11 @@ public class OntologyInstallService {
             });
 
             // install
+            JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
+            JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
             actions.forEach(action -> {
-                summaries.add(ontInstallerService.install(new JdbcTemplate(ontDataSource), action));
-                summaries.add(crcInstallerService.install(new JdbcTemplate(crcDataSource), action));
+                summaries.add(ontInstallerService.install(ontJdbcTemplate, action));
+                summaries.add(crcInstallerService.install(crcJdbcTemplate, action));
             });
         }
     }
