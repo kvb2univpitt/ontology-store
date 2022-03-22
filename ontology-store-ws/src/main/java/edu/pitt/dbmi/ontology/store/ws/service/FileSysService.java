@@ -62,7 +62,7 @@ public class FileSysService {
     public FileSysService(
             @Value("${ontology.dir.download}") String downloadDirectory,
             ResourcePatternResolver resourcePatternResolver) {
-        this.downloadDirectory = downloadDirectory;
+        this.downloadDirectory = Paths.get(downloadDirectory, "products").toString();
         this.resourcePatternResolver = resourcePatternResolver;
     }
 
