@@ -45,6 +45,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -54,6 +56,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * @author Kevin V. Bui (kvb2@pitt.edu)
  */
 public abstract class AbstractInstallerService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractInstallerService.class);
 
     protected static final String ACTION_TYPE = "Install";
 
@@ -109,7 +113,7 @@ public abstract class AbstractInstallerService {
             try (Connection conn = dataSource.getConnection()) {
                 return conn.getMetaData().getDatabaseProductName();
             } catch (SQLException exception) {
-                exception.printStackTrace(System.err);
+                LOGGER.error("", exception);
             }
         }
 
@@ -155,6 +159,7 @@ public abstract class AbstractInstallerService {
 
                                 stmt.execute();
                             } catch (Exception exception) {
+                                LOGGER.error("", exception);
                             }
                         });
             }
@@ -189,7 +194,7 @@ public abstract class AbstractInstallerService {
                                 }
                             }
                         } catch (Exception exception) {
-                            exception.printStackTrace(System.err);
+                            LOGGER.error("", exception);
                         }
 
                         stmt.addBatch();
@@ -250,6 +255,7 @@ public abstract class AbstractInstallerService {
 
                                     stmt.execute();
                                 } catch (Exception exception) {
+                                    LOGGER.error("", exception);
                                 }
                             }
                         });
