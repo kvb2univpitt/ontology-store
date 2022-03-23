@@ -78,19 +78,28 @@ public abstract class AbstractInstallerService {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
-                String sql = null;
+                PreparedStatement pstmt = null;
                 switch (conn.getMetaData().getDatabaseProductName()) {
                     case "PostgreSQL":
-                        sql = "SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = ? OR tablename = ?)";
+                        pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
+                        pstmt.setString(1, conn.getSchema());
+                        pstmt.setString(2, tableName);
+                        pstmt.setString(3, tableName);
+                        break;
+                    case "Oracle":
+                        pstmt = conn.prepareStatement("SELECT 1 FROM user_tables WHERE table_name = UPPER(?) OR table_name = LOWER(?)");
+                        pstmt.setString(1, tableName);
+                        pstmt.setString(2, tableName);
+                        break;
+                    case "Microsoft SQL Server":
+                        pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
+                        pstmt.setString(1, conn.getSchema());
+                        pstmt.setString(2, tableName);
+                        pstmt.setString(3, tableName);
                         break;
                 }
 
-                if (sql != null) {
-                    PreparedStatement pstmt = conn.prepareStatement(sql);
-                    pstmt.setString(1, conn.getSchema());
-                    pstmt.setString(2, tableName);
-                    pstmt.setString(3, tableName.toLowerCase());
-
+                if (pstmt != null) {
                     ResultSet resultSet = pstmt.executeQuery();
 
                     return resultSet.next();
