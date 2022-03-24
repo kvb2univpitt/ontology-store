@@ -22,8 +22,14 @@ import edu.pitt.dbmi.ontology.store.ws.InstallationException;
 import edu.pitt.dbmi.ontology.store.ws.db.HiveDBAccess;
 import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
 import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -61,7 +67,8 @@ public class OntologyInstallService {
 
     public synchronized void performInstallation(String project, List<OntologyProductAction> actions, List<ActionSummary> summaries) throws InstallationException {
         actions = actions.stream().filter(e -> e.isInstall()).collect(Collectors.toList());
-        actions = validate(actions, summaries);
+        actions = validateProgress(actions, summaries);
+        actions = validateFilesExistence(actions, summaries);
 
         if (!actions.isEmpty()) {
             String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
@@ -85,14 +92,57 @@ public class OntologyInstallService {
             // install
             JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
             JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
-            actions.forEach(action -> {
-                summaries.add(ontInstallerService.install(ontJdbcTemplate, action));
-                summaries.add(crcInstallerService.install(crcJdbcTemplate, action));
-            });
+            actions.forEach(action -> install(action, ontJdbcTemplate, crcJdbcTemplate, summaries));
         }
     }
 
-    public DataSource getDataSource(String datasourceJNDIName) {
+    private void install(OntologyProductAction action, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummary> summaries) {
+        String productFolder = action.getKey().replaceAll(".json", "");
+
+        Map<String, Path> metadataTableFiles = fileSysService.getMetadata(productFolder).stream()
+                .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll(".tsv", ""), e -> e));
+        Map<String, Path> tableAccessTableFiles = fileSysService.getTableAccess(productFolder).stream()
+                .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll("_TA.tsv", ""), e -> e));
+        Map<String, Path> crcDataTableFiles = fileSysService.getCrcData(productFolder).stream()
+                .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll("_CD.tsv", ""), e -> e));
+
+        // install metadata
+        try {
+            for (String tableName : metadataTableFiles.keySet()) {
+                if (!ontInstallerService.metadataExists(ontJdbcTemplate, tableName)) {
+                    ontInstallerService.importMetadata(ontJdbcTemplate, tableName, metadataTableFiles.get(tableName));
+                    ontInstallerService.insertIntoTableAccessTable(ontJdbcTemplate, tableAccessTableFiles.get(tableName));
+                }
+            }
+            ontInstallerService.insertIntoSchemesTable(ontJdbcTemplate, fileSysService.getSchemesFile(productFolder));
+
+            summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Metadata Installed."));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("", exception);
+            summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
+            fileSysService.createInstallFailedIndicatorFile(productFolder);
+        }
+
+        // install CRC data
+        try {
+            for (String tableName : metadataTableFiles.keySet()) {
+                if (!ontInstallerService.metadataExists(ontJdbcTemplate, tableName)) {
+                    crcInstallerService.importCrcData(crcJdbcTemplate, crcDataTableFiles.get(tableName));
+                }
+            }
+            crcInstallerService.insertIntoQtBreakdownPathTable(crcJdbcTemplate, fileSysService.getQtBreakdownPathFile(productFolder));
+
+            summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "CRC Data Installed."));
+        } catch (SQLException | IOException exception) {
+            LOGGER.error("", exception);
+            summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "CRC Data Installation Failed."));
+            fileSysService.createInstallFailedIndicatorFile(productFolder);
+        }
+
+        fileSysService.createInstallFinishedIndicatorFile(productFolder);
+    }
+
+    private DataSource getDataSource(String datasourceJNDIName) {
         try {
             return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
         } catch (Exception exception) {
@@ -102,7 +152,7 @@ public class OntologyInstallService {
         }
     }
 
-    private List<OntologyProductAction> validate(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+    private List<OntologyProductAction> validateProgress(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
         List<OntologyProductAction> installActions = new LinkedList<>();
 
         actions.forEach(action -> {
@@ -123,6 +173,50 @@ public class OntologyInstallService {
                 summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download not finished."));
             } else {
                 summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Has not been downloaded."));
+            }
+        });
+
+        return installActions;
+    }
+
+    private List<OntologyProductAction> validateFilesExistence(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+        List<OntologyProductAction> installActions = new LinkedList<>();
+
+        actions.forEach(action -> {
+            String productFolder = action.getKey().replaceAll(".json", "");
+
+            Set<String> metadata = new HashSet<>();
+            Set<String> crcData = new HashSet<>();
+            Set<String> tableAccess = new HashSet<>();
+            fileSysService.getMetadata(productFolder).stream()
+                    .map(e -> e.getFileName().toString().replaceAll(".tsv", ""))
+                    .forEach(metadata::add);
+            fileSysService.getCrcData(productFolder).stream()
+                    .map(e -> e.getFileName().toString().replaceAll("_CD.tsv", ""))
+                    .forEach(crcData::add);
+            fileSysService.getTableAccess(productFolder).stream()
+                    .map(e -> e.getFileName().toString().replaceAll("_TA.tsv", ""))
+                    .forEach(tableAccess::add);
+
+            boolean isValid = true;
+            for (String tableName : metadata) {
+                isValid = crcData.contains(tableName);
+                if (!isValid) {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, String.format("Missing %s_CD.tsv file", tableName)));
+                    break;
+                }
+
+                isValid = tableAccess.contains(tableName);
+                if (!isValid) {
+                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, String.format("Missing %s_TA.tsv file", tableName)));
+                    break;
+                }
+            }
+
+            if (isValid) {
+                installActions.add(action);
+            } else {
+                fileSysService.createInstallFailedIndicatorFile(productFolder);
             }
         });
 

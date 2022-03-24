@@ -18,8 +18,6 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
-import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
-import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -64,15 +62,13 @@ public abstract class AbstractInstallerService {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
-    protected static final int DEFAULT_BATCH_SIZE = 25000;
+    protected static final int DEFAULT_BATCH_SIZE = 50000;
 
     protected final FileSysService fileSysService;
 
     public AbstractInstallerService(FileSysService fileSysService) {
         this.fileSysService = fileSysService;
     }
-
-    public abstract ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action);
 
     protected boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();

@@ -18,8 +18,6 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
-import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
-import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,60 +50,21 @@ public class OntInstallerService extends AbstractInstallerService {
         super(fileSysService);
     }
 
-    @Override
-    public ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
-        String productFolder = action.getKey().replaceAll(".json", "");
-
-        // import metadata
-        for (Path ontology : fileSysService.getMetadata(productFolder)) {
-            String fileName = ontology.getFileName().toString();
-            String tableName = fileName.replaceAll(".tsv", "");
-            try {
-                if (!tableExists(jdbcTemplate, tableName)) {
-                    createOntologyTable(jdbcTemplate, tableName);
-                    insertIntoOntologyTable(jdbcTemplate, tableName, ontology);
-                    createOntologyTableIndices(jdbcTemplate, tableName);
-                }
-            } catch (SQLException | IOException exception) {
-                String errMsg = String.format("Failed to import ontology from file '%s'.", ontology.toString());
-                LOGGER.error(errMsg, exception);
-
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed.");
-            }
-        }
-
-        // import schemes data
-        try {
-            insertIntoSchemesTable(jdbcTemplate, fileSysService.getSchemesFile(productFolder));
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("SCHEMES.tsv insertion error.", exception);
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Schemes Installation Failed.");
-        }
-
-        // import table access data
-        for (Path tableAccessFile : fileSysService.getTableAccess(productFolder)) {
-            try {
-                insertIntoTableAccessTable(jdbcTemplate, tableAccessFile);
-            } catch (SQLException | IOException exception) {
-                LOGGER.error(tableAccessFile.toString() + " insertion error.", exception);
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Table Access Installation Failed.");
-            }
-        }
-
-        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Metadata Installed.");
+    public boolean metadataExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
+        return tableExists(jdbcTemplate, tableName);
     }
 
-    private void insertIntoTableAccessTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
+    public void importMetadata(JdbcTemplate jdbcTemplate, String tableName, Path data) throws SQLException, IOException {
+        createOntologyTable(jdbcTemplate, tableName);
+        insertIntoOntologyTable(jdbcTemplate, tableName, data);
+        createOntologyTableIndices(jdbcTemplate, tableName);
+    }
+
+    public void insertIntoTableAccessTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
         insertUnique(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, file, TABLE_ACCESS_TABLE_PK);
     }
 
-    private void insertIntoSchemesTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
+    public void insertIntoSchemesTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
         insertUnique(jdbcTemplate, SCHEMES_TABLE_NAME, file, SCHEMES_TABLE_PK);
     }
 

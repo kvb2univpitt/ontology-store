@@ -50,8 +50,8 @@ public class FileSysService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSysService.class);
 
-    private static final String SCHEMES_FILE = "SCHEMES.tsv";
-    private static final String QT_BREAKDOWN_PATH_FILE = "QT_BREAKDOWN_PATH.tsv";
+    public static final String SCHEMES_FILE = "SCHEMES.tsv";
+    public static final String QT_BREAKDOWN_PATH_FILE = "QT_BREAKDOWN_PATH.tsv";
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 

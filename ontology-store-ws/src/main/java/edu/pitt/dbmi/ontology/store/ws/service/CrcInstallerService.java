@@ -18,8 +18,6 @@
  */
 package edu.pitt.dbmi.ontology.store.ws.service;
 
-import edu.pitt.dbmi.ontology.store.ws.model.ActionSummary;
-import edu.pitt.dbmi.ontology.store.ws.model.OntologyProductAction;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,44 +57,13 @@ public class CrcInstallerService extends AbstractInstallerService {
         super(fileSysService);
     }
 
-    @Override
-    public ActionSummary install(JdbcTemplate jdbcTemplate, OntologyProductAction action) {
-        String productFolder = action.getKey().replaceAll(".json", "");
+    public boolean importCrcData(JdbcTemplate jdbcTemplate, Path data) throws SQLException, IOException {
+        insertIntoConceptDimensionTable(jdbcTemplate, data);
 
-        // import crc data
-        for (Path crcData : fileSysService.getCrcData(productFolder)) {
-            String fileName = crcData.getFileName().toString();
-            String tableName = fileName.replaceAll("_CD.tsv", "");
-            try {
-                if (!tableExists(jdbcTemplate, tableName)) {
-                    insertIntoConceptDimensionTable(jdbcTemplate, crcData);
-                }
-            } catch (SQLException | IOException exception) {
-                String errMsg = String.format("Failed to import ontology from file '%s'.", crcData.toString());
-                LOGGER.error(errMsg, exception);
-
-                fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-                return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "CRC Data Installation Failed.");
-            }
-        }
-
-        // import qt-breakdown-path data
-        try {
-            insertIntoQtBreakdownPathTable(jdbcTemplate, fileSysService.getQtBreakdownPathFile(productFolder));
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("QT_BREAKDOWN_PATH.tsv insertion error.", exception);
-            fileSysService.createInstallFailedIndicatorFile(productFolder);
-
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "CRC Installation Failed.");
-        }
-
-        fileSysService.createInstallFinishedIndicatorFile(productFolder);
-
-        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "CRC Data Installed.");
+        return true;
     }
 
-    private void insertIntoQtBreakdownPathTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
+    public void insertIntoQtBreakdownPathTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
         insertUnique(jdbcTemplate, QT_BREAKDOWN_PATH_TABLE, file, QT_BREAKDOWN_PATH_TABLE_PK);
     }
 
