@@ -106,12 +106,15 @@ public class OntologyInstallService {
         Map<String, Path> crcDataTableFiles = fileSysService.getCrcData(productFolder).stream()
                 .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll("_CD.tsv", ""), e -> e));
 
+        Set<String> createdMetadataTables = new HashSet<>();
+
         // install metadata
         try {
             for (String tableName : metadataTableFiles.keySet()) {
                 if (!ontInstallerService.metadataExists(ontJdbcTemplate, tableName)) {
                     ontInstallerService.importMetadata(ontJdbcTemplate, tableName, metadataTableFiles.get(tableName));
                     ontInstallerService.insertIntoTableAccessTable(ontJdbcTemplate, tableAccessTableFiles.get(tableName));
+                    createdMetadataTables.add(tableName);
                 }
             }
             ontInstallerService.insertIntoSchemesTable(ontJdbcTemplate, fileSysService.getSchemesFile(productFolder));
@@ -125,10 +128,8 @@ public class OntologyInstallService {
 
         // install CRC data
         try {
-            for (String tableName : metadataTableFiles.keySet()) {
-                if (!ontInstallerService.metadataExists(ontJdbcTemplate, tableName)) {
-                    crcInstallerService.importCrcData(crcJdbcTemplate, crcDataTableFiles.get(tableName));
-                }
+            for (String tableName : createdMetadataTables) {
+                crcInstallerService.importCrcData(crcJdbcTemplate, crcDataTableFiles.get(tableName));
             }
             crcInstallerService.insertIntoQtBreakdownPathTable(crcJdbcTemplate, fileSysService.getQtBreakdownPathFile(productFolder));
 
