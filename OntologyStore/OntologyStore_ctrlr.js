@@ -282,10 +282,9 @@ if (undefined === i2b2.OntologyStore.ontology) {
                         jQuery.ajax({
                             type: 'POST',
                             headers: {
-                                'X-I2B2-User': i2b2.h.getUser(),
-                                'X-I2B2-Pass': i2b2.h.getPass(),
                                 'X-I2B2-Domain': i2b2.h.getDomain(),
-                                'X-I2B2-Project': i2b2.h.getProject()
+                                'X-I2B2-Project': i2b2.h.getProject(),
+                                'Authorization': 'Basic ' + btoa(i2b2.h.getUser() + ':' + i2b2.h.getPass())
                             },
                             url: 'http://' + location.host + '/ontology-store/action',
                             contentType: "application/json; charset=utf-8",
