@@ -19,9 +19,12 @@
 package edu.pitt.dbmi.ontology.store.ws.config;
 
 import edu.pitt.dbmi.ontology.store.ws.db.HiveDBAccess;
+import edu.pitt.dbmi.ontology.store.ws.db.PmDBAccess;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 /**
  *
@@ -33,8 +36,23 @@ import org.springframework.context.annotation.Configuration;
 public class DatabaseConfig {
 
     @Bean
-    public HiveDBAccess hiveDBAccess(DataSource dataSource) {
-        return new HiveDBAccess(dataSource);
+    public DataSource hiveDataSource(@Value("${spring.hive.datasource.jndi-name}") String datasourceJNDIName) {
+        return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
+    }
+
+    @Bean
+    public DataSource pmDataSource(@Value("${spring.pm.datasource.jndi-name}") String datasourceJNDIName) {
+        return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
+    }
+
+    @Bean
+    public HiveDBAccess hiveDBAccess(DataSource hiveDataSource) {
+        return new HiveDBAccess(hiveDataSource);
+    }
+
+    @Bean
+    public PmDBAccess pmDBAccess(DataSource pmDataSource) {
+        return new PmDBAccess(pmDataSource);
     }
 
 }
