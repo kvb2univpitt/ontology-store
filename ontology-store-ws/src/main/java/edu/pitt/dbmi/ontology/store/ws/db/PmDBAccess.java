@@ -69,8 +69,8 @@ public class PmDBAccess {
         return false;
     }
 
-    public boolean hasExpiredSession(String username, String password) throws SQLException {
-        LocalDateTime expiration = getSessionExpiration(username, password);
+    public boolean hasExpiredSession(String userId, String sessionId) throws SQLException {
+        LocalDateTime expiration = getSessionExpiration(userId, sessionId);
         if (expiration == null) {
             return true;
         }
@@ -78,7 +78,7 @@ public class PmDBAccess {
         return LocalDateTime.now().compareTo(expiration) > 0;
     }
 
-    private LocalDateTime getSessionExpiration(String username, String password) throws SQLException {
+    private LocalDateTime getSessionExpiration(String userId, String sessionId) throws SQLException {
         LocalDateTime expiration = null;
 
         DataSource dataSource = jdbcTemplate.getDataSource();
@@ -86,8 +86,8 @@ public class PmDBAccess {
             try (Connection conn = dataSource.getConnection()) {
                 String sql = String.format(SESSION_EXPIRATION_SQL_TEMPLATE, conn.getSchema());
                 PreparedStatement stmt = conn.prepareStatement(sql);
-                stmt.setString(1, username);
-                stmt.setString(2, password);
+                stmt.setString(1, userId);
+                stmt.setString(2, sessionId);
 
                 ResultSet resultSet = stmt.executeQuery();
                 while (resultSet.next()) {
