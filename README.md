@@ -12,7 +12,7 @@ The **ontology-store-ws** is the Ontology-Store REST API for retrieving a list o
 ### Building the REST API
 
 #### Prerequisite
-- [OpenJDK 8](https://developers.redhat.com/products/openjdk/download)
+- [Java 8 and above](https://developers.redhat.com/products/openjdk/download)
 - [Apache Maven 3.x.x](https://maven.apache.org/download.cgi)
 
 
