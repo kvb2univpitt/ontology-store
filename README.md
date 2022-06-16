@@ -49,6 +49,22 @@ The Ontology-Store REST API must be running in the same Servlet container as the
 
 > Note that the instructions above require administrative privileges.
 
+### Proxying OntologyStore Request
+
+The request to ontologystore API is made to the path ***/ontology-store*** on the same server (hostname) where the i2b2 webclient is hosted.  The request is then gets proxied over to the Wildfly server.
+
+Assuming your Wildfly server is running on host ***localhost*** on port ***9090***, create a file called ***ontologystore.conf*** in the directory **/etc/httpd/conf.d/** with the following content:
+
+```conf
+ProxyPass /ontology-store http://localhost:9090/ontology-store
+ProxyPassReverse /ontology-store http://localhost:9090/ontology-store
+ProxyTimeout 3000
+```
+
+> Remember to restart your Apache web server.
+
+For more information on proxying, please visit [Apache Module mod_proxy](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html).
+
 ## OntologyStore
 
 An i2b2 plug-in that allow users to download ontologies and import them into an i2b2 database by making API calls to the Ontology-Store REST API.
