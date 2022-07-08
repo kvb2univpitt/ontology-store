@@ -1,0 +1,13 @@
+{
+    "title": "Ontology Store",
+    "description": "This plugin enables users to download and install ontologies.",
+    "category": ["celless", "plugin", "standard"],
+    "icons": {
+        "size32x32": "OntologyStore_icon_32x32.png"
+    },
+    "assetDir": "assets",
+    "plugin_version": "1.0",
+    "i2b2_version": "1.7.13",
+    "base": "index.html",
+    "sandbox": true
+}

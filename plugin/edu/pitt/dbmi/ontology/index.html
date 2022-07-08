@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Ontology Store</title>
+        <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.css"/>
+        <style>
+            body {
+                margin: 10px;
+            }
+            table#ontology-product-table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+                font-size:13px;
+                margin-bottom:20px;
+                margin-top:20px;
+            }
+
+            #ontology-product-table td, th {
+                border: 1px solid dimgrey;
+                text-align: middle;
+                padding: 5px;
+            }
+
+            #ontology-product-table th {
+                background-color: #216288;
+                color: lightgrey;
+            }
+
+            #ontology-product-table tr:hover td {
+                background-color: #DCDCDC;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0">Ontology-Store</h1>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <button id="ontology-download" type="button" class="btn btn-primary btn-sm mb-2"><i class="bi bi-cloud-download"></i> Sync From Cloud</button>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm shadow mb-4" id="ontology-product-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Version</th>
+                                    <th scope="col">Owner/Author</th>
+                                    <th scope="col">Product Type</th>
+                                    <th scope="col">Include Network Ontology Artifacts</th>
+                                    <th scope="col">Included Terminologies</th>
+                                    <th scope="col">Download</th>
+                                    <th scope="col">Install</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="vendor/jquery/jquery.min.js"></script>
+        <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script>
+            let ontology = {
+                products: [],
+                table: {
+                    headers: [
+                        "Title",
+                        "Version",
+                        "Owner/Author",
+                        "Product Type",
+                        "Include Network Ontology Artifacts",
+                        "Included Terminologies",
+                        "Download",
+                        "Install",
+                        "Status"
+                    ],
+                    clear: function () {
+                        // remove existing data
+                        $('#ontology-product-table tbody').empty();
+                    },
+                    show: function () {
+                        $('#ontology-product-table').show();
+                    },
+                    addRow: function (index, product) {
+                        let table = document.getElementById("ontology-product-table");
+                        let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
+                        let row = tBody.insertRow(-1);
+
+                        // add columns
+                        let columns = [];
+                        for (let i = 0; i < this.headers.length; i++) {
+                            columns[i] = row.insertCell(i);
+                        }
+
+                        // add column data
+                        columns[0].innerHTML = product.title;
+                        columns[1].innerHTML = product.version;
+                        columns[2].innerHTML = product.owner;
+                        columns[3].innerHTML = product.type;
+                        if (product.downloaded) {
+                            columns[4].innerHTML = product.includeNetworkPackage
+                                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" disabled="disabled" />`
+                                    : `<input id="network-${index}" type="checkbox" name="network" disabled="disabled" />`;
+                        } else {
+                            columns[4].innerHTML = product.includeNetworkPackage
+                                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
+                                    : `<input id="network-${index}" type="checkbox" name="network" />`;
+                        }
+                        columns[5].innerHTML = product.terminologies.join(',');
+
+                        if (product.downloaded) {
+                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+
+                            if (product.installed) {
+                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                                columns[8].innerHTML = '<span class="text-success fw-bold">Completed</span>';
+                            } else if (product.failed) {
+                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                                columns[8].innerHTML = '<span class="text-danger fw-bold">Installation Failed</span>';
+                            } else if (product.started) {
+                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                                columns[8].innerHTML = '<span class="text-info fw-bold">Installation In Progress</span>';
+                            } else {
+                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+                                columns[8].innerHTML = 'Ready To Be Installed';
+                            }
+                        } else if (product.failed) {
+                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                            columns[8].innerHTML = '<span class="text-danger fw-bold">Download Failed</span>';
+                        } else if (product.started) {
+                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                            columns[8].innerHTML = '<span class="text-info fw-bold">Download In Progress</span>';
+                        } else {
+                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
+                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+                        }
+
+                        // style columns
+                        columns[4].style = 'width: 150px; max-width: 150px';
+                        columns[4].className = "text-center";
+                        columns[6].style = 'width: 70px; max-width: 70px';
+                        columns[6].className = "text-center";
+                        columns[7].style = 'width: 50px; max-width: 50px';
+                        columns[7].className = "text-center";
+                        columns[8].style = 'width: 80px; max-width: 80px';
+                    }
+                }
+            };
+            $(document).ready(function () {
+                $("#ontology-download").click(function (evt) {
+                    $.ajax({
+                        type: 'GET',
+                        dataType: 'text',
+                        url: 'http://' + location.host + '/ontology-store/products',
+                        success: function (data) {
+                            let table = ontology.table;
+                            table.clear();
+
+                            ontology.products = JSON.parse(data);
+                            if (ontology.products.length > 0) {
+                                $.each(ontology.products, function (index, product) {
+                                    table.addRow(index, product);
+                                });
+                            }
+
+                            table.show();
+                        },
+                        error: function (e) {
+                        }
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
