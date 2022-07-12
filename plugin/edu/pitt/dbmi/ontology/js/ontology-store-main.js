@@ -58,7 +58,7 @@ i2b2.OntologyStore = {
                     columns[8].innerHTML = '<span class="text-danger fw-bold">Installation Failed</span>';
                 } else if (product.started) {
                     columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                    columns[8].innerHTML = '<span class="text-info fw-bold">Installation In Progress</span>';
+                    columns[8].innerHTML = '<span class="text-primary fw-bold">Installation In Progress</span>';
                 } else {
                     columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
                     columns[8].innerHTML = 'Ready To Be Installed';
@@ -70,7 +70,7 @@ i2b2.OntologyStore = {
             } else if (product.started) {
                 columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
                 columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8].innerHTML = '<span class="text-info fw-bold">Download In Progress</span>';
+                columns[8].innerHTML = '<span class="text-primary fw-bold">Download In Progress</span>';
             } else {
                 columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
                 columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
@@ -196,10 +196,13 @@ i2b2.OntologyStore.execute = function () {
                 success: function (data) {
                     i2b2.OntologyStore.showSummary(data);
                 },
-                error: function (e) {
-                    console.info(e);
+                error: function (data) {
+                    $('#messageModalLabel').text(data.statusText);
+                    $('#messageModalMessage').text(data.responseText);
+                    $('#messageModal').modal('show');
                 },
                 complete: function (e) {
+                    i2b2.OntologyStore.syncFromCloud();
                     $('#progressModal').modal('hide');
                 }
             });
