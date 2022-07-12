@@ -6,34 +6,8 @@
         <title>Ontology Store</title>
         <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
         <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.css"/>
-        <style>
-            body {
-                margin: 10px;
-            }
-            table#ontology-product-table {
-                font-family: arial, sans-serif;
-                border-collapse: collapse;
-                width: 100%;
-                font-size:13px;
-                margin-bottom:20px;
-                margin-top:20px;
-            }
-
-            #ontology-product-table td, th {
-                border: 1px solid dimgrey;
-                text-align: middle;
-                padding: 5px;
-            }
-
-            #ontology-product-table th {
-                background-color: #216288;
-                color: lightgrey;
-            }
-
-            #ontology-product-table tr:hover td {
-                background-color: #DCDCDC;
-            }
-        </style>
+        <link rel="stylesheet" href="css/style.css"/>
+        <script src="js/i2b2-loader.js"></script>
     </head>
     <body>
         <div class="container-fluid">
@@ -42,143 +16,97 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <button id="ontology-download" type="button" class="btn btn-primary btn-sm mb-2"><i class="bi bi-cloud-download"></i> Sync From Cloud</button>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm shadow mb-4" id="ontology-product-table" style="display: none;">
-                            <thead>
+                    <button id="syncFromCloud" type="button" class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#progressModal">
+                        <i class="bi bi-cloud-download"></i> Sync From Cloud
+                    </button>
+                    <div id="ontologyList" class="card shadow mb-3 p-0" style="display: none;">
+                        <div class="card-body">
+                            <div class="table-responsive mb-4">
+                                <table class="table table-sm table-hover" id="productTable">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Version</th>
+                                            <th scope="col">Owner/Author</th>
+                                            <th scope="col">Product Type</th>
+                                            <th scope="col">Include Network Ontology Artifacts</th>
+                                            <th scope="col">Included Terminologies</th>
+                                            <th scope="col">Download</th>
+                                            <th scope="col">Install</th>
+                                            <th scope="col">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button id="executeBtn" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#progressModal" disabled="disabled">Execute</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="summaryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="summaryModalLabel">Download/Install Summary</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-bordered border-primary table-sm table-hover shadow" id="summaryTable">
+                            <thead class="table-primary">
                                 <tr>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Version</th>
-                                    <th scope="col">Owner/Author</th>
-                                    <th scope="col">Product Type</th>
-                                    <th scope="col">Include Network Ontology Artifacts</th>
-                                    <th scope="col">Included Terminologies</th>
-                                    <th scope="col">Download</th>
-                                    <th scope="col">Install</th>
+                                    <th scope="col">Ontology</th>
+                                    <th scope="col">Action</th>
                                     <th scope="col">Status</th>
+                                    <th scope="col">Detail</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="progressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="progressModalLabel">Progress</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="messageModalLabel">Message Title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="messageModalMessage">Message</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
         <script src="vendor/jquery/jquery.min.js"></script>
         <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script>
-            let ontology = {
-                products: [],
-                table: {
-                    headers: [
-                        "Title",
-                        "Version",
-                        "Owner/Author",
-                        "Product Type",
-                        "Include Network Ontology Artifacts",
-                        "Included Terminologies",
-                        "Download",
-                        "Install",
-                        "Status"
-                    ],
-                    clear: function () {
-                        // remove existing data
-                        $('#ontology-product-table tbody').empty();
-                    },
-                    show: function () {
-                        $('#ontology-product-table').show();
-                    },
-                    addRow: function (index, product) {
-                        let table = document.getElementById("ontology-product-table");
-                        let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
-                        let row = tBody.insertRow(-1);
-
-                        // add columns
-                        let columns = [];
-                        for (let i = 0; i < this.headers.length; i++) {
-                            columns[i] = row.insertCell(i);
-                        }
-
-                        // add column data
-                        columns[0].innerHTML = product.title;
-                        columns[1].innerHTML = product.version;
-                        columns[2].innerHTML = product.owner;
-                        columns[3].innerHTML = product.type;
-                        if (product.downloaded) {
-                            columns[4].innerHTML = product.includeNetworkPackage
-                                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" disabled="disabled" />`
-                                    : `<input id="network-${index}" type="checkbox" name="network" disabled="disabled" />`;
-                        } else {
-                            columns[4].innerHTML = product.includeNetworkPackage
-                                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
-                                    : `<input id="network-${index}" type="checkbox" name="network" />`;
-                        }
-                        columns[5].innerHTML = product.terminologies.join(',');
-
-                        if (product.downloaded) {
-                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-
-                            if (product.installed) {
-                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                                columns[8].innerHTML = '<span class="text-success fw-bold">Completed</span>';
-                            } else if (product.failed) {
-                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                                columns[8].innerHTML = '<span class="text-danger fw-bold">Installation Failed</span>';
-                            } else if (product.started) {
-                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                                columns[8].innerHTML = '<span class="text-info fw-bold">Installation In Progress</span>';
-                            } else {
-                                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
-                                columns[8].innerHTML = 'Ready To Be Installed';
-                            }
-                        } else if (product.failed) {
-                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                            columns[8].innerHTML = '<span class="text-danger fw-bold">Download Failed</span>';
-                        } else if (product.started) {
-                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                            columns[8].innerHTML = '<span class="text-info fw-bold">Download In Progress</span>';
-                        } else {
-                            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
-                            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
-                        }
-
-                        // style columns
-                        columns[4].style = 'width: 150px; max-width: 150px';
-                        columns[4].className = "text-center";
-                        columns[6].style = 'width: 70px; max-width: 70px';
-                        columns[6].className = "text-center";
-                        columns[7].style = 'width: 50px; max-width: 50px';
-                        columns[7].className = "text-center";
-                        columns[8].style = 'width: 80px; max-width: 80px';
-                    }
-                }
-            };
-            $(document).ready(function () {
-                $("#ontology-download").click(function (evt) {
-                    $.ajax({
-                        type: 'GET',
-                        dataType: 'text',
-                        url: 'http://' + location.host + '/ontology-store/products',
-                        success: function (data) {
-                            let table = ontology.table;
-                            table.clear();
-
-                            ontology.products = JSON.parse(data);
-                            if (ontology.products.length > 0) {
-                                $.each(ontology.products, function (index, product) {
-                                    table.addRow(index, product);
-                                });
-                            }
-
-                            table.show();
-                        },
-                        error: function (e) {
-                        }
-                    });
-                });
-            });
-        </script>
+        <script src="js/ontology-store-main.js"></script>
     </body>
 </html>
