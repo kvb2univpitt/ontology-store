@@ -73,55 +73,45 @@ An i2b2 plug-in that allow users to download ontologies and import them into an 
 
 #### Copy the Plug-in to the i2b2 Web Client
 
-Copy the folder **OntologyStore** located in the project folder **ontology-store** to the directory ***js-i2b2/cells/plugins/standard*** of the i2b2 web client.
+Copy the folder **edu** located in the project folder **ontology-store/plugin** to the directory ***plugins*** of the i2b2 web client.
 
 #### Registering the Plug-in
 
-Registering the plug-in with the web client framework by adding an entry to the module loader configuration file **i2b2_loader.js** located in the folder ***webclient/js-i2b2***.  Add the following code to the **i2b2.hive.tempCellsList**:
+Registering the plug-in with the web client framework by adding the entry ```"edu.pitt.dbmi.ontology"``` to the file **plugins.json** located in the folder ***plugins*** of the web client.
 
-```js
-{code: "OntologyStore",
-    forceLoading: true,
-    forceConfigMsg: {params: []},
-    forceDir: "cells/plugins/standard"
-}
-```
+For an example, the **plugins.json** file should look similar to this:
 
-The **i2b2_loader.js**  should look similar to this:
-
-```js
-i2b2.hive.tempCellsList = [
-    {code: "PM",
-        forceLoading: true 			// <----- this must be set to true for the PM cell!
-    },
-    {code: "ONT"},
-    {code: "CRC"},
-    {code: "WORK"},
+```json
+[
+    "edu.harvard.catalyst.example",
     ...
-    {code: "OntologyStore",
-        forceLoading: true,
-        forceConfigMsg: {params: []},
-        forceDir: "cells/plugins/standard"
-    }
-];
+    "edu.pitt.dbmi.ontology"
+]
 ```
-
-For more information on installing the plug-in, please visit [Web Client Plug-in Developers Guide](https://community.i2b2.org/wiki/display/webclient/Web+Client+Plug-in+Developers+Guide).
 
 ## Using the Plug-in
 
 The plug-in requires users to have i2b2 administrative privileges.
 
 1. Log on to the i2b2 web client as an **administrator**.
-2. Click on the ***Analysis Tools*** drop-down and select the **Ontology Store**.
-    ![Select OntologyStore Plug-in](img/select_ont_plugin.png)
-3. Click on the icon ***Sync From Cloud*** to retrieve a list of ontologies from AWS to download/install.
-    ![Click Sync From Cloud Button](img/click_sync_from_cloud.png)
-4. Select the ontology to download and install by checking the checkboxes and click the ***Execute*** button.
-    ![Download and Install Ontology](img/click_execute_btn.png)
-5. A spinner will show while tasks are in progress.
-    ![Progress](img/progress.png)
-6. Once the task is done, a summary of the task will pop up.
+2. Click on the ***Analysis Tools*** link.
+
+    ![Click Analysis Tool](img/click_analysis_tool.png)
+3. Click on the **Ontology Store** plugin.
+
+    ![Click OntologyStore Plugin](img/click_ontologystore.png)
+4. Click on the icon ***Sync From Cloud*** to retrieve a list of ontologies from AWS to download/install.
+
+    ![Click Sync From Cloud](img/click_sync_from_cloud.png)
+5. Select the ontology to download and install by checking the checkboxes and click the ***Execute*** button.
+
+    ![Click the Execute Button](img/click_execute_button.png)
+6. A spinner will show while tasks are in progress.
+
+    ![Task in Progress](img/execute_progress.png)
+7. Once the task is done, a summary of the task will pop up.
+
     ![Summary](img/summary.png)
-7. Log out and log back in.  You will see the installed ontologies.
+8. Log out and log back in.  You will see the installed ontologies.
+
     ![Ontology Installed](img/ontology_installed.png)
