@@ -16,7 +16,7 @@
             </div>
             <div class="row">
                 <div class="col-lg-12">
-                    <button id="syncFromCloud" type="button" class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#progressModal">
+                    <button id="syncFromCloud" type="button" class="btn btn-primary btn-sm mb-3">
                         <i class="bi bi-cloud-download"></i> Sync From Cloud
                     </button>
                     <div id="ontologyList" class="card shadow mb-3 p-0" style="display: none;">
@@ -42,7 +42,7 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button id="executeBtn" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#progressModal" disabled="disabled">Execute</button>
+                                <button id="executeBtn" type="button" class="btn btn-primary" disabled="disabled">Execute</button>
                             </div>
                         </div>
                     </div>
@@ -108,5 +108,22 @@
         <script src="vendor/jquery/jquery.min.js"></script>
         <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="js/ontology-store-main.js"></script>
+        <script>
+            $(document).ready(function () {
+                let progressModal = i2b2.OntologyStore.modal.progress;
+
+                $('#syncFromCloud').click(function (evt) {
+                    progressModal.show('Fetching Ontologies From Cloud');
+
+                    let syncFromCloud = i2b2.OntologyStore.syncFromCloud;
+                    syncFromCloud.sync(syncFromCloud.successHandler, syncFromCloud.errorHandler);
+                });
+                $('#executeBtn').click(function (evt) {
+                    progressModal.show('Downloading/Installing Ontologies');
+
+                    i2b2.OntologyStore.execute();
+                });
+            });
+        </script>
     </body>
 </html>
