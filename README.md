@@ -115,3 +115,4 @@ The plug-in requires users to have i2b2 administrative privileges.
 8. Log out and log back in.  You will see the installed ontologies.
 
     ![Ontology Installed](img/ontology_installed.png)
+    ![Onotology List](img/ontology_list.png)
