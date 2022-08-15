@@ -2,16 +2,7 @@
     padding: 20px;
 }
 
-#OntologyStore-mainDiv #img-name {
-    padding-left:35px;
-    font-size:11px;
-    font-weight:bold;
-    margin-top:-6px;
-    margin-bottom:10px;
-    margin-left:-35px;
-}
-
-table#ontology-product-table {
+table#OntologyStore-ProductTable {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
@@ -20,36 +11,23 @@ table#ontology-product-table {
     margin-top:20px;
 }
 
-#ontology-product-table td, th {
+#OntologyStore-ProductTable td, th {
     border: 1px solid dimgrey;
     text-align: middle;
     padding: 5px;
 }
 
-#ontology-product-table th {
+#OntologyStore-ProductTable th {
     background-color: #216288;
     color: lightgrey;
 }
 
-#ontology-product-table tr:hover td {
+#OntologyStore-ProductTable tr:hover td {
     background-color: #DCDCDC;
 }
 
-#OntologyStore-mainDiv .text-center {
-    text-align: center;
-}
 
-#ontology-execute {
-    background-color: #216288;
-    display: inline-block;
-    cursor: pointer;
-    color: #FFFFFF;
-    padding: 6px 14px;
-    text-decoration: none;
-    font: 12px Arial, Helvetica, sans-serif;
-}
-
-table#action-summary {
+table#OntologyStore-ActionSummary {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
@@ -58,33 +36,18 @@ table#action-summary {
     margin-top:20px;
 }
 
-table#action-summary td, th {
+table#OntologyStore-ActionSummary td, th {
     border: 1px solid dimgrey;
     text-align: middle;
     padding: 5px;
 }
 
-table#action-summary th {
+table#OntologyStore-ActionSummary th {
     background-color: #003366;
     color: #FFFFFF;
     text-align: left;
 }
 
-table#action-summary tr:hover td {
+table#OntologyStore-ActionSummary tr:hover td {
     background-color: #DCDCDC;
-}
-
-.text-fail {
-    font-weight: bold;
-    color: red
-}
-
-.text-success {
-    font-weight: bold;
-    color: green
-}
-
-.text-in-progress {
-    font-weight: bold;
-    color: royalblue
 }

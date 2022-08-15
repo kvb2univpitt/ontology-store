@@ -7,24 +7,43 @@
     </head>
     <body>
         <div id="OntologyStore-mainDiv">
-            <div id="sync-cloud">
-                <img id="ontology-download" alt="Sync From Cloud" src="js-i2b2/cells/plugins/standard/OntologyStore/assets/cloud_download.png" height="50" width="50" />
-                <div id="img-name">Sync from Cloud</div>
-            </div>
-            <div id="ontology-products">
-                <table id="ontology-product-table"></table>
+            <button type="button" class="btn btn-primary mb-4" id="OntologyStore-SyncFromCloud" onclick="i2b2.OntologyStore.syncFromCloud();">
+                <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
+            </button>
+            <div class="card">
+                <div class="card-body">
+                    <table id="OntologyStore-ProductTable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Version</th>
+                                <th>Owner/Author</th>
+                                <th>Product Type</th>
+                                <th>Include Network Ontology Artifacts</th>
+                                <th>Included Terminologies</th>
+                                <th>Download</th>
+                                <th>Install</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-success" id="OntologyStore-ExecuteBtn" onclick="i2b2.OntologyStore.execute();">Execute</button>
+                </div>
             </div>
             <!-- modal dialog content markup -->
-            <div id="download-modal" style="visibility:hidden">
-                <div class="hd">Download/Install Ontology</div>
+            <div id="OntologyStore-ProgressModal" style="visibility:hidden">
+                <div class="hd"><span id="OntologyStore-ProgressModalTitle"></span></div>
                 <div class="bd">
                     <img alt="Spinner" src="assets/images/spin.gif" height="200" width="200" />
                 </div>
             </div>
-            <div id="download-message" style="visibility:hidden">
-                <div class="hd"><span id="download-message-title"></span></div>
+            <div id="OntologyStore-MessageModal" style="visibility:hidden">
+                <div class="hd"><span id="OntologyStore-MessageModalTitle"></span></div>
                 <div class="bd">
-                    <p id="download-message-body" style="padding: 10px;"></p>
+                    <div id="OntologyStore-MessageModalMessage" style="padding: 10px;"></div>
                 </div>
             </div>
         </div>
