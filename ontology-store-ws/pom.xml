@@ -10,7 +10,7 @@
     </parent>
     <groupId>edu.pitt.dbmi</groupId>
     <artifactId>ontology-store-ws</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <packaging>war</packaging>
 
     <name>ontology-store-ws</name>
