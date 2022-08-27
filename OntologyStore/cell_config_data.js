@@ -1,8 +1,6 @@
-// This file contains a list of all files that need to be loaded dynamically for this i2b2 Cell
-// Every file in this list will be loaded after the cell's Init function is called
 {
     files: ["OntologyStore_ctrlr.js", "datatables.min.js"],
-    css: ["OntologyStore.css", "OntologyStore_styles", "bootstrap-icons.css", "datatables.min.css"],
+    css: ["OntologyStore.css", "OntologyStore_bootstrap.css", "bootstrap-icons.css", "datatables.min.css"],
     config: {
         // Additional configuration variables that are set by the system
         short_name: "Ontology Store",

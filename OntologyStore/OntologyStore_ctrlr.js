@@ -1,6 +1,3 @@
-i2b2.OntologyStore.productTable = null;
-i2b2.OntologyStore.products = [];
-
 i2b2.OntologyStore.modal = {
     progress: {
         show: function (title) {
@@ -56,6 +53,26 @@ i2b2.OntologyStore.modal = {
 };
 
 i2b2.OntologyStore.message = {
+    getSummaryProgress: function (summary) {
+        if (summary.actionType === 'Download') {
+            if (summary.inProgress) {
+                return '<span class="ontologystore-text-info"><i class="bi bi-file-earmark-arrow-down"></i> In Progress</span>';
+            } else {
+                return summary.success
+                        ? '<span class="ontologystore-text-success"><i class="bi bi-file-earmark-arrow-down"></i> Success</span>'
+                        : '<span class="ontologystore-text-danger"><i class="bi bi-file-earmark-arrow-down"></i> Failed</span>';
+            }
+        } else {
+            if (summary.inProgress) {
+                return '<span class="ontologystore-text-info"><i class="bi bi-server"></i> In Progress</span>';
+            } else {
+                return summary.success
+                        ? '<span class="ontologystore-text-success"><i class="bi bi-server"></i> Success</span>'
+                        : '<span class="ontologystore-text-danger"><i class="bi bi-server"></i> Failed</span>';
+            }
+        }
+
+    },
     createSummaryTable: function (data) {
         let table = document.createElement('table');
         table.id = 'OntologyStore-ActionSummary';
@@ -81,7 +98,7 @@ i2b2.OntologyStore.message = {
             let summary = data[i];
             columns[0].innerHTML = summary.title;
             columns[1].innerHTML = summary.actionType;
-            columns[2].innerHTML = summary.inProgress ? '<span class="text-danger">In Progress</span>' : summary.success ? '<span class="text-success">Success</span>' : '<span class="text-fail">Failed</span>';
+            columns[2].innerHTML = this.getSummaryProgress(summary);
             columns[3].innerHTML = summary.detail;
 
             columns[2].className = "text-center";
@@ -116,7 +133,7 @@ i2b2.OntologyStore.message = {
 
         if (!this.panel.summary) {
             let panel = new YAHOO.widget.Panel("OntologyStore-MessageModal", {
-                width: "600px",
+                width: "800px",
                 fixedcenter: true,
                 close: true,
                 draggable: true,
@@ -140,11 +157,11 @@ i2b2.OntologyStore.refreshProductTable = function () {
         columns[1] = product.version;
         columns[2] = product.owner;
         columns[3] = product.type;
-        columns[4] = product.type;
-        columns[5] = product.type;
-        columns[6] = product.type;
-        columns[7] = product.type;
-        columns[8] = product.type;
+        columns[4] = '';
+        columns[5] = '';
+        columns[6] = '';
+        columns[7] = '';
+        columns[8] = '';
 
         if (product.downloaded) {
             columns[4] = product.includeNetworkPackage
@@ -163,25 +180,25 @@ i2b2.OntologyStore.refreshProductTable = function () {
 
             if (product.installed) {
                 columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8] = '<span class="text-success">Completed</span>';
+                columns[8] = '<span class="ontologystore-text-success">Installed</span>';
             } else if (product.failed) {
                 columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8] = '<span class="text-danger">Installation Failed</span>';
+                columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
             } else if (product.started) {
                 columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8] = '<span class="text-info">Installation In Progress</span>';
+                columns[8] = '<span class="ontologystore-text-info">Installation In Progress</span>';
             } else {
                 columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
-                columns[8] = 'Ready To Be Installed';
+                columns[8] = '<span class="ontologystore-text-warning">Ready To Be Installed</span>';
             }
         } else if (product.failed) {
             columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
             columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-            columns[8] = '<span class="text-danger">Download Failed</span>';
+            columns[8] = '<span class="ontologystore-text-danger">Download Failed</span>';
         } else if (product.started) {
             columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
             columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-            columns[8] = '<span class="text-info">Download In Progress</span>';
+            columns[8] = '<span class="ontologystore-text-info">Download In Progress</span>';
         } else {
             columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
             columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
@@ -190,17 +207,6 @@ i2b2.OntologyStore.refreshProductTable = function () {
         datatable.row.add(columns);
     });
     datatable.draw();
-};
-
-i2b2.OntologyStore.fetchProducts = function () {
-    jQuery.ajax({
-        type: 'GET',
-        dataType: 'text',
-        url: 'http://' + location.host + '/ontology-store/products'
-    }).success(function (data) {
-        i2b2.OntologyStore.products = JSON.parse(data);
-        i2b2.OntologyStore.refreshProductTable();
-    });
 };
 
 i2b2.OntologyStore.syncFromCloud = function () {
@@ -215,10 +221,22 @@ i2b2.OntologyStore.syncFromCloud = function () {
 
         document.getElementById("OntologyStore-ExecuteBtn").disabled = false;
         i2b2.OntologyStore.modal.progress.hide();
+        jQuery('#OntologyStore-Product').show();
     }).error(function () {
         document.getElementById("OntologyStore-ExecuteBtn").disabled = true;
         i2b2.OntologyStore.modal.progress.hide();
         i2b2.OntologyStore.modal.message.show('Save Phenotype Failed', 'Unable to save phenotype workbook at this time.');
+    });
+};
+
+i2b2.OntologyStore.fetchProducts = function () {
+    jQuery.ajax({
+        type: 'GET',
+        dataType: 'text',
+        url: 'http://' + location.host + '/ontology-store/products'
+    }).success(function (data) {
+        i2b2.OntologyStore.products = JSON.parse(data);
+        i2b2.OntologyStore.refreshProductTable();
     });
 };
 
@@ -237,7 +255,6 @@ i2b2.OntologyStore.execute = function () {
         indexes = indexes.filter((value, index, self) => {
             return self.indexOf(value) === index;
         });
-
 
         let data = [];
         indexes.forEach(index => {
@@ -283,6 +300,14 @@ i2b2.OntologyStore.execute = function () {
                     i2b2.OntologyStore.modal.progress.hide();
                     i2b2.OntologyStore.fetchProducts();
 
+                    // check to see if refresh is required    
+                    for (let i = 0; i < data.length; i++) {
+                        if (data[i].actionType === 'Install') {
+                            i2b2.ONT.view.nav.doRefreshAll();
+                            break;
+                        }
+                    }
+
                     i2b2.OntologyStore.message.showSummary(data);
                 });
             } else {
@@ -296,19 +321,11 @@ i2b2.OntologyStore.execute = function () {
 
 i2b2.OntologyStore.Init = function (loadedDiv) {
     i2b2.OntologyStore.productTable = jQuery('#OntologyStore-ProductTable').DataTable({
-        columnDefs: [
-            {
-                "targets": 4,
-                "className": "text-center"
-            },
-            {
-                "targets": 6,
-                "className": "text-center"
-            },
-            {
-                "targets": 7,
-                "className": "text-center"
-            }
+        "columnDefs": [
+            {"targets": 0, "className": "ontologystore-title"},
+            {"targets": 4, "className": "dt-center ontologystore-network-chkbx"},
+            {"targets": 6, "className": "dt-center ontologystore-download-chkbx"},
+            {"targets": 7, "className": "dt-center ontologystore-install-chkbx"}
         ]
     });
 

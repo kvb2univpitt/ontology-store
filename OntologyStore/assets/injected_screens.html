@@ -7,30 +7,34 @@
     </head>
     <body>
         <div id="OntologyStore-mainDiv">
-            <button type="button" class="btn btn-primary mb-4" id="OntologyStore-SyncFromCloud" onclick="i2b2.OntologyStore.syncFromCloud();">
+            <button type="button" class="ontologystore-btn ontologystore-btn-primary ontologystore-mb-4" id="OntologyStore-SyncFromCloud" onclick="i2b2.OntologyStore.syncFromCloud();">
                 <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
             </button>
-            <div class="card">
-                <div class="card-body">
-                    <table id="OntologyStore-ProductTable">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Version</th>
-                                <th>Owner/Author</th>
-                                <th>Product Type</th>
-                                <th>Include Network Ontology Artifacts</th>
-                                <th>Included Terminologies</th>
-                                <th>Download</th>
-                                <th>Install</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+            <div class="ontologystore-card" id="OntologyStore-Product" style="display: none;">
+                <div class="ontologystore-card-body">
+                    <div class="ontologystore-table-responsive">
+                        <table id="OntologyStore-ProductTable">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Version</th>
+                                    <th>Owner/Author</th>
+                                    <th>Product Type</th>
+                                    <th>Include Network Ontology Artifacts</th>
+                                    <th>Included Terminologies</th>
+                                    <th>Download</th>
+                                    <th>Install</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <button type="button" class="btn btn-success" id="OntologyStore-ExecuteBtn" onclick="i2b2.OntologyStore.execute();">Execute</button>
+                <div class="ontologystore-card-footer">
+                    <button type="button" class="ontologystore-btn ontologystore-btn-success ontologystore-float-right" id="OntologyStore-ExecuteBtn" onclick="i2b2.OntologyStore.execute();">
+                        <i class="bi bi-play-fill"></i> Execute
+                    </button>
                 </div>
             </div>
             <!-- modal dialog content markup -->
