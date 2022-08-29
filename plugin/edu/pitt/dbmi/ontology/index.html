@@ -6,23 +6,24 @@
         <title>Ontology Store</title>
         <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
         <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.css"/>
-        <link rel="stylesheet" href="css/style.css"/>
+        <link rel="stylesheet" href="vendor/datatables/datatables.min.css" />
+        <link rel="stylesheet" href="css/ontologystore.css"/>
         <script src="js/i2b2-loader.js"></script>
     </head>
     <body>
         <div class="container-fluid">
-            <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0">Ontology-Store</h1>
-            </div>
             <div class="row">
-                <div class="col-lg-12">
-                    <button id="syncFromCloud" type="button" class="btn btn-primary btn-sm mb-3">
+                <main class="col-12 px-md-4">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap pt-3 pb-2 mb-3 border-bottom">
+                        <h2>Ontology Store</h2>
+                    </div>
+                    <button id="syncFromCloud" class="btn btn-primary btn-sm mt-2 mb-4" type="button" onclick="i2b2.OntologyStore.syncFromCloud();">
                         <i class="bi bi-cloud-download"></i> Sync From Cloud
                     </button>
-                    <div id="ontologyList" class="card shadow mb-3 p-0" style="display: none;">
+                    <div class="card shadow mb-5" id="OntologyStore-Products" style="display: none;">
                         <div class="card-body">
-                            <div class="table-responsive mb-4">
-                                <table class="table table-sm table-hover" id="productTable">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="OntologyStore-ProductTable">
                                     <thead>
                                         <tr>
                                             <th scope="col">Title</th>
@@ -41,15 +42,45 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button id="executeBtn" type="button" class="btn btn-primary" disabled="disabled">Execute</button>
+                            <button type="button" class="btn btn-success float-end" id="OntologyStore-ExecuteBtn" onclick="i2b2.OntologyStore.execute();" disabled="disabled">
+                                <i class="bi bi-play-fill"></i> Execute
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        <div class="modal fade" id="OntologyStore-ProgressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="OntologyStore-ProgressModalTitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="OntologyStore-ProgressModalTitle">Progress</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="summaryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+        <div class="modal fade" id="OntologyStore-MessageModal" tabindex="-1" aria-labelledby="OntologyStore-MessageModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="OntologyStore-MessageModalLabel">Message Title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="OntologyStore-MessageModalMessage">Message</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="OntologyStore-SummaryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -57,7 +88,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <table class="table table-bordered border-primary table-sm table-hover shadow" id="summaryTable">
+                        <table class="table table-bordered border-primary table-sm table-hover shadow" id="OntologyStore-SummaryTable">
                             <thead class="table-primary">
                                 <tr>
                                     <th scope="col">Ontology</th>
@@ -75,55 +106,9 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="progressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="progressModalLabel">Progress</h5>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="messageModalLabel">Message Title</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body" id="messageModalMessage">Message</div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
         <script src="vendor/jquery/jquery.min.js"></script>
         <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="vendor/datatables/datatables.min.js"></script>
         <script src="js/ontology-store-main.js"></script>
-        <script>
-            $(document).ready(function () {
-                let progressModal = i2b2.OntologyStore.modal.progress;
-
-                $('#syncFromCloud').click(function (evt) {
-                    progressModal.show('Fetching Ontologies From Cloud');
-
-                    let syncFromCloud = i2b2.OntologyStore.syncFromCloud;
-                    syncFromCloud.sync(syncFromCloud.successHandler, syncFromCloud.errorHandler);
-                });
-                $('#executeBtn').click(function (evt) {
-                    progressModal.show('Downloading/Installing Ontologies');
-
-                    i2b2.OntologyStore.execute();
-                });
-            });
-        </script>
     </body>
 </html>

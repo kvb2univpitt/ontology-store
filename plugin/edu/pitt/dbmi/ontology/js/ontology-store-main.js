@@ -10,35 +10,123 @@ i2b2.h.getDomain = function () {
     return 'i2b2demo';
 };
 
-i2b2.OntologyStore = {
-    products: []
+i2b2.OntologyStore = {};
+
+i2b2.OntologyStore.productTable = jQuery('table#OntologyStore-ProductTable').DataTable({
+    "columnDefs": [
+        {"targets": 0, "className": "ontologystore-title"},
+        {"targets": 4, "className": "dt-center ontologystore-network-chkbx"},
+        {"targets": 6, "className": "dt-center ontologystore-download-chkbx"},
+        {"targets": 7, "className": "dt-center ontologystore-install-chkbx"}
+    ]
+});
+
+i2b2.OntologyStore.refreshProductTable = function () {
+    let datatable = i2b2.OntologyStore.productTable;
+    datatable.clear();
+    jQuery.each(i2b2.OntologyStore.products, function (index, product) {
+        let columns = [];
+        columns[0] = product.title;
+        columns[1] = product.version;
+        columns[2] = product.owner;
+        columns[3] = product.type;
+        columns[4] = '';
+        columns[5] = '';
+        columns[6] = '';
+        columns[7] = '';
+        columns[8] = '';
+
+        if (product.downloaded) {
+            columns[4] = product.includeNetworkPackage
+                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" disabled="disabled" />`
+                    : `<input id="network-${index}" type="checkbox" name="network" disabled="disabled" />`;
+        } else {
+            columns[4] = product.includeNetworkPackage
+                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
+                    : `<input id="network-${index}" type="checkbox" name="network" />`;
+        }
+
+        columns[5] = product.terminologies.join(',');
+
+        if (product.downloaded) {
+            columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+
+            if (product.installed) {
+                columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                columns[8] = '<span class="ontologystore-text-success">Installed</span>';
+            } else if (product.failed) {
+                columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
+            } else if (product.started) {
+                columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+                columns[8] = '<span class="ontologystore-text-info">Installation In Progress</span>';
+            } else {
+                columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+                columns[8] = '<span class="ontologystore-text-warning">Ready To Be Installed</span>';
+            }
+        } else if (product.failed) {
+            columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+            columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+            columns[8] = '<span class="ontologystore-text-danger">Download Failed</span>';
+        } else if (product.started) {
+            columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
+            columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
+            columns[8] = '<span class="ontologystore-text-info">Download In Progress</span>';
+        } else {
+            columns[6] = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
+            columns[7] = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
+        }
+
+        datatable.row.add(columns);
+    });
+    datatable.draw();
 };
 
 i2b2.OntologyStore.modal = {
     progress: {
         show: (title) => {
-            $('#progressModalLabel').text(title);
-            $('#progressModal').modal('show');
+            $('#OntologyStore-ProgressModalTitle').text(title);
+            $('#OntologyStore-ProgressModal').modal('show');
         },
         hide: () => {
-            $('#progressModal').modal('hide');
+            $('#OntologyStore-ProgressModal').modal('hide');
         }
     },
     message: {
         show: (title, message) => {
-            $('#messageModalLabel').text(title);
-            $('#messageModalMessage').text(message);
-            $('#messageModal').modal('show');
+            $('#OntologyStore-MessageModalLabel').text(title);
+            $('#OntologyStore-MessageModalMessage').text(message);
+            $('#OntologyStore-MessageModal').modal('show');
         }
     },
     summary: {
         numOfHeaders: 4,
-        show: (data) => {
+        getSummaryProgress: function (summary) {
+            if (summary.actionType === 'Download') {
+                if (summary.inProgress) {
+                    return '<span class="ontologystore-text-info"><i class="bi bi-file-earmark-arrow-down"></i> In Progress</span>';
+                } else {
+                    return summary.success
+                            ? '<span class="ontologystore-text-success"><i class="bi bi-file-earmark-arrow-down"></i> Success</span>'
+                            : '<span class="ontologystore-text-danger"><i class="bi bi-file-earmark-arrow-down"></i> Failed</span>';
+                }
+            } else {
+                if (summary.inProgress) {
+                    return '<span class="ontologystore-text-info"><i class="bi bi-server"></i> In Progress</span>';
+                } else {
+                    return summary.success
+                            ? '<span class="ontologystore-text-success"><i class="bi bi-server"></i> Success</span>'
+                            : '<span class="ontologystore-text-danger"><i class="bi bi-server"></i> Failed</span>';
+                }
+            }
+
+        },
+        show: function (data) {
             // clear summary table
-            $('table#summaryTable tbody').empty();
+            $('table#OntologyStore-SummaryTable tbody').empty();
 
             // add data to summary table
-            let table = document.getElementById('summaryTable');
+            let table = document.getElementById('OntologyStore-SummaryTable');
             let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
             for (let i = 0; i < data.length; i++) {
                 // create row with columns
@@ -51,179 +139,100 @@ i2b2.OntologyStore.modal = {
                 let summary = data[i];
                 columns[0].innerHTML = summary.title;
                 columns[1].innerHTML = summary.actionType;
-                columns[2].innerHTML = summary.inProgress ?
-                        '<span class="text-in-progress">In Progress</span>' : summary.success ? '<span class="text-success fw-bold">Success</span>'
-                        : '<span class="text-danger fw-bold">Failed</span>';
+                columns[2].innerHTML = this.getSummaryProgress(summary);
                 columns[3].innerHTML = summary.detail;
 
                 columns[2].className = "text-center";
             }
 
-            $('#summaryModal').modal('show');
+            $('#OntologyStore-SummaryModal').modal('show');
         }
     }
 };
 
-i2b2.OntologyStore.table = {
-    numOfHeaders: 9,
-    insertRow: (index, product) => {
-        let table = document.getElementById('productTable');
-        let tBody = (table.tBodies.length > 0) ? table.tBodies[0] : table.createTBody();
-        let row = tBody.insertRow(-1);
+i2b2.OntologyStore.syncFromCloudAction = (successHandler, errorHandler) => {
+    $.ajax({
+        type: 'GET',
+        dataType: 'text',
+        url: 'http://' + location.host + '/ontology-store/products',
+        success: successHandler,
+        error: errorHandler
+    });
+};
 
-        // add columns
-        let columns = [];
-        for (let i = 0; i < i2b2.OntologyStore.table.numOfHeaders; i++) {
-            columns[i] = row.insertCell(i);
-        }
+i2b2.OntologyStore.syncFromCloud = () => {
+    i2b2.OntologyStore.modal.progress.show('Sync From Clould');
+    i2b2.OntologyStore.syncFromCloudAction(
+            i2b2.OntologyStore.syncFromCloud.successHandler,
+            i2b2.OntologyStore.syncFromCloud.errorHandler);
+};
 
-        // add column data
-        columns[0].innerHTML = product.title;
-        columns[1].innerHTML = product.version;
-        columns[2].innerHTML = product.owner;
-        columns[3].innerHTML = product.type;
-
-        if (product.downloaded) {
-            columns[4].innerHTML = product.includeNetworkPackage
-                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" disabled="disabled" />`
-                    : `<input id="network-${index}" type="checkbox" name="network" disabled="disabled" />`;
-        } else {
-            columns[4].innerHTML = product.includeNetworkPackage
-                    ? `<input id="network-${index}" type="checkbox" name="network" checked="checked" />`
-                    : `<input id="network-${index}" type="checkbox" name="network" />`;
-        }
-        columns[5].innerHTML = product.terminologies.join(',');
-
-        if (product.downloaded) {
-            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-
-            if (product.installed) {
-                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8].innerHTML = '<span class="text-success fw-bold">Completed</span>';
-            } else if (product.failed) {
-                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8].innerHTML = '<span class="text-danger fw-bold">Installation Failed</span>';
-            } else if (product.started) {
-                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-                columns[8].innerHTML = '<span class="text-primary fw-bold">Installation In Progress</span>';
-            } else {
-                columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
-                columns[8].innerHTML = 'Ready To Be Installed';
-            }
-        } else if (product.failed) {
-            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-            columns[8].innerHTML = '<span class="text-danger fw-bold">Download Failed</span>';
-        } else if (product.started) {
-            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" disabled="disabled" />`;
-            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" disabled="disabled" />`;
-            columns[8].innerHTML = '<span class="text-primary fw-bold">Download In Progress</span>';
-        } else {
-            columns[6].innerHTML = `<input id="download-${index}" data-id="${index}" type="checkbox" name="download" />`;
-            columns[7].innerHTML = `<input id="install-${index}" data-id="${index}" type="checkbox" name="install" />`;
-        }
-
-        // align text
-        columns[4].className = "text-center";
-        columns[6].className = "text-center";
-        columns[7].className = "text-center";
-
-        // style columns
-        columns[4].style = 'width: 150px; max-width: 150px';
-        columns[6].style = 'width: 70px; max-width: 70px';
-        columns[7].style = 'width: 50px; max-width: 50px';
-        columns[8].style = 'width: 90px; max-width: 90px';
-    },
-    add: (data) => {
+i2b2.OntologyStore.syncFromCloud.successHandler = (data) => {
+    setTimeout(function () {
         i2b2.OntologyStore.products = JSON.parse(data);
+        i2b2.OntologyStore.refreshProductTable();
 
-        $('table#productTable tbody').empty();
-
-        if (i2b2.OntologyStore.products.length > 0) {
-            $.each(i2b2.OntologyStore.products, function (index, product) {
-                i2b2.OntologyStore.table.insertRow(index, product);
-            });
-
-            $('#executeBtn').removeAttr('disabled');
-        } else {
-            $('#executeBtn').attr('disabled', 'disabled');
-        }
-    }
+        $('#OntologyStore-ExecuteBtn').removeAttr('disabled');
+        $('#OntologyStore-Products').show();
+        i2b2.OntologyStore.modal.progress.hide();
+    }, 500);
 };
 
-i2b2.OntologyStore.syncFromCloud = {
-    sync: (successHandler, errorHandler) => {
-        $.ajax({
-            type: 'GET',
-            dataType: 'text',
-            url: 'http://' + location.host + '/ontology-store/products',
-            success: successHandler,
-            error: errorHandler
-        });
-    },
-    errorHandler: () => {
-        $('table#productTable tbody').empty();
-        $('#executeBtn').attr('disabled', 'disabled');
+i2b2.OntologyStore.syncFromCloud.errorHandler = () => {
+    setTimeout(function () {
+        $('table#OntologyStore-ProductTable tbody').empty();
+        $('#OntologyStore-ExecuteBtn').attr('disabled', 'disabled');
 
-        setTimeout(function () {
-            i2b2.OntologyStore.modal.progress.hide();
-            i2b2.OntologyStore.modal.message.show(
-                    'Fail to Sync From Cloud',
-                    'Unable to retrieve a list of ontologies.');
-        }, 500);
-    },
-    successHandler: (data) => {
-        i2b2.OntologyStore.table.add(data);
-        setTimeout(function () {
-            i2b2.OntologyStore.modal.progress.hide();
-            $('#ontologyList').show();
-        }, 500);
-    },
-    reloadErrorHandler: () => {
-        $('table#productTable tbody').empty();
-        $('#executeBtn').attr('disabled', 'disabled');
-
+        i2b2.OntologyStore.modal.progress.hide();
         i2b2.OntologyStore.modal.message.show(
                 'Fail to Sync From Cloud',
                 'Unable to retrieve a list of ontologies.');
-    },
-    reloadSuccessHandler: (data) => {
-        i2b2.OntologyStore.table.add(data);
-    }
+    }, 500);
+};
+
+i2b2.OntologyStore.getSelectedDataIndexes = () => {
+    let indexes = [];
+    document.querySelectorAll('input[name="download"]:checked').forEach(chkbx => {
+        indexes.push(chkbx.dataset.id);
+    });
+    document.querySelectorAll('input[name="install"]:checked').forEach(chkbx => {
+        indexes.push(chkbx.dataset.id);
+    });
+    // get unique ids
+    indexes = indexes.filter((value, index, self) => {
+        return self.indexOf(value) === index;
+    });
+
+    return indexes;
+};
+
+i2b2.OntologyStore.getSelectedData = (indexes) => {
+    let data = [];
+    indexes.forEach(index => {
+        let product = i2b2.OntologyStore.products[index];
+        let includeNetChkbx = document.getElementById(`network-${index}`);
+        let downloadChkbx = document.getElementById(`download-${index}`);
+        let installChkbx = document.getElementById(`install-${index}`);
+
+        data.push({
+            title: product.title,
+            key: product.fileName,
+            includeNetworkPackage: includeNetChkbx.checked,
+            download: downloadChkbx.checked,
+            install: installChkbx.checked
+        });
+    });
+
+    return data;
 };
 
 i2b2.OntologyStore.execute = () => {
     if (i2b2.PM.model.isAdmin) {
-        let indexes = [];
-        document.querySelectorAll('input[name="download"]:checked').forEach(chkbx => {
-            indexes.push(chkbx.dataset.id);
-        });
-        document.querySelectorAll('input[name="install"]:checked').forEach(chkbx => {
-            indexes.push(chkbx.dataset.id);
-        });
-
-        // get unique ids
-        indexes = indexes.filter((value, index, self) => {
-            return self.indexOf(value) === index;
-        });
-
+        let indexes = i2b2.OntologyStore.getSelectedDataIndexes();
         if (indexes.length > 0) {
-            let data = [];
-            indexes.forEach(index => {
-                let product = i2b2.OntologyStore.products[index];
-                let includeNetChkbx = document.getElementById(`network-${index}`);
-                let downloadChkbx = document.getElementById(`download-${index}`);
-                let installChkbx = document.getElementById(`install-${index}`);
+            i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
 
-                data.push({
-                    title: product.title,
-                    key: product.fileName,
-                    includeNetworkPackage: includeNetChkbx.checked,
-                    download: downloadChkbx.checked,
-                    install: installChkbx.checked
-                });
-            });
-
+            let selectedData = i2b2.OntologyStore.getSelectedData(indexes);
             $.ajax({
                 type: 'POST',
                 headers: {
@@ -232,45 +241,61 @@ i2b2.OntologyStore.execute = () => {
                 },
                 url: 'http://' + location.host + '/ontology-store/action',
                 contentType: "application/json; charset=utf-8",
-                data: JSON.stringify(data),
+                data: JSON.stringify(selectedData),
                 success: function (data) {
-                    let syncFromCloud = i2b2.OntologyStore.syncFromCloud;
-                    syncFromCloud.sync(syncFromCloud.reloadSuccessHandler, syncFromCloud.reloadErrorHandler);
+                    let successHandler = (fetchedData) => {
+                        setTimeout(function () {
+                            i2b2.OntologyStore.products = JSON.parse(fetchedData);
+                            i2b2.OntologyStore.refreshProductTable();
 
-                    setTimeout(function () {
-                        $('#progressModal').modal('hide');
-
+//                            i2b2.ONT.view.nav.doRefreshAll();
+                            i2b2.OntologyStore.modal.progress.hide();
+                            i2b2.OntologyStore.modal.summary.show(data);
+                        }, 500);
+                    };
+                    let errorHandler = () => {
+//                        i2b2.ONT.view.nav.doRefreshAll();
+                        i2b2.OntologyStore.modal.progress.hide();
                         i2b2.OntologyStore.modal.summary.show(data);
-                    }, 500);
+                    };
+
+                    i2b2.OntologyStore.syncFromCloudAction(successHandler, errorHandler);
                 },
                 error: function (data) {
-                    setTimeout(function () {
-                        $('#progressModal').modal('hide');
+                    let successHandler = (fetchedData) => {
+                        setTimeout(function () {
+                            i2b2.OntologyStore.products = JSON.parse(fetchedData);
+                            i2b2.OntologyStore.refreshProductTable();
 
-                        $('#messageModalLabel').text(data.statusText);
-                        $('#messageModalMessage').html(data.responseText);
-                        $('#messageModal').modal('show');
-                    }, 500);
+//                            i2b2.ONT.view.nav.doRefreshAll();
+                            i2b2.OntologyStore.modal.progress.hide();
+                            i2b2.OntologyStore.modal.message.show(data.statusText, data.responseText);
+                        }, 500);
+                    };
+                    let errorHandler = () => {
+//                        i2b2.ONT.view.nav.doRefreshAll();
+                        i2b2.OntologyStore.modal.progress.hide();
+                        i2b2.OntologyStore.modal.message.show(data.statusText, data.responseText);
+                    };
                 }
             });
         } else {
             // at least one ontology must be selected to download/install.
             setTimeout(function () {
-                $('#progressModal').modal('hide');
-
-                $('#messageModalLabel').text('No Ontology Selected');
-                $('#messageModalMessage').text('Please select an ontology to download/install.');
-                $('#messageModal').modal('show');
+                i2b2.OntologyStore.modal.progress.hide();
+                i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
             }, 500);
         }
     } else {
         // must be admin to download/install ontology
         setTimeout(function () {
-            $('#progressModal').modal('hide');
-
-            $('#messageModalLabel').text('Insufficient Privileges');
-            $('#messageModalMessage').text('Administrative privileges required!');
-            $('#messageModal').modal('show');
+            i2b2.OntologyStore.modal.progress.hide();
+            i2b2.OntologyStore.modal.message.show('Insufficient Privileges', 'Administrative privileges required!');
         }, 500);
     }
 };
+
+
+
+window.addEventListener("I2B2_READY", () => {
+});
