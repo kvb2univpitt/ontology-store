@@ -87,7 +87,7 @@ i2b2.OntologyStore.message = {
             row.appendChild(th);
         }
 
-        let tBody = table.createTBody()
+        let tBody = table.createTBody();
         for (let i = 0; i < data.length; i++) {
             let columns = [];
             row = tBody.insertRow(-1);
