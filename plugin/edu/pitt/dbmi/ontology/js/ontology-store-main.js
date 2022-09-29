@@ -1,16 +1,19 @@
-i2b2.PM = {
-    model: {
-        isAdmin: true
+i2b2.OntologyStore = {
+    env: {
+        isAdmin: false,
+        project: '',
+        domain: '',
+        user: '',
+        session: ''
+    },
+    func: {
+        doRefreshAll: function () {
+            i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]().then((doRefreshAll) => {
+                doRefreshAll();
+            });
+        }
     }
 };
-i2b2.h.getProject = function () {
-    return 'Demo';
-};
-i2b2.h.getDomain = function () {
-    return 'i2b2demo';
-};
-
-i2b2.OntologyStore = {};
 
 i2b2.OntologyStore.productTable = jQuery('table#OntologyStore-ProductTable').DataTable({
     "columnDefs": [
@@ -190,14 +193,17 @@ i2b2.OntologyStore.syncFromCloud.errorHandler = () => {
     }, 500);
 };
 
-i2b2.OntologyStore.getSelectedDataIndexes = () => {
+i2b2.OntologyStore.getSelectedProductIndexes = () => {
     let indexes = [];
+
+    // get selected product download/install indexes
     document.querySelectorAll('input[name="download"]:checked').forEach(chkbx => {
         indexes.push(chkbx.dataset.id);
     });
     document.querySelectorAll('input[name="install"]:checked').forEach(chkbx => {
         indexes.push(chkbx.dataset.id);
     });
+
     // get unique ids
     indexes = indexes.filter((value, index, self) => {
         return self.indexOf(value) === index;
@@ -206,55 +212,63 @@ i2b2.OntologyStore.getSelectedDataIndexes = () => {
     return indexes;
 };
 
-i2b2.OntologyStore.getSelectedData = (indexes) => {
+i2b2.OntologyStore.getSelectedProducts = () => {
     let data = [];
-    indexes.forEach(index => {
-        let product = i2b2.OntologyStore.products[index];
-        let includeNetChkbx = document.getElementById(`network-${index}`);
-        let downloadChkbx = document.getElementById(`download-${index}`);
-        let installChkbx = document.getElementById(`install-${index}`);
 
-        data.push({
-            title: product.title,
-            key: product.fileName,
-            includeNetworkPackage: includeNetChkbx.checked,
-            download: downloadChkbx.checked,
-            install: installChkbx.checked
-        });
-    });
+    i2b2.OntologyStore.getSelectedProductIndexes()
+            .forEach(index => {
+                let product = i2b2.OntologyStore.products[index];
+                let includeNetChkbx = document.getElementById(`network-${index}`);
+                let downloadChkbx = document.getElementById(`download-${index}`);
+                let installChkbx = document.getElementById(`install-${index}`);
+
+                data.push({
+                    title: product.title,
+                    key: product.fileName,
+                    includeNetworkPackage: includeNetChkbx.checked,
+                    download: downloadChkbx.checked,
+                    install: installChkbx.checked
+                });
+            });
 
     return data;
 };
 
 i2b2.OntologyStore.execute = () => {
-    if (i2b2.PM.model.isAdmin) {
-        let indexes = i2b2.OntologyStore.getSelectedDataIndexes();
-        if (indexes.length > 0) {
+    let dat = [
+        i2b2.OntologyStore.env.domain,
+        i2b2.OntologyStore.env.project,
+        i2b2.OntologyStore.env.user,
+        i2b2.OntologyStore.env.session
+    ];
+    if (i2b2.OntologyStore.env.isAdmin) {
+        let selectedProducts = i2b2.OntologyStore.getSelectedProducts();
+        if (selectedProducts.length > 0) {
             i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
 
-            let selectedData = i2b2.OntologyStore.getSelectedData(indexes);
             $.ajax({
                 type: 'POST',
                 headers: {
-                    'X-I2B2-Domain': i2b2.h.getDomain(),
-                    'X-I2B2-Project': i2b2.h.getProject()
+                    'X-I2B2-Domain': i2b2.OntologyStore.env.domain,
+                    'X-I2B2-Project': i2b2.OntologyStore.env.project,
+                    'Authorization': 'Basic ' + btoa(i2b2.OntologyStore.env.user + ':' + i2b2.OntologyStore.env.session)
                 },
                 url: 'http://' + location.host + '/ontology-store/action',
                 contentType: "application/json; charset=utf-8",
-                data: JSON.stringify(selectedData),
+                data: JSON.stringify(selectedProducts),
                 success: function (data) {
                     let successHandler = (fetchedData) => {
                         setTimeout(function () {
                             i2b2.OntologyStore.products = JSON.parse(fetchedData);
                             i2b2.OntologyStore.refreshProductTable();
 
-//                            i2b2.ONT.view.nav.doRefreshAll();
+                            i2b2.OntologyStore.func.doRefreshAll();
                             i2b2.OntologyStore.modal.progress.hide();
                             i2b2.OntologyStore.modal.summary.show(data);
                         }, 500);
                     };
                     let errorHandler = () => {
-//                        i2b2.ONT.view.nav.doRefreshAll();
+                        i2b2.OntologyStore.func.doRefreshAll();
                         i2b2.OntologyStore.modal.progress.hide();
                         i2b2.OntologyStore.modal.summary.show(data);
                     };
@@ -267,13 +281,13 @@ i2b2.OntologyStore.execute = () => {
                             i2b2.OntologyStore.products = JSON.parse(fetchedData);
                             i2b2.OntologyStore.refreshProductTable();
 
-//                            i2b2.ONT.view.nav.doRefreshAll();
+                            i2b2.OntologyStore.func.doRefreshAll();
                             i2b2.OntologyStore.modal.progress.hide();
                             i2b2.OntologyStore.modal.message.show(data.statusText, data.responseText);
                         }, 500);
                     };
                     let errorHandler = () => {
-//                        i2b2.ONT.view.nav.doRefreshAll();
+                        i2b2.OntologyStore.func.doRefreshAll();
                         i2b2.OntologyStore.modal.progress.hide();
                         i2b2.OntologyStore.modal.message.show(data.statusText, data.responseText);
                     };
@@ -281,21 +295,27 @@ i2b2.OntologyStore.execute = () => {
             });
         } else {
             // at least one ontology must be selected to download/install.
-            setTimeout(function () {
-                i2b2.OntologyStore.modal.progress.hide();
-                i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
-            }, 500);
+            i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
         }
     } else {
-        // must be admin to download/install ontology
-        setTimeout(function () {
-            i2b2.OntologyStore.modal.progress.hide();
-            i2b2.OntologyStore.modal.message.show('Insufficient Privileges', 'Administrative privileges required!');
-        }, 500);
+        i2b2.OntologyStore.modal.message.show('Insufficient Privileges', 'Administrative privileges required!');
     }
 };
 
-
-
 window.addEventListener("I2B2_READY", () => {
+    i2b2.authorizedTunnel.variable["i2b2.PM.model.isAdmin"].then((isAdmin) => {
+        i2b2.OntologyStore.env.isAdmin = isAdmin;
+    });
+    i2b2.authorizedTunnel.function["i2b2.h.getDomain"]().then((domain) => {
+        i2b2.OntologyStore.env.domain = domain;
+    });
+    i2b2.authorizedTunnel.function["i2b2.h.getProject"]().then((project) => {
+        i2b2.OntologyStore.env.project = project;
+    });
+    i2b2.authorizedTunnel.function["i2b2.h.getUser"]().then((user) => {
+        i2b2.OntologyStore.env.user = user;
+    });
+    i2b2.authorizedTunnel.function["i2b2.h.getPass"]().then((session) => {
+        i2b2.OntologyStore.env.session = session;
+    });
 });

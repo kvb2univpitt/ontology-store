@@ -9,5 +9,17 @@
     "plugin_version": "1.0",
     "i2b2_version": "1.7.13",
     "base": "index.html",
-    "sandbox": true
+    "sandbox": true,
+    "authorizedTunnel": {
+        "variables": {
+            "i2b2.PM.model.isAdmin": "R"
+        },
+        "functions": [
+            "i2b2.h.getDomain",
+            "i2b2.h.getProject",
+            "i2b2.h.getUser",
+            "i2b2.h.getPass",
+            "i2b2.ONT.view.nav.doRefreshAll"
+        ]
+    }
 }
