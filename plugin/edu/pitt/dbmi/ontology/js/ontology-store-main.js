@@ -1,4 +1,5 @@
 i2b2.OntologyStore = {
+    endpoint: 'http://' + location.host + '/ontology-store',
     env: {
         isAdmin: false,
         project: '',
@@ -157,7 +158,7 @@ i2b2.OntologyStore.syncFromCloudAction = (successHandler, errorHandler) => {
     $.ajax({
         type: 'GET',
         dataType: 'text',
-        url: 'http://' + location.host + '/ontology-store/products',
+        url: i2b2.OntologyStore.endpoint + '/products',
         success: successHandler,
         error: errorHandler
     });
@@ -253,7 +254,7 @@ i2b2.OntologyStore.execute = () => {
                     'X-I2B2-Project': i2b2.OntologyStore.env.project,
                     'Authorization': 'Basic ' + btoa(i2b2.OntologyStore.env.user + ':' + i2b2.OntologyStore.env.session)
                 },
-                url: 'http://' + location.host + '/ontology-store/action',
+                url: i2b2.OntologyStore.endpoint + '/action',
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(selectedProducts),
                 success: function (data) {
@@ -303,6 +304,7 @@ i2b2.OntologyStore.execute = () => {
 };
 
 window.addEventListener("I2B2_READY", () => {
+    // set the variables for later use
     i2b2.authorizedTunnel.variable["i2b2.PM.model.isAdmin"].then((isAdmin) => {
         i2b2.OntologyStore.env.isAdmin = isAdmin;
     });
