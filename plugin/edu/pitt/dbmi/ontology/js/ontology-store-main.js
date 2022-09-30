@@ -9,9 +9,7 @@ i2b2.OntologyStore = {
     },
     func: {
         doRefreshAll: function () {
-            i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]().then((doRefreshAll) => {
-                doRefreshAll();
-            });
+            i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
         }
     }
 };
