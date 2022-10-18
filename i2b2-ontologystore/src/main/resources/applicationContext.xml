@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+    <!-- Configure spring to give a hook to axis2 without a ServletContext -->
+    <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
+
+    <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="java:/PMBootStrapDS"/>
+    </bean>
+    <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="java:/OntologyBootStrapDS"/>
+    </bean>
+
+    <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess">
+        <constructor-arg><ref bean="pmDataSource"/></constructor-arg>
+        <constructor-arg><ref bean="hiveDataSource"/></constructor-arg>
+    </bean>
+    <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess">
+        <constructor-arg>
+            <ref bean="hiveDataSource"/>
+        </constructor-arg>
+    </bean>
+    
+    <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
+    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
+        <constructor-arg><ref bean="pmDBAccess"/></constructor-arg>
+        <constructor-arg><ref bean="hiveDBAccess"/></constructor-arg>
+    </bean>
+</beans>
