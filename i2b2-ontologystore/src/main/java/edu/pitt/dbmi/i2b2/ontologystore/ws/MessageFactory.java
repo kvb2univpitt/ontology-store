@@ -31,12 +31,14 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResultStatusType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.HelloWorldType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.util.OntologyStoreJAXBUtil;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
@@ -93,7 +95,7 @@ public class MessageFactory {
      * @throws I2B2Exception
      */
     public static String convertToXMLString(ResponseMessageType respMessageType) throws I2B2Exception {
-        try (StringWriter writer = new StringWriter()) {
+        try ( StringWriter writer = new StringWriter()) {
             edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ObjectFactory objectFactory = new edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ObjectFactory();
             OntologyStoreJAXBUtil.getJaxbUtil().marshaller(objectFactory.createResponse(respMessageType), writer);
 
@@ -177,22 +179,16 @@ public class MessageFactory {
         return messageHeader;
     }
 
-    public static ResponseMessageType createBuildResponse(MessageHeaderType messageHeaderType, HelloWorldType helloWorld) {
+    public static ResponseMessageType createBuildResponse(MessageHeaderType messageHeaderType, List<ProductType> products) {
         ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
 
-        BodyType bodyType = createBodyType(helloWorld);
-
-        return createResponseMessageType(messageHeaderType, respHeader, bodyType);
-    }
-
-    public static BodyType createBodyType(HelloWorldType helloWorld) {
         BodyType bodyType = new BodyType();
-
-        if (helloWorld != null) {
-            bodyType.getAny().add((new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory()).createHelloWorld(helloWorld));
+        if (products != null) {
+            edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory of = new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory();
+            bodyType.getAny().add(of.createProducts(new ProductsType(products)));
         }
 
-        return bodyType;
+        return createResponseMessageType(messageHeaderType, respHeader, bodyType);
     }
 
 }

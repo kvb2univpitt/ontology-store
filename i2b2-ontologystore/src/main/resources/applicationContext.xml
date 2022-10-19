@@ -3,6 +3,10 @@
 <beans>
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
+    
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:application.properties" />
+    </bean>
 
     <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
         <property name="jndiName" value="java:/PMBootStrapDS"/>
@@ -12,8 +16,12 @@
     </bean>
 
     <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess">
-        <constructor-arg><ref bean="pmDataSource"/></constructor-arg>
-        <constructor-arg><ref bean="hiveDataSource"/></constructor-arg>
+        <constructor-arg>
+            <ref bean="pmDataSource"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="hiveDataSource"/>
+        </constructor-arg>
     </bean>
     <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess">
         <constructor-arg>
@@ -21,9 +29,22 @@
         </constructor-arg>
     </bean>
     
+    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
+        <constructor-arg type="java.lang.String">
+            <value>${aws.s3.json.product.list}</value>
+        </constructor-arg>
+    </bean>
+    
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
-        <constructor-arg><ref bean="pmDBAccess"/></constructor-arg>
-        <constructor-arg><ref bean="hiveDBAccess"/></constructor-arg>
+        <constructor-arg>
+            <ref bean="pmDBAccess"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="hiveDBAccess"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="amazonS3Service"/>
+        </constructor-arg>
     </bean>
 </beans>

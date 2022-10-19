@@ -22,6 +22,7 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
+import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
@@ -39,10 +40,12 @@ public class OntologyStoreService extends AbstractWebService {
 
     private final PmDBAccess pmDBAccess;
     private final HiveDBAccess hiveDBAccess;
+    private final AmazonS3Service amazonS3Service;
 
-    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess) {
+    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service) {
         this.pmDBAccess = pmDBAccess;
         this.hiveDBAccess = hiveDBAccess;
+        this.amazonS3Service = amazonS3Service;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -53,7 +56,7 @@ public class OntologyStoreService extends AbstractWebService {
         String xmlRequest = req.toString();
         GetProductsDataMessage getProductsDataMessage = new GetProductsDataMessage(xmlRequest);
 
-        return execute(new GetProductsRequestHandler(getProductsDataMessage, pmDBAccess), 5000);
+        return execute(new GetProductsRequestHandler(getProductsDataMessage, amazonS3Service, pmDBAccess), 5000);
     }
 
 }
