@@ -18,56 +18,69 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlType;
+
 /**
  *
  * Oct 18, 2022 6:15:15 AM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "productType", propOrder = {
+    "fileName",
+    "title",
+    "version",
+    "owner",
+    "type",
+    "includeNetworkPackage",
+    "terminologies",
+    "downloaded",
+    "installed",
+    "started",
+    "failed"
+})
 public class ProductType {
 
+    @XmlElement(required = true)
     private String fileName;
 
+    @XmlElement(required = true)
     private String title;
 
+    @XmlElement(required = true)
     private String version;
 
+    @XmlElement(required = true)
     private String owner;
 
+    @XmlElement(required = true)
     private String type;
 
+    @XmlElement(required = true)
     private boolean includeNetworkPackage;
 
+    @XmlElementWrapper(name = "terminologies")
+    @XmlElement(required = true, name = "terminology")
     private String[] terminologies;
 
+    @XmlElement(required = true)
     private boolean downloaded;
 
+    @XmlElement(required = true)
     private boolean installed;
 
+    @XmlElement(required = true)
     private boolean started;
 
+    @XmlElement(required = true)
     private boolean failed;
 
     public ProductType() {
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Product{");
-        sb.append("fileName=").append(fileName);
-        sb.append(", title=").append(title);
-        sb.append(", version=").append(version);
-        sb.append(", owner=").append(owner);
-        sb.append(", type=").append(type);
-        sb.append(", includeNetworkPackage=").append(includeNetworkPackage);
-        sb.append(", terminologies=").append(terminologies);
-        sb.append(", downloaded=").append(downloaded);
-        sb.append(", installed=").append(installed);
-        sb.append(", started=").append(started);
-        sb.append(", failed=").append(failed);
-        sb.append('}');
-        return sb.toString();
     }
 
     public String getFileName() {
