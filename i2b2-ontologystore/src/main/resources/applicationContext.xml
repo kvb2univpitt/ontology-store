@@ -3,7 +3,9 @@
 <beans>
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
-    
+
+    <bean id="resourcePatternResolver" class="org.springframework.core.io.support.PathMatchingResourcePatternResolver" />
+
     <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location" value="classpath:application.properties" />
     </bean>
@@ -28,13 +30,7 @@
             <ref bean="hiveDataSource"/>
         </constructor-arg>
     </bean>
-    
-    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
-        <constructor-arg type="java.lang.String">
-            <value>${aws.s3.json.product.list}</value>
-        </constructor-arg>
-    </bean>
-    
+
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
         <constructor-arg>
@@ -45,6 +41,24 @@
         </constructor-arg>
         <constructor-arg>
             <ref bean="amazonS3Service"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService">
+        <constructor-arg type="java.lang.String">
+            <value>${ontology.dir.download}</value>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="resourcePatternResolver"/>
+        </constructor-arg>
+    </bean>
+
+    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
+        <constructor-arg type="java.lang.String">
+            <value>${aws.s3.json.product.list}</value>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="fileSysService"/>
         </constructor-arg>
     </bean>
 </beans>

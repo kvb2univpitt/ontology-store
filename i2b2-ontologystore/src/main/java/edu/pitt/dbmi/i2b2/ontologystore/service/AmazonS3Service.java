@@ -39,22 +39,24 @@ import org.apache.commons.logging.LogFactory;
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
 public class AmazonS3Service {
-    
+
     private static final Log LOGGER = LogFactory.getLog(AmazonS3Service.class);
-    
+
     private static final Pattern SLASH_DELIMITER = Pattern.compile("/");
-    
+
     private final String productListJsonUrl;
-    
-    public AmazonS3Service(String productListJsonUrl) {
+    private final FileSysService fileSysService;
+
+    public AmazonS3Service(String productListJsonUrl, FileSysService fileSysService) {
         this.productListJsonUrl = productListJsonUrl;
+        this.fileSysService = fileSysService;
     }
-    
+
     public List<ProductType> getProducts() {
         List<ProductType> products = new LinkedList<>();
-        
+
         try {
-            Map<String, SimpleProduct> objs = getSimpleOntologyStoreObjects();
+            Map<String, SimpleProduct> objs = SimpleProducts();
             for (String fileName : objs.keySet()) {
                 SimpleProduct obj = objs.get(fileName);
 
@@ -75,16 +77,33 @@ public class AmazonS3Service {
         } catch (IOException exception) {
             LOGGER.error("", exception);
         }
-        
+
         return products;
     }
-    
+
     private void getStatus(ProductType product) {
+        String productFolder = product.getFileName().replaceAll(".json", "");
+        if (fileSysService.hasFinshedDownload(productFolder)) {
+            product.setDownloaded(true);
+            product.setIncludeNetworkPackage(fileSysService.hasNetworkFiles(productFolder));
+
+            if (fileSysService.hasFinshedInstall(productFolder)) {
+                product.setInstalled(true);
+            } else if (fileSysService.hasFailedInstall(productFolder)) {
+                product.setFailed(true);
+            } else if (fileSysService.hasStartedInstall(productFolder)) {
+                product.setStarted(true);
+            }
+        } else if (fileSysService.hasFailedDownload(productFolder)) {
+            product.setFailed(true);
+        } else if (fileSysService.hasStartedDownload(productFolder)) {
+            product.setStarted(true);
+        }
     }
-    
-    private Map<String, SimpleProduct> getSimpleOntologyStoreObjects() throws IOException {
+
+    private Map<String, SimpleProduct> SimpleProducts() throws IOException {
         Map<String, SimpleProduct> objs = new TreeMap<>();
-        
+
         ObjectMapper objMapper = new ObjectMapper();
         ProductList productList = objMapper.readValue(new URL(productListJsonUrl), ProductList.class);
         for (String productURL : productList.getProducts()) {
@@ -93,5 +112,5 @@ public class AmazonS3Service {
         }
         return objs;
     }
-    
+
 }
