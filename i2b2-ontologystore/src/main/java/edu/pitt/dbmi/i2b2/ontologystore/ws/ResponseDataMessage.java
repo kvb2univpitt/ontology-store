@@ -22,13 +22,13 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 
 /**
  *
- * Oct 10, 2022 8:08:38 PM
+ * Oct 20, 2022 4:01:49 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class GetProductsDataMessage extends RequestDataMessage {
+public class ResponseDataMessage extends RequestDataMessage {
 
-    public GetProductsDataMessage(String requestMessageXml) throws I2B2Exception {
+    public ResponseDataMessage(String requestMessageXml) throws I2B2Exception {
         super(requestMessageXml);
     }
 

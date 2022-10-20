@@ -24,8 +24,8 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
-import edu.pitt.dbmi.i2b2.ontologystore.ws.GetProductsDataMessage;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
+import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
 import java.util.List;
 
 /**
@@ -36,22 +36,22 @@ import java.util.List;
  */
 public class GetProductsRequestHandler extends RequestHandler {
 
-    private final GetProductsDataMessage getProductsDataMessage;
+    private final ResponseDataMessage responseDataMessage;
     private final AmazonS3Service amazonS3Service;
 
     public GetProductsRequestHandler(
-            GetProductsDataMessage getProductsDataMessage,
+            ResponseDataMessage responseDataMessage,
             AmazonS3Service amazonS3Service,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
-        this.getProductsDataMessage = getProductsDataMessage;
+        this.responseDataMessage = responseDataMessage;
         this.amazonS3Service = amazonS3Service;
     }
 
     @Override
     public String execute() throws I2B2Exception {
         MessageHeaderType messageHeader = MessageFactory
-                .createResponseMessageHeader(getProductsDataMessage.getMessageHeaderType());
+                .createResponseMessageHeader(responseDataMessage.getMessageHeaderType());
         if (isInValidUser(messageHeader)) {
             return createInvalidUserResponse(messageHeader);
         }
@@ -62,7 +62,7 @@ public class GetProductsRequestHandler extends RequestHandler {
         List<ProductType> products = amazonS3Service.getProducts();
 
         ResponseMessageType responseMessageType = MessageFactory
-                .createBuildResponse(messageHeader, products);
+                .buildGetProductsResponse(messageHeader, products);
 
         return MessageFactory.convertToXMLString(responseMessageType);
     }

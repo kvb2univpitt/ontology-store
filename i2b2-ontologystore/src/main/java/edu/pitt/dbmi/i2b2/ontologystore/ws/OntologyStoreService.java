@@ -54,7 +54,7 @@ public class OntologyStoreService extends AbstractWebService {
         }
 
         String xmlRequest = req.toString();
-        GetProductsDataMessage getProductsDataMessage = new GetProductsDataMessage(xmlRequest);
+        ResponseDataMessage getProductsDataMessage = new ResponseDataMessage(xmlRequest);
 
         return execute(new GetProductsRequestHandler(getProductsDataMessage, amazonS3Service, pmDBAccess), 5000);
     }

@@ -179,7 +179,7 @@ public class MessageFactory {
         return messageHeader;
     }
 
-    public static ResponseMessageType createBuildResponse(MessageHeaderType messageHeaderType, List<ProductType> products) {
+    public static ResponseMessageType buildGetProductsResponse(MessageHeaderType messageHeaderType, List<ProductType> products) {
         ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
 
         BodyType bodyType = new BodyType();
