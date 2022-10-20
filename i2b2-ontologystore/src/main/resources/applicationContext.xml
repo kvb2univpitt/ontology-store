@@ -4,12 +4,15 @@
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
 
+    <!-- resolve a specified file location path -->
     <bean id="resourcePatternResolver" class="org.springframework.core.io.support.PathMatchingResourcePatternResolver" />
 
+    <!-- application.properties -->
     <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location" value="classpath:application.properties" />
     </bean>
 
+    <!-- datasource -->
     <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
         <property name="jndiName" value="java:/PMBootStrapDS"/>
     </bean>
@@ -17,6 +20,7 @@
         <property name="jndiName" value="java:/OntologyBootStrapDS"/>
     </bean>
 
+    <!-- peform database tasks -->
     <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess">
         <constructor-arg>
             <ref bean="pmDataSource"/>
@@ -44,6 +48,7 @@
         </constructor-arg>
     </bean>
 
+    <!-- provide specific services -->
     <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService">
         <constructor-arg type="java.lang.String">
             <value>${ontology.dir.download}</value>
@@ -52,10 +57,17 @@
             <ref bean="resourcePatternResolver"/>
         </constructor-arg>
     </bean>
-
     <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
         <constructor-arg type="java.lang.String">
             <value>${aws.s3.json.product.list}</value>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="fileSysService"/>
+        </constructor-arg>
+    </bean>
+    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService">
+        <constructor-arg>
+            <ref bean="amazonS3Service"/>
         </constructor-arg>
         <constructor-arg>
             <ref bean="fileSysService"/>

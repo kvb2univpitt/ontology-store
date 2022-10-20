@@ -20,10 +20,12 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItems;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductList;
 import edu.pitt.dbmi.i2b2.ontologystore.model.SimpleProduct;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +58,7 @@ public class AmazonS3Service {
         List<ProductType> products = new LinkedList<>();
 
         try {
-            Map<String, SimpleProduct> objs = SimpleProducts();
+            Map<String, SimpleProduct> objs = getSimpleProducts();
             for (String fileName : objs.keySet()) {
                 SimpleProduct obj = objs.get(fileName);
 
@@ -101,7 +103,24 @@ public class AmazonS3Service {
         }
     }
 
-    private Map<String, SimpleProduct> SimpleProducts() throws IOException {
+    public ProductItems getProductItemsObject(String key) throws IOException {
+        return getProductItemsObjects().get(key);
+    }
+
+    private Map<String, ProductItems> getProductItemsObjects() throws IOException {
+        Map<String, ProductItems> objs = new HashMap<>();
+
+        ObjectMapper objMapper = new ObjectMapper();
+        ProductList productList = objMapper.readValue(new URL(productListJsonUrl), ProductList.class);
+        for (String productURL : productList.getProducts()) {
+            String[] fields = SLASH_DELIMITER.split(productURL);
+            objs.put(fields[fields.length - 1], objMapper.readValue(new URL(productURL), ProductItems.class));
+        }
+
+        return objs;
+    }
+
+    private Map<String, SimpleProduct> getSimpleProducts() throws IOException {
         Map<String, SimpleProduct> objs = new TreeMap<>();
 
         ObjectMapper objMapper = new ObjectMapper();
