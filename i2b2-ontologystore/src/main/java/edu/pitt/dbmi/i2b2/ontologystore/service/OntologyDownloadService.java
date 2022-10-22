@@ -18,8 +18,8 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
-import edu.pitt.dbmi.i2b2.ontologystore.model.ActionSummary;
-import edu.pitt.dbmi.i2b2.ontologystore.model.OntologyProductAction;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItems;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,24 +54,42 @@ public class OntologyDownloadService {
         this.fileSysService = fileSysService;
     }
 
-    public synchronized void performDownload(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
+    public synchronized void performDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
         actions = validate(actions, summaries);
         actions = prepare(actions, summaries);
         actions.stream().filter(e -> e.isDownload()).forEach(action -> summaries.add(download(action)));
     }
 
-    private List<OntologyProductAction> validate(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        List<OntologyProductAction> downloadActions = new LinkedList<>();
+    private List<ProductActionType> validate(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+        List<ProductActionType> downloadActions = new LinkedList<>();
 
         actions.forEach(action -> {
             String productFolder = action.getKey().replaceAll(".json", "");
             if (fileSysService.hasFinshedDownload(productFolder)) {
-                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+                ActionSummaryType summary = new ActionSummaryType();
+                summary.setTitle(action.getTitle());
+                summary.setActionType(ACTION_TYPE);
+                summary.setInProgress(false);
+                summary.setSuccess(true);
+                summary.setDetail("Already downloaded.");
+                summaries.add(summary);
             } else if (fileSysService.hasFailedDownload(productFolder)) {
-                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed."));
+                ActionSummaryType summary = new ActionSummaryType();
+                summary.setTitle(action.getTitle());
+                summary.setActionType(ACTION_TYPE);
+                summary.setInProgress(false);
+                summary.setSuccess(false);
+                summary.setDetail("Download previously failed.");
+                summaries.add(summary);
             } else if (fileSysService.hasStartedDownload(productFolder)) {
-                summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Download already started."));
+                ActionSummaryType summary = new ActionSummaryType();
+                summary.setTitle(action.getTitle());
+                summary.setActionType(ACTION_TYPE);
+                summary.setInProgress(true);
+                summary.setSuccess(false);
+                summary.setDetail("Download already started.");
+                summaries.add(summary);
             } else {
                 downloadActions.add(action);
             }
@@ -80,8 +98,8 @@ public class OntologyDownloadService {
         return downloadActions;
     }
 
-    private List<OntologyProductAction> prepare(List<OntologyProductAction> actions, List<ActionSummary> summaries) {
-        List<OntologyProductAction> downloadActions = new LinkedList<>();
+    private List<ProductActionType> prepare(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+        List<ProductActionType> downloadActions = new LinkedList<>();
 
         actions.forEach(action -> {
             String productFolder = action.getKey().replaceAll(".json", "");
@@ -95,7 +113,13 @@ public class OntologyDownloadService {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
-                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                    ActionSummaryType summary = new ActionSummaryType();
+                    summary.setTitle(action.getTitle());
+                    summary.setActionType(ACTION_TYPE);
+                    summary.setInProgress(false);
+                    summary.setSuccess(false);
+                    summary.setDetail("Unable to create directories for download.");
+                    summaries.add(summary);
                 }
 
             } else {
@@ -103,7 +127,13 @@ public class OntologyDownloadService {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
-                    summaries.add(new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                    ActionSummaryType summary = new ActionSummaryType();
+                    summary.setTitle(action.getTitle());
+                    summary.setActionType(ACTION_TYPE);
+                    summary.setInProgress(false);
+                    summary.setSuccess(false);
+                    summary.setDetail("Unable to create directories for download.");
+                    summaries.add(summary);
                 }
             }
         });
@@ -111,7 +141,7 @@ public class OntologyDownloadService {
         return downloadActions;
     }
 
-    private ActionSummary download(OntologyProductAction action) {
+    private ActionSummaryType download(ProductActionType action) {
         String productFolder = action.getKey().replaceAll(".json", "");
         Path productDir = fileSysService.getProductDirectory(productFolder);
         Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
@@ -143,11 +173,25 @@ public class OntologyDownloadService {
             LOGGER.error("", exception);
             fileSysService.createDownloadFailedIndicatorFile(productFolder);
 
-            return new ActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download Failed!");
+            ActionSummaryType summary = new ActionSummaryType();
+            summary.setTitle(action.getTitle());
+            summary.setActionType(ACTION_TYPE);
+            summary.setInProgress(false);
+            summary.setSuccess(false);
+            summary.setDetail("Download Failed!");
+
+            return summary;
         }
         fileSysService.createDownloadFinishedIndicatorFile(productFolder);
 
-        return new ActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Downloaded.");
+        ActionSummaryType summary = new ActionSummaryType();
+        summary.setTitle(action.getTitle());
+        summary.setActionType(ACTION_TYPE);
+        summary.setInProgress(false);
+        summary.setSuccess(true);
+        summary.setDetail("Downloaded.");
+
+        return summary;
     }
 
     private static void downloadFile(String uri, Path productDir) throws IOException {

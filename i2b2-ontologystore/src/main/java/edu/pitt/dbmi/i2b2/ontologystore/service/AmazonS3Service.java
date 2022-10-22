@@ -20,11 +20,13 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.TerminologiesType;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItems;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductList;
 import edu.pitt.dbmi.i2b2.ontologystore.model.SimpleProduct;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -70,7 +72,10 @@ public class AmazonS3Service {
                 product.setOwner(obj.getProductOwner());
                 product.setType(obj.getProductType());
                 product.setIncludeNetworkPackage(obj.getIncludeNetworkPackage().equals("Y"));
-                product.setTerminologies(obj.getTerminologies());
+
+                TerminologiesType terminologies = new TerminologiesType();
+                terminologies.getTerminology().addAll(Arrays.asList(obj.getTerminologies()));
+                product.setTerminologies(terminologies);
 
                 getStatus(product);
 

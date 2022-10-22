@@ -22,7 +22,9 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
+import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
@@ -41,11 +43,13 @@ public class OntologyStoreService extends AbstractWebService {
     private final PmDBAccess pmDBAccess;
     private final HiveDBAccess hiveDBAccess;
     private final AmazonS3Service amazonS3Service;
+    private final OntologyDownloadService downloadService;
 
-    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service) {
+    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service, OntologyDownloadService downloadService) {
         this.pmDBAccess = pmDBAccess;
         this.hiveDBAccess = hiveDBAccess;
         this.amazonS3Service = amazonS3Service;
+        this.downloadService = downloadService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -53,10 +57,29 @@ public class OntologyStoreService extends AbstractWebService {
             return getNullRequestResponse();
         }
 
-        String xmlRequest = req.toString();
-        ResponseDataMessage getProductsDataMessage = new ResponseDataMessage(xmlRequest);
+        ResponseDataMessage responseDataMsg = new ResponseDataMessage(req.toString());
 
-        return execute(new GetProductsRequestHandler(getProductsDataMessage, amazonS3Service, pmDBAccess), 5000);
+        long waitTime = 0;
+        if ((responseDataMsg.getRequestMessageType() != null) && (responseDataMsg.getRequestMessageType().getRequestHeader() != null)) {
+            waitTime = responseDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
+        }
+
+        return execute(new GetProductsRequestHandler(responseDataMsg, amazonS3Service, pmDBAccess), waitTime);
+    }
+
+    public OMElement getProductActions(OMElement req) throws XMLStreamException, I2B2Exception {
+        if (req == null) {
+            return getNullRequestResponse();
+        }
+
+        ProductActionDataMessage productActionDataMsg = new ProductActionDataMessage(req.toString());
+
+        long waitTime = 0;
+        if ((productActionDataMsg.getRequestMessageType() != null) && (productActionDataMsg.getRequestMessageType().getRequestHeader() != null)) {
+            waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
+        }
+
+        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, pmDBAccess), waitTime);
     }
 
 }

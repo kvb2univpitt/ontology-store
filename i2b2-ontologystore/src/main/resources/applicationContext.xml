@@ -35,19 +35,6 @@
         </constructor-arg>
     </bean>
 
-    <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
-    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
-        <constructor-arg>
-            <ref bean="pmDBAccess"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="hiveDBAccess"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="amazonS3Service"/>
-        </constructor-arg>
-    </bean>
-
     <!-- provide specific services -->
     <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService">
         <constructor-arg type="java.lang.String">
@@ -65,12 +52,28 @@
             <ref bean="fileSysService"/>
         </constructor-arg>
     </bean>
-    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService">
+    <bean id="downloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService">
         <constructor-arg>
             <ref bean="amazonS3Service"/>
         </constructor-arg>
         <constructor-arg>
             <ref bean="fileSysService"/>
+        </constructor-arg>
+    </bean>
+
+    <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
+    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
+        <constructor-arg>
+            <ref bean="pmDBAccess"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="hiveDBAccess"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="amazonS3Service"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="downloadService"/>
         </constructor-arg>
     </bean>
 </beans>

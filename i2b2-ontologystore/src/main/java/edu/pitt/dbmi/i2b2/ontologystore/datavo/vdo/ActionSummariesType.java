@@ -17,16 +17,16 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for productsType complex type.
+ * <p>Java class for actionSummariesType complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="productsType">
+ * &lt;complexType name="actionSummariesType">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="product" type="{http://www.i2b2.org/xsd/cell/ontologystore/1.1/}productType" maxOccurs="unbounded"/>
+ *         &lt;element name="action_summary" type="{http://www.i2b2.org/xsd/cell/ontologystore/1.1/}actionSummaryType" maxOccurs="unbounded"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -36,41 +36,41 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "productsType", propOrder = {
-    "product"
+@XmlType(name = "actionSummariesType", propOrder = {
+    "actionSummary"
 })
-public class ProductsType {
+public class ActionSummariesType {
 
-    @XmlElement(required = true)
-    protected List<ProductType> product;
+    @XmlElement(name = "action_summary", required = true)
+    protected List<ActionSummaryType> actionSummary;
 
     /**
-     * Gets the value of the product property.
+     * Gets the value of the actionSummary property.
      * 
      * <p>
      * This accessor method returns a reference to the live list,
      * not a snapshot. Therefore any modification you make to the
      * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the product property.
+     * This is why there is not a <CODE>set</CODE> method for the actionSummary property.
      * 
      * <p>
      * For example, to add a new item, do as follows:
      * <pre>
-     *    getProduct().add(newItem);
+     *    getActionSummary().add(newItem);
      * </pre>
      * 
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link ProductType }
+     * {@link ActionSummaryType }
      * 
      * 
      */
-    public List<ProductType> getProduct() {
-        if (product == null) {
-            product = new ArrayList<ProductType>();
+    public List<ActionSummaryType> getActionSummary() {
+        if (actionSummary == null) {
+            actionSummary = new ArrayList<ActionSummaryType>();
         }
-        return this.product;
+        return this.actionSummary;
     }
 
 }

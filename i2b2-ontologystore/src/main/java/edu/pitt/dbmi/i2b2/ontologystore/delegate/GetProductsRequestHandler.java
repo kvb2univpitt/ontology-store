@@ -21,12 +21,11 @@ package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
-import java.util.List;
 
 /**
  *
@@ -55,14 +54,12 @@ public class GetProductsRequestHandler extends RequestHandler {
         if (isInValidUser(messageHeader)) {
             return createInvalidUserResponse(messageHeader);
         }
-        if (isNotAdmin(messageHeader)) {
-            return createNotAdminResponse(messageHeader);
-        }
 
-        List<ProductType> products = amazonS3Service.getProducts();
+        ProductsType productsType = new ProductsType();
+        productsType.getProduct().addAll(amazonS3Service.getProducts());
 
         ResponseMessageType responseMessageType = MessageFactory
-                .buildGetProductsResponse(messageHeader, products);
+                .buildGetProductsResponse(messageHeader, productsType);
 
         return MessageFactory.convertToXMLString(responseMessageType);
     }

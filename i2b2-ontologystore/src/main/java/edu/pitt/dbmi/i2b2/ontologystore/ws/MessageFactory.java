@@ -31,14 +31,14 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResultStatusType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.util.OntologyStoreJAXBUtil;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
@@ -179,13 +179,37 @@ public class MessageFactory {
         return messageHeader;
     }
 
-    public static ResponseMessageType buildGetProductsResponse(MessageHeaderType messageHeaderType, List<ProductType> products) {
+    public static ResponseMessageType buildGetProductsResponse(MessageHeaderType messageHeaderType, ProductsType value) {
         ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
 
         BodyType bodyType = new BodyType();
-        if (products != null) {
+        if (value != null) {
             edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory of = new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory();
-            bodyType.getAny().add(of.createProducts(new ProductsType(products)));
+            bodyType.getAny().add(of.createProducts(value));
+        }
+
+        return createResponseMessageType(messageHeaderType, respHeader, bodyType);
+    }
+
+    public static ResponseMessageType buildGetActionSummariesResponse(MessageHeaderType messageHeaderType, ActionSummariesType value) {
+        ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
+
+        BodyType bodyType = new BodyType();
+        if (value != null) {
+            edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory of = new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory();
+            bodyType.getAny().add(of.createActionSummaries(value));
+        }
+
+        return createResponseMessageType(messageHeaderType, respHeader, bodyType);
+    }
+
+    public static ResponseMessageType buildGetProductActionsType(MessageHeaderType messageHeaderType, ProductActionsType value) {
+        ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
+
+        BodyType bodyType = new BodyType();
+        if (value != null) {
+            edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory of = new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory();
+            bodyType.getAny().add(of.createProductActions(value));
         }
 
         return createResponseMessageType(messageHeaderType, respHeader, bodyType);
