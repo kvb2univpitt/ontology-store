@@ -44,6 +44,16 @@
             <ref bean="resourcePatternResolver"/>
         </constructor-arg>
     </bean>
+    <bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService">
+        <constructor-arg>
+            <ref bean="fileSysService"/>
+        </constructor-arg>
+    </bean>
+    <bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService">
+        <constructor-arg>
+            <ref bean="fileSysService"/>
+        </constructor-arg>
+    </bean>
     <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
         <constructor-arg type="java.lang.String">
             <value>${aws.s3.json.product.list}</value>
@@ -60,6 +70,20 @@
             <ref bean="fileSysService"/>
         </constructor-arg>
     </bean>
+    <bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService">
+        <constructor-arg>
+            <ref bean="fileSysService"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="hiveDBAccess"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="ontInstallerService"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="crcInstallerService"/>
+        </constructor-arg>
+    </bean>
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
@@ -74,6 +98,9 @@
         </constructor-arg>
         <constructor-arg>
             <ref bean="downloadService"/>
+        </constructor-arg>
+        <constructor-arg>
+            <ref bean="installService"/>
         </constructor-arg>
     </bean>
 </beans>

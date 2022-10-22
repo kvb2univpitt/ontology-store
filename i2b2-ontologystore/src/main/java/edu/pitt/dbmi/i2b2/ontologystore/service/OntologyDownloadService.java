@@ -40,7 +40,7 @@ import org.apache.commons.logging.LogFactory;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class OntologyDownloadService {
+public class OntologyDownloadService extends AbstractOntologyService {
 
     private static final Log LOGGER = LogFactory.getLog(OntologyDownloadService.class);
 
@@ -67,29 +67,11 @@ public class OntologyDownloadService {
         actions.forEach(action -> {
             String productFolder = action.getKey().replaceAll(".json", "");
             if (fileSysService.hasFinshedDownload(productFolder)) {
-                ActionSummaryType summary = new ActionSummaryType();
-                summary.setTitle(action.getTitle());
-                summary.setActionType(ACTION_TYPE);
-                summary.setInProgress(false);
-                summary.setSuccess(true);
-                summary.setDetail("Already downloaded.");
-                summaries.add(summary);
+                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
             } else if (fileSysService.hasFailedDownload(productFolder)) {
-                ActionSummaryType summary = new ActionSummaryType();
-                summary.setTitle(action.getTitle());
-                summary.setActionType(ACTION_TYPE);
-                summary.setInProgress(false);
-                summary.setSuccess(false);
-                summary.setDetail("Download previously failed.");
-                summaries.add(summary);
+                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed."));
             } else if (fileSysService.hasStartedDownload(productFolder)) {
-                ActionSummaryType summary = new ActionSummaryType();
-                summary.setTitle(action.getTitle());
-                summary.setActionType(ACTION_TYPE);
-                summary.setInProgress(true);
-                summary.setSuccess(false);
-                summary.setDetail("Download already started.");
-                summaries.add(summary);
+                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Download already started."));
             } else {
                 downloadActions.add(action);
             }
@@ -113,13 +95,7 @@ public class OntologyDownloadService {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
-                    ActionSummaryType summary = new ActionSummaryType();
-                    summary.setTitle(action.getTitle());
-                    summary.setActionType(ACTION_TYPE);
-                    summary.setInProgress(false);
-                    summary.setSuccess(false);
-                    summary.setDetail("Unable to create directories for download.");
-                    summaries.add(summary);
+                    summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
                 }
 
             } else {
@@ -127,13 +103,7 @@ public class OntologyDownloadService {
                     fileSysService.createDownloadStartedIndicatorFile(productFolder);
                     downloadActions.add(action);
                 } else {
-                    ActionSummaryType summary = new ActionSummaryType();
-                    summary.setTitle(action.getTitle());
-                    summary.setActionType(ACTION_TYPE);
-                    summary.setInProgress(false);
-                    summary.setSuccess(false);
-                    summary.setDetail("Unable to create directories for download.");
-                    summaries.add(summary);
+                    summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
                 }
             }
         });
@@ -173,25 +143,11 @@ public class OntologyDownloadService {
             LOGGER.error("", exception);
             fileSysService.createDownloadFailedIndicatorFile(productFolder);
 
-            ActionSummaryType summary = new ActionSummaryType();
-            summary.setTitle(action.getTitle());
-            summary.setActionType(ACTION_TYPE);
-            summary.setInProgress(false);
-            summary.setSuccess(false);
-            summary.setDetail("Download Failed!");
-
-            return summary;
+            return createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download Failed!");
         }
         fileSysService.createDownloadFinishedIndicatorFile(productFolder);
 
-        ActionSummaryType summary = new ActionSummaryType();
-        summary.setTitle(action.getTitle());
-        summary.setActionType(ACTION_TYPE);
-        summary.setInProgress(false);
-        summary.setSuccess(true);
-        summary.setDetail("Downloaded.");
-
-        return summary;
+        return createActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Downloaded.");
     }
 
     private static void downloadFile(String uri, Path productDir) throws IOException {

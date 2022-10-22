@@ -47,7 +47,7 @@ public abstract class RequestHandler {
 
     public abstract String execute() throws I2B2Exception;
 
-    protected boolean isInValidUser(MessageHeaderType messageHeader) {
+    protected boolean isInvalidUser(MessageHeaderType messageHeader) {
         return pmDBAccess.getRoleInfo(messageHeader) == null;
     }
 

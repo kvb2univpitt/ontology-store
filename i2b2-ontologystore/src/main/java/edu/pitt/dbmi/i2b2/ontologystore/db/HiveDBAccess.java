@@ -18,8 +18,6 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.db;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,21 +33,35 @@ public class HiveDBAccess {
 
     private static final Log LOGGER = LogFactory.getLog(HiveDBAccess.class);
 
+    private final String QUERY_ONT_DATASOURCE = "SELECT c_db_datasource FROM ont_db_lookup WHERE c_project_path = ?";
+    private final String QUERY_CRC_DATASOURCE = "SELECT c_db_datasource FROM crc_db_lookup WHERE c_project_path = ?";
+
     private final JdbcTemplate jdbcTemplate;
 
     public HiveDBAccess(DataSource hiveDataSource) {
         this.jdbcTemplate = new JdbcTemplate(hiveDataSource);
     }
 
-    private String getSchema() throws SQLException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                return conn.getSchema();
-            }
+    public String getOntDataSourceJNDIName(String project) {
+        String projectPath = String.format("%s/", project);
+        try {
+            return jdbcTemplate.queryForObject(QUERY_ONT_DATASOURCE, String.class, new Object[]{projectPath});
+        } catch (Exception exception) {
+            String errMsg = String.format("Unable to get ONT JNDI name for project %s.", project);
+            LOGGER.error(errMsg, exception);
+            return null;
         }
+    }
 
-        return null;
+    public String getCrcDataSourceJNDIName(String project) {
+        String projectPath = String.format("/%s/", project);
+        try {
+            return jdbcTemplate.queryForObject(QUERY_CRC_DATASOURCE, String.class, new Object[]{projectPath});
+        } catch (Exception exception) {
+            String errMsg = String.format("Unable to get CRC JNDI name for project %s.", project);
+            LOGGER.error(errMsg, exception);
+            return null;
+        }
     }
 
 }

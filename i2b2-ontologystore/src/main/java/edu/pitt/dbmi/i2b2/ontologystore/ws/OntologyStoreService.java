@@ -25,6 +25,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
@@ -44,12 +45,14 @@ public class OntologyStoreService extends AbstractWebService {
     private final HiveDBAccess hiveDBAccess;
     private final AmazonS3Service amazonS3Service;
     private final OntologyDownloadService downloadService;
+    private final OntologyInstallService installService;
 
-    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service, OntologyDownloadService downloadService) {
+    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service, OntologyDownloadService downloadService, OntologyInstallService installService) {
         this.pmDBAccess = pmDBAccess;
         this.hiveDBAccess = hiveDBAccess;
         this.amazonS3Service = amazonS3Service;
         this.downloadService = downloadService;
+        this.installService = installService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -79,7 +82,7 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, pmDBAccess), waitTime);
+        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, installService, pmDBAccess), waitTime);
     }
 
 }

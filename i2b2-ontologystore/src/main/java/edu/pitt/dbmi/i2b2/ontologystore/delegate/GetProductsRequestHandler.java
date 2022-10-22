@@ -51,7 +51,7 @@ public class GetProductsRequestHandler extends RequestHandler {
     public String execute() throws I2B2Exception {
         MessageHeaderType messageHeader = MessageFactory
                 .createResponseMessageHeader(responseDataMessage.getMessageHeaderType());
-        if (isInValidUser(messageHeader)) {
+        if (isInvalidUser(messageHeader)) {
             return createInvalidUserResponse(messageHeader);
         }
 
