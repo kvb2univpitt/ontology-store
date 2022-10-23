@@ -14,10 +14,10 @@
 
     <!-- datasource -->
     <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="java:/PMBootStrapDS"/>
+        <property name="jndiName" value="${spring.pm.datasource.jndi-name}"/>
     </bean>
     <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="java:/OntologyBootStrapDS"/>
+        <property name="jndiName" value="${spring.hive.datasource.jndi-name}"/>
     </bean>
 
     <!-- peform database tasks -->
