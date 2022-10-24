@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
@@ -54,7 +56,10 @@ public class FileSysService {
     private final String downloadDirectory;
     private final ResourcePatternResolver resourcePatternResolver;
 
-    public FileSysService(String downloadDirectory, ResourcePatternResolver resourcePatternResolver) {
+    @Autowired
+    public FileSysService(
+            @Value("${ontology.dir.download}") String downloadDirectory,
+            ResourcePatternResolver resourcePatternResolver) {
         this.downloadDirectory = Paths.get(downloadDirectory, "products").toString();
         this.resourcePatternResolver = resourcePatternResolver;
     }
@@ -67,7 +72,7 @@ public class FileSysService {
         List<String> list = new LinkedList<>();
 
         Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+        try ( BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.isEmpty()) {
@@ -83,7 +88,7 @@ public class FileSysService {
         List<String> list = new LinkedList<>();
 
         Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+        try ( BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.isEmpty()) {

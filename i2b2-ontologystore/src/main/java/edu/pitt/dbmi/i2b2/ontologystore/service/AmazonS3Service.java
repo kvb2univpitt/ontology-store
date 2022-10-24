@@ -35,6 +35,8 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -51,7 +53,10 @@ public class AmazonS3Service {
     private final String productListJsonUrl;
     private final FileSysService fileSysService;
 
-    public AmazonS3Service(String productListJsonUrl, FileSysService fileSysService) {
+    @Autowired
+    public AmazonS3Service(
+            @Value("${aws.s3.json.product.list}") String productListJsonUrl,
+            FileSysService fileSysService) {
         this.productListJsonUrl = productListJsonUrl;
         this.fileSysService = fileSysService;
     }

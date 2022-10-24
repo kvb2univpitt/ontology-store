@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
@@ -54,7 +55,12 @@ public class OntologyInstallService extends AbstractOntologyService {
     private final OntInstallerService ontInstallerService;
     private final CrcInstallerService crcInstallerService;
 
-    public OntologyInstallService(FileSysService fileSysService, HiveDBAccess hiveDBAccess, OntInstallerService ontInstallerService, CrcInstallerService crcInstallerService) {
+    @Autowired
+    public OntologyInstallService(
+            FileSysService fileSysService,
+            HiveDBAccess hiveDBAccess,
+            OntInstallerService ontInstallerService,
+            CrcInstallerService crcInstallerService) {
         this.fileSysService = fileSysService;
         this.hiveDBAccess = hiveDBAccess;
         this.ontInstallerService = ontInstallerService;

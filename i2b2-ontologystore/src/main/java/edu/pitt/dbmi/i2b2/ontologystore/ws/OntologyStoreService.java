@@ -19,7 +19,6 @@
 package edu.pitt.dbmi.i2b2.ontologystore.ws;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
-import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
@@ -30,6 +29,7 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -42,14 +42,17 @@ public class OntologyStoreService extends AbstractWebService {
     private static final Log LOGGER = LogFactory.getLog(OntologyStoreService.class);
 
     private final PmDBAccess pmDBAccess;
-    private final HiveDBAccess hiveDBAccess;
     private final AmazonS3Service amazonS3Service;
     private final OntologyDownloadService downloadService;
     private final OntologyInstallService installService;
 
-    public OntologyStoreService(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess, AmazonS3Service amazonS3Service, OntologyDownloadService downloadService, OntologyInstallService installService) {
+    @Autowired
+    public OntologyStoreService(
+            PmDBAccess pmDBAccess,
+            AmazonS3Service amazonS3Service,
+            OntologyDownloadService downloadService,
+            OntologyInstallService installService) {
         this.pmDBAccess = pmDBAccess;
-        this.hiveDBAccess = hiveDBAccess;
         this.amazonS3Service = amazonS3Service;
         this.downloadService = downloadService;
         this.installService = installService;

@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-<beans>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config />
+
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
 
@@ -22,86 +27,18 @@
     </bean>
 
     <!-- peform database tasks -->
-    <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess">
-        <constructor-arg>
-            <ref bean="pmDataSource"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="hiveDataSource"/>
-        </constructor-arg>
-    </bean>
-    <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess">
-        <constructor-arg>
-            <ref bean="hiveDataSource"/>
-        </constructor-arg>
-    </bean>
+    <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess" />
+    <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess" />
 
     <!-- provide specific services -->
-    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService">
-        <constructor-arg type="java.lang.String">
-            <value>${ontology.dir.download}</value>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="resourcePatternResolver"/>
-        </constructor-arg>
-    </bean>
-    <bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService">
-        <constructor-arg>
-            <ref bean="fileSysService"/>
-        </constructor-arg>
-    </bean>
-    <bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService">
-        <constructor-arg>
-            <ref bean="fileSysService"/>
-        </constructor-arg>
-    </bean>
-    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service">
-        <constructor-arg type="java.lang.String">
-            <value>${aws.s3.json.product.list}</value>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="fileSysService"/>
-        </constructor-arg>
-    </bean>
-    <bean id="downloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService">
-        <constructor-arg>
-            <ref bean="amazonS3Service"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="fileSysService"/>
-        </constructor-arg>
-    </bean>
-    <bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService">
-        <constructor-arg>
-            <ref bean="fileSysService"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="hiveDBAccess"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="ontInstallerService"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="crcInstallerService"/>
-        </constructor-arg>
-    </bean>
+    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
+    <bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService" />
+    <bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService" />
+    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service" />
+    <bean id="downloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
+    <bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
-    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService">
-        <constructor-arg>
-            <ref bean="pmDBAccess"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="hiveDBAccess"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="amazonS3Service"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="downloadService"/>
-        </constructor-arg>
-        <constructor-arg>
-            <ref bean="installService"/>
-        </constructor-arg>
-    </bean>
+    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
+
 </beans>

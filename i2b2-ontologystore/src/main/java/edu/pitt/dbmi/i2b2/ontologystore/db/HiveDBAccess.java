@@ -21,6 +21,7 @@ package edu.pitt.dbmi.i2b2.ontologystore.db;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -38,6 +39,7 @@ public class HiveDBAccess {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     public HiveDBAccess(DataSource hiveDataSource) {
         this.jdbcTemplate = new JdbcTemplate(hiveDataSource);
     }

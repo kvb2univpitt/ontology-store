@@ -43,6 +43,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.owasp.esapi.ESAPI;
 import org.owasp.esapi.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -62,6 +63,7 @@ public class PmDBAccess {
     private final JdbcTemplate pmJdbcTemplate;
     private final JdbcTemplate hiveJdbcTemplate;
 
+    @Autowired
     public PmDBAccess(DataSource pmDataSource, DataSource hiveDataSource) {
         this.pmJdbcTemplate = new JdbcTemplate(pmDataSource);
         this.hiveJdbcTemplate = new JdbcTemplate(hiveDataSource);
@@ -186,7 +188,7 @@ public class PmDBAccess {
     private String getSchema() throws SQLException {
         DataSource dataSource = pmJdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
+            try ( Connection conn = dataSource.getConnection()) {
                 return conn.getSchema();
             }
         }

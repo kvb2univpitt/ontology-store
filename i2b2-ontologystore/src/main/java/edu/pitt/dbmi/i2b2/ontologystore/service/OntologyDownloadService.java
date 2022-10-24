@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -49,7 +50,10 @@ public class OntologyDownloadService extends AbstractOntologyService {
     private final AmazonS3Service amazonS3Service;
     private final FileSysService fileSysService;
 
-    public OntologyDownloadService(AmazonS3Service amazonS3Service, FileSysService fileSysService) {
+    @Autowired
+    public OntologyDownloadService(
+            AmazonS3Service amazonS3Service,
+            FileSysService fileSysService) {
         this.amazonS3Service = amazonS3Service;
         this.fileSysService = fileSysService;
     }

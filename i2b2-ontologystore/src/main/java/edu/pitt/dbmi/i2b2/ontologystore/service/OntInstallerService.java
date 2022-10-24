@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -42,6 +43,7 @@ public class OntInstallerService extends AbstractInstallerService {
     protected static final String TABLE_ACCESS_TABLE_NAME = "table_access";
     protected static final String TABLE_ACCESS_TABLE_PK = "c_table_cd";
 
+    @Autowired
     public OntInstallerService(FileSysService fileSysService) {
         super(fileSysService);
     }
