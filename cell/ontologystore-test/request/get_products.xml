@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
-             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
-             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/">
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
     <message_header>
         <proxy>
             <redirect_url>I2B2_URI</redirect_url>
