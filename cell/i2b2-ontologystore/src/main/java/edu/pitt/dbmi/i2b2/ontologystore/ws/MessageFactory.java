@@ -125,7 +125,7 @@ public class MessageFactory {
         messageHeader.setHl7VersionCompatible(new BigDecimal("2.4"));
 
         ApplicationType appType = new ApplicationType();
-        appType.setApplicationName("Ontology Cell");
+        appType.setApplicationName("OntologyStore Cell");
         appType.setApplicationVersion("1.700");
         messageHeader.setSendingApplication(appType);
 

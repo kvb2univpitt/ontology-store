@@ -6,7 +6,7 @@
             <redirect_url>I2B2_URI</redirect_url>
         </proxy>
         <sending_application>
-            <application_name>i2b2 Ontology Service</application_name>
+            <application_name>i2b2 OntologyStore Service</application_name>
             <application_version>1.7</application_version>
         </sending_application>
         <sending_facility>
