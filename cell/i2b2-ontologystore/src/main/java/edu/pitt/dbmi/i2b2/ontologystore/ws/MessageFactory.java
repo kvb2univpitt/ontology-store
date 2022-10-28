@@ -95,7 +95,7 @@ public class MessageFactory {
      * @throws I2B2Exception
      */
     public static String convertToXMLString(ResponseMessageType respMessageType) throws I2B2Exception {
-        try ( StringWriter writer = new StringWriter()) {
+        try (StringWriter writer = new StringWriter()) {
             edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ObjectFactory objectFactory = new edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ObjectFactory();
             OntologyStoreJAXBUtil.getJaxbUtil().marshaller(objectFactory.createResponse(respMessageType), writer);
 

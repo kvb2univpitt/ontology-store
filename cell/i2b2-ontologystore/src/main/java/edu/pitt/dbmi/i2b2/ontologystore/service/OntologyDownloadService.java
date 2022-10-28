@@ -158,7 +158,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
         String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
         Path file = Paths.get(productDir.toString(), fileName);
 
-        try ( InputStream inputStream = URI.create(uri).toURL().openStream()) {
+        try (InputStream inputStream = URI.create(uri).toURL().openStream()) {
             Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
         }
     }

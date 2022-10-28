@@ -51,7 +51,7 @@ public class GetUserConfigurationRequestMessage extends ProjectManagementRequest
      * @throws JAXBUtilException
      */
     public String getXMLString(RequestMessageType reqMessageType) throws JAXBUtilException {
-        try ( StringWriter writer = new StringWriter()) {
+        try (StringWriter writer = new StringWriter()) {
             JAXBElement<RequestMessageType> element = (new edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ObjectFactory())
                     .createRequest(reqMessageType);
             OntologyStoreJAXBUtil.getJaxbUtil().marshaller(element, writer);

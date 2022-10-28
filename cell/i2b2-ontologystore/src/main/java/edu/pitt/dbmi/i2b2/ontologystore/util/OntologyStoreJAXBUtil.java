@@ -32,12 +32,12 @@ public final class OntologyStoreJAXBUtil {
 
     private OntologyStoreJAXBUtil() {
     }
-    
+
     public static JAXBUtil getJaxbUtil() {
         if (jaxbUtil == null) {
             jaxbUtil = new JAXBUtil(JAXBConstant.DEFAULT_PACKAGE_NAME);
         }
-        
+
         return jaxbUtil;
     }
 

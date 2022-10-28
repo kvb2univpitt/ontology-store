@@ -68,11 +68,11 @@ public class CrcInstallerService extends AbstractInstallerService {
     private void insertIntoConceptDimensionTable(JdbcTemplate jdbcTemplate, Path file) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?;", conn.getSchema(), CONCEPT_DIMENSION_TABLE);
                 PreparedStatement pstmt = conn.prepareStatement(sql);
 
-                try ( BufferedReader reader = Files.newBufferedReader(file)) {
+                try (BufferedReader reader = Files.newBufferedReader(file)) {
                     // skip header
                     reader.readLine();
 
@@ -109,7 +109,7 @@ public class CrcInstallerService extends AbstractInstallerService {
 
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 // create prepared statement
                 String sql = createInsertStatement(conn.getSchema(), CONCEPT_DIMENSION_TABLE, fileSysService.getHeaders(file));
                 PreparedStatement pstmt = conn.prepareStatement(sql);

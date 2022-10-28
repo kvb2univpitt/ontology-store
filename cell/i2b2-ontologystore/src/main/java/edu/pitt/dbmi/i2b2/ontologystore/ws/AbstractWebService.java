@@ -54,7 +54,7 @@ public abstract class AbstractWebService {
         executorService.submit(runnable);
         executorService.shutdown();
         try {
-            // timeout after 5 seconds
+            // timeout after waitTime seconds
             if (waitTime > 0) {
                 executorService.awaitTermination(waitTime, TimeUnit.MILLISECONDS);
             } else {
@@ -62,7 +62,7 @@ public abstract class AbstractWebService {
             }
         } catch (InterruptedException exception) {
             LOGGER.error(exception.getMessage());
-            throw new I2B2Exception("Thread error while running Ontology job.");
+            throw new I2B2Exception("Thread error while running OntologyStore job.");
         } finally {
             executorService.shutdownNow();
         }
@@ -84,7 +84,7 @@ public abstract class AbstractWebService {
                 ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, timeOuterror);
                 responseData = MessageFactory.convertToXMLString(responseMsgType);
             } else {
-                LOGGER.error("ontology data response is null");
+                LOGGER.error("ontologystore data response is null");
                 LOGGER.info("waitTime is " + waitTime);
                 ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, UNKNOWN_ERROR_MESSAGE);
                 responseData = MessageFactory.convertToXMLString(responseMsgType);

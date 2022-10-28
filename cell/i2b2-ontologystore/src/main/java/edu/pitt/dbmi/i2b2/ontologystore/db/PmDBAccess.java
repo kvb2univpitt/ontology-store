@@ -188,7 +188,7 @@ public class PmDBAccess {
     private String getSchema() throws SQLException {
         DataSource dataSource = pmJdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 return conn.getSchema();
             }
         }

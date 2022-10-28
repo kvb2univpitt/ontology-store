@@ -73,7 +73,7 @@ public abstract class AbstractInstallerService {
     protected boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 PreparedStatement pstmt = null;
                 switch (conn.getMetaData().getDatabaseProductName()) {
                     case "PostgreSQL":
@@ -115,7 +115,7 @@ public abstract class AbstractInstallerService {
     protected String getDatabaseVendor(JdbcTemplate jdbcTemplate) {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 return conn.getMetaData().getDatabaseProductName();
             } catch (SQLException exception) {
                 LOGGER.error("", exception);
@@ -140,7 +140,7 @@ public abstract class AbstractInstallerService {
     protected void insert(JdbcTemplate jdbcTemplate, String table, Path file) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 // create prepared statement
                 String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), fileSysService.getHeaders(file));
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -174,7 +174,7 @@ public abstract class AbstractInstallerService {
     protected void batchInsert(JdbcTemplate jdbcTemplate, String table, Path file, int batchSize) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 // create prepared statement
                 String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), fileSysService.getHeaders(file));
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -182,7 +182,7 @@ public abstract class AbstractInstallerService {
                 // get columnTypes
                 int count = 0;
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-                try ( BufferedReader reader = Files.newBufferedReader(file)) {
+                try (BufferedReader reader = Files.newBufferedReader(file)) {
                     // skip header
                     reader.readLine();
 
@@ -227,7 +227,7 @@ public abstract class AbstractInstallerService {
             List<String> columnNames = fileSysService.getHeaders(file);
             final int pkIndex = columnNames.indexOf(pkColumn);
 
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 // create prepared statement
                 String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -330,7 +330,7 @@ public abstract class AbstractInstallerService {
 
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
-            try ( Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 String query = String.format("SELECT %s FROM %s.%s", column, conn.getSchema(), table.toLowerCase());
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(query);

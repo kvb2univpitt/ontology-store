@@ -72,7 +72,7 @@ public class FileSysService {
         List<String> list = new LinkedList<>();
 
         Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try ( BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.isEmpty()) {
@@ -88,7 +88,7 @@ public class FileSysService {
         List<String> list = new LinkedList<>();
 
         Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try ( BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.isEmpty()) {
