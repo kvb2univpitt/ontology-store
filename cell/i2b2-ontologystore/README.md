@@ -56,10 +56,10 @@ Set the value for the attribute ***ontology.dir.download*** with the location to
 
 The following instructions assume i2b2 hives is deployed on Wildfly server with domain name ***localhost*** on port ***9090*** with the following credentials:
 
-| Username | Password | Role  | Domain   |
-|----------|----------|-------|----------|
-| demo     | demouser | user  | i2b2demo |
-| i2b2     | i2b2user | admin | i2b2demo |
+| Username | Password | Role  | Domain   | Project ID |
+|----------|----------|-------|----------|------------|
+| demo     | demouser | user  | i2b2demo | Demo       |
+| i2b2     | demouser | admin | i2b2demo | Demo       |
 
 ### Getting a List of Ontologies
 
