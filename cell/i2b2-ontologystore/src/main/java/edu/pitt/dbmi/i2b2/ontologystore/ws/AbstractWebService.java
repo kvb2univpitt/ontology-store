@@ -25,8 +25,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.axiom.om.OMElement;
+import org.apache.axis2.context.ConfigurationContext;
+import org.apache.axis2.description.AxisService;
+import org.apache.axis2.engine.ServiceLifeCycle;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  *
@@ -34,11 +38,22 @@ import org.apache.commons.logging.LogFactory;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public abstract class AbstractWebService {
+public abstract class AbstractWebService implements ServiceLifeCycle {
 
     private static final Log LOGGER = LogFactory.getLog(AbstractWebService.class);
 
     private static final String UNKNOWN_ERROR_MESSAGE = "Error message delivered from the remote server. You may wish to retry your last action";
+
+    @Override
+    public void startUp(ConfigurationContext context, AxisService service) {
+        ClassPathXmlApplicationContext appCtx = new ClassPathXmlApplicationContext(new String[]{"applicationContext.xml"}, false);
+        appCtx.setClassLoader(service.getClassLoader());
+        appCtx.refresh();
+    }
+
+    @Override
+    public void shutDown(ConfigurationContext context, AxisService service) {
+    }
 
     protected OMElement getNullRequestResponse() throws I2B2Exception {
         ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, UNKNOWN_ERROR_MESSAGE);
