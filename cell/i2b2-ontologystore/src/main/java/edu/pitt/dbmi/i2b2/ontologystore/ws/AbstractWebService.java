@@ -55,6 +55,15 @@ public abstract class AbstractWebService implements ServiceLifeCycle {
     public void shutDown(ConfigurationContext context, AxisService service) {
     }
 
+    protected String unescapeXml(String xml) {
+        return xml
+                .replaceAll("&lt;", "<")
+                .replaceAll("&gt;", ">")
+                .replaceAll("&quot;", "\"")
+                .replaceAll("&#39;", "\'")
+                .replaceAll("&amp;", "&");
+    }
+
     protected OMElement getNullRequestResponse() throws I2B2Exception {
         ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, UNKNOWN_ERROR_MESSAGE);
         String ontologyDataResponse = MessageFactory.convertToXMLString(responseMsgType);

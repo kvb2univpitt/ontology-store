@@ -78,7 +78,7 @@ public class OntologyStoreService extends AbstractWebService {
             return getNullRequestResponse();
         }
 
-        ProductActionDataMessage productActionDataMsg = new ProductActionDataMessage(req.toString());
+        ProductActionDataMessage productActionDataMsg = new ProductActionDataMessage(unescapeXml(req.toString()));
 
         long waitTime = 0;
         if ((productActionDataMsg.getRequestMessageType() != null) && (productActionDataMsg.getRequestMessageType().getRequestHeader() != null)) {
