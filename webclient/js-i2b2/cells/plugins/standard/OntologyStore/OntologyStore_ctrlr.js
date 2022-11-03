@@ -8,7 +8,7 @@ i2b2.OntologyStore.modal = {
                     fixedcenter: true,
                     close: false,
                     draggable: false,
-                    zindex: 4,
+                    zindex: 100,
                     modal: true,
                     visible: false
                 });
@@ -35,7 +35,7 @@ i2b2.OntologyStore.modal = {
                     fixedcenter: true,
                     close: true,
                     draggable: true,
-                    zindex: 4,
+                    zindex: 100,
                     modal: true,
                     visible: false
                 });
@@ -118,7 +118,7 @@ i2b2.OntologyStore.message = {
                 fixedcenter: true,
                 close: true,
                 draggable: true,
-                zindex: 4,
+                zindex: 100,
                 modal: false,
                 visible: false
             });
@@ -138,7 +138,7 @@ i2b2.OntologyStore.message = {
                 fixedcenter: true,
                 close: true,
                 draggable: true,
-                zindex: 4,
+                zindex: 100,
                 modal: true,
                 visible: false
             });
