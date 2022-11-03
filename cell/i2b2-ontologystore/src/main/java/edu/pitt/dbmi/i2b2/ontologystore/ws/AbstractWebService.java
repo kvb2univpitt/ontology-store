@@ -97,7 +97,7 @@ public abstract class AbstractWebService implements ServiceLifeCycle {
                 LOGGER.error("runnable.jobException is " + runnable.getException().getMessage());
                 LOGGER.info("waitTime is " + waitTime);
 
-                ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, UNKNOWN_ERROR_MESSAGE);
+                ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, runnable.getException().getMessage());
                 responseData = MessageFactory.convertToXMLString(responseMsgType);
             } else if (!runnable.isJobCompleted()) {
                 String timeOuterror = "Remote server timed out \n"
