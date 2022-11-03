@@ -377,6 +377,7 @@ i2b2.OntologyStore.Init = function (loadedDiv) {
     });
 
     document.getElementById('OntologyStore-ExecuteBtn').disabled = true;
+    i2b2.OntologyStore.syncFromCloud();
 };
 
 i2b2.OntologyStore.Unload = function () {
