@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config />
+
+    <!-- Configure spring to give a hook to axis2 without a ServletContext -->
+    <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
+
+    <!-- resolve a specified file location path -->
+    <bean id="resourcePatternResolver" class="org.springframework.core.io.support.PathMatchingResourcePatternResolver" />
+
+    <!-- application.properties -->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:application.properties" />
+        <!--<property name="location" value="file:${user.home}/.spring/ontologystore.properties" />-->
+    </bean>
+
+    <!-- datasource -->
+    <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="${spring.pm.datasource.jndi-name}"/>
+    </bean>
+    <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="${spring.hive.datasource.jndi-name}"/>
+    </bean>
+
+    <!-- peform database tasks -->
+    <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess" />
+    <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess" />
+
+    <!-- provide specific services -->
+    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
+    <bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService" />
+    <bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService" />
+    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service" />
+    <bean id="downloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
+    <bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
+
+    <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
+    <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
+
+</beans>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<serviceGroup>
+    <service name="OntologyStoreService">
+        <description>OntologyStore web services.</description>
+        <messageReceivers>
+            <messageReceiver mep="http://www.w3.org/2004/08/wsdl/in-only" class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver" />
+            <messageReceiver mep="http://www.w3.org/2004/08/wsdl/in-out" class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver" />
+        </messageReceivers>
+        <parameter name="ServiceClass" locked="false">edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService</parameter>
+        <parameter name="ServiceTCCL">composite</parameter>
+        <parameter name="ServiceObjectSupplier">org.apache.axis2.extensions.spring.receivers.SpringAppContextAwareObjectSupplier</parameter>
+        <parameter name="SpringBeanName">ontologyStoreService</parameter>
+        <parameter name="SpringContextLocation">applicationContext.xml</parameter>
+    </service>
+</serviceGroup>
