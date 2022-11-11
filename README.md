@@ -2,14 +2,14 @@
 
 An i2b2 software for downloading and installing ontologies.  The software consists of the following software components:
 
-- [i2b2-ontologystore](cell/README.md), a backend API (i2b2 cell).
-- [OntologyStore](plugin/README.md), a frontend client (i2b2 plug-in).
+- [i2b2-ontologystore](cell), a backend API (i2b2 cell).
+- [OntologyStore](plugin), a frontend client (i2b2 plug-in).
 
 
 ## Installing the Software
 
-- Instructions for installing the [i2b2-ontologystore](cell/README.md).
-- Instructions for installing the  [OntologyStore](plugin/README.md).
+- Instructions for building and installing the [i2b2-ontologystore](cell).
+- Instructions for installing the  [OntologyStore](plugin).
 
 ## Using the Software
 
