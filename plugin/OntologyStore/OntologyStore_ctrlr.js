@@ -133,6 +133,24 @@ i2b2.OntologyStore.summary = {
     }
 };
 
+i2b2.OntologyStore.downloadCheckboxAction = function (productIndex) {
+    let installChkbx = document.getElementById('install-' + productIndex);
+    let downloadChkbx = document.getElementById('download-' + productIndex);
+
+    if (!downloadChkbx.checked) {
+        installChkbx.checked = false;
+    }
+};
+
+i2b2.OntologyStore.installCheckboxAction = function (productIndex) {
+    let installChkbx = document.getElementById('install-' + productIndex);
+    let downloadChkbx = document.getElementById('download-' + productIndex);
+
+    if (installChkbx.checked) {
+        downloadChkbx.checked = true;
+    }
+};
+
 i2b2.OntologyStore.refreshProductTable = function () {
     let datatable = i2b2.OntologyStore.productTable;
     datatable.clear();
@@ -164,14 +182,14 @@ i2b2.OntologyStore.refreshProductTable = function () {
         if (product.downloaded || product.installed || product.failed || product.started) {
             columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" disabled="disabled" />';
         } else {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" />';
+            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
         }
 
         // install checkbox
         if (product.installed || product.failed || product.started) {
             columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
         } else {
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" />';
+            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
         }
 
         // status
