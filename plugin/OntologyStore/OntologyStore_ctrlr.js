@@ -240,12 +240,16 @@ i2b2.OntologyStore.getSelectedProductIndexes = function () {
     let index = 0;
     let selections = document.querySelectorAll('input[name="download"]:checked');
     for (let i = 0; i < selections.length; i++) {
-        indexes[index++] = selections[i].dataset.id;
+        if (!selections[i].disabled) {
+            indexes[index++] = selections[i].dataset.id;
+        }
     }
 
     selections = document.querySelectorAll('input[name="install"]:checked');
     for (let i = 0; i < selections.length; i++) {
-        indexes[index++] = selections[i].dataset.id;
+        if (!selections[i].disabled) {
+            indexes[index++] = selections[i].dataset.id;
+        }
     }
 
     // get unique ids
@@ -269,8 +273,8 @@ i2b2.OntologyStore.getSelectedProducts = function (products) {
             title: product.title,
             key: product.fileName,
             includeNetworkPackage: includeNetChkbx.checked,
-            download: downloadChkbx.checked,
-            install: installChkbx.checked
+            download: downloadChkbx.disabled ? false : downloadChkbx.checked,
+            install: installChkbx.disabled ? false : installChkbx.checked
         };
     });
 
