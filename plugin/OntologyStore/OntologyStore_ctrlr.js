@@ -2,18 +2,18 @@ i2b2.OntologyStore.modal = {
     progress: {
         show: function (title) {
             jQuery('#OntologyStore-ProgressModalTitle').text(title);
+
             if (!i2b2.OntologyStore.modal.progress.panel) {
-                let panel = new YAHOO.widget.Panel('OntologyStore-ProgressModal', {
+                i2b2.OntologyStore.modal.progress.panel = new YAHOO.widget.Panel('OntologyStore-ProgressModal', {
                     width: "200px",
                     fixedcenter: true,
-                    close: false,
+                    close: true,
                     draggable: false,
                     zindex: 100,
                     modal: true,
                     visible: false
                 });
-                panel.render(document.body);
-                i2b2.OntologyStore.modal.progress.panel = panel;
+                i2b2.OntologyStore.modal.progress.panel.render(document.body);
             }
 
             i2b2.OntologyStore.modal.progress.panel.show();
@@ -29,8 +29,8 @@ i2b2.OntologyStore.modal = {
             document.getElementById('OntologyStore-MessageModalTitle').innerHTML = title;
             document.getElementById('OntologyStore-MessageModalMessage').innerHTML = message;
 
-            if (!this.panel) {
-                let panel = new YAHOO.widget.Panel('OntologyStore-MessageModal', {
+            if (!i2b2.OntologyStore.modal.message.panel) {
+                i2b2.OntologyStore.modal.message.panel = new YAHOO.widget.Panel('OntologyStore-MessageModal', {
                     width: "400px",
                     fixedcenter: true,
                     close: true,
@@ -39,8 +39,7 @@ i2b2.OntologyStore.modal = {
                     modal: true,
                     visible: false
                 });
-                panel.render(document.body);
-                i2b2.OntologyStore.modal.message.panel = panel;
+                i2b2.OntologyStore.modal.message.panel.render(document.body);
             }
 
             i2b2.OntologyStore.modal.message.panel.show();
@@ -50,10 +49,36 @@ i2b2.OntologyStore.modal = {
                 i2b2.OntologyStore.modal.message.panel.hide();
             }
         }
+    },
+    summary: {
+        show: function (data) {
+            document.getElementById('OntologyStore-SummaryMessageModalMessage').innerHTML = null;
+            document.getElementById('OntologyStore-SummaryMessageModalMessage').appendChild(i2b2.OntologyStore.summary.createSummaryTable(data));
+
+            if (!i2b2.OntologyStore.modal.summary.panel) {
+                i2b2.OntologyStore.modal.summary.panel = new YAHOO.widget.Panel('OntologyStore-SummaryMessageModal', {
+                    width: '800px',
+                    fixedcenter: true,
+                    close: true,
+                    draggable: true,
+                    zindex: 100,
+                    modal: true,
+                    visible: false
+                });
+                i2b2.OntologyStore.modal.summary.panel.render(document.body);
+            }
+
+            i2b2.OntologyStore.modal.summary.panel.show();
+        },
+        hide: function () {
+            if (i2b2.OntologyStore.modal.summary.panel) {
+                i2b2.OntologyStore.modal.summary.panel.hide();
+            }
+        }
     }
 };
 
-i2b2.OntologyStore.message = {
+i2b2.OntologyStore.summary = {
     getSummaryProgress: function (summary) {
         if (summary.actionType === 'Download') {
             if (summary.inProgress) {
@@ -72,7 +97,6 @@ i2b2.OntologyStore.message = {
                         : '<span class="ontologystore-text-danger"><i class="bi bi-server"></i> Failed</span>';
             }
         }
-
     },
     createSummaryTable: function (data) {
         let table = document.createElement('table');
@@ -106,46 +130,6 @@ i2b2.OntologyStore.message = {
         }
 
         return table;
-    },
-    panel: {},
-    show: function (title, message) {
-        document.getElementById('OntologyStore-MessageModalTitle').innerHTML = title;
-        document.getElementById('OntologyStore-MessageModalMessage').innerHTML = message;
-
-        if (!this.panel.error) {
-            var panel = new YAHOO.widget.Panel('OntologyStore-MessageModal', {
-                width: '400px',
-                fixedcenter: true,
-                close: true,
-                draggable: true,
-                zindex: 100,
-                modal: false,
-                visible: false
-            });
-            panel.render(document.body);
-            this.panel.error = panel;
-        }
-        this.panel.error.show();
-    },
-    showSummary: function (data) {
-        document.getElementById('OntologyStore-MessageModalTitle').innerHTML = 'Download/Install Summary';
-        document.getElementById('OntologyStore-MessageModalMessage').innerHTML = null;
-        document.getElementById('OntologyStore-MessageModalMessage').appendChild(this.createSummaryTable(data));
-
-        if (!this.panel.summary) {
-            var panel = new YAHOO.widget.Panel('OntologyStore-MessageModal', {
-                width: '800px',
-                fixedcenter: true,
-                close: true,
-                draggable: true,
-                zindex: 100,
-                modal: true,
-                visible: false
-            });
-            panel.render(document.body);
-            this.panel.summary = panel;
-        }
-        this.panel.summary.show();
     }
 };
 
@@ -327,7 +311,7 @@ i2b2.OntologyStore.execute = function () {
 
 
                             i2b2.OntologyStore.modal.progress.hide();
-                            i2b2.OntologyStore.message.showSummary(data);
+                            i2b2.OntologyStore.modal.summary.show(data);
                         };
                         i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, innerScopedCallback);
                     }
