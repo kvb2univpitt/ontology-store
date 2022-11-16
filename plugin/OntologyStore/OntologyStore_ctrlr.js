@@ -178,35 +178,33 @@ i2b2.OntologyStore.refreshProductTable = function () {
 
         columns[5] = product.terminologies.join(',');
 
-        // download checkbox
-        if (product.downloaded || product.installed || product.failed || product.started) {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" disabled="disabled" />';
-        } else {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
-        }
-
-        // install checkbox
-        if (product.installed || product.failed || product.started) {
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
-        } else {
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
-        }
-
-        // status
         if (product.downloaded) {
+            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
+
             if (product.installed) {
+                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-success">Installed</span>';
             } else if (product.failed) {
+                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
             } else if (product.started) {
+                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-info">Installation In Progress</span>';
             } else {
+                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
                 columns[8] = '<span class="ontologystore-text-warning">Ready To Be Installed</span>';
             }
         } else if (product.failed) {
+            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
+            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
             columns[8] = '<span class="ontologystore-text-danger">Download Failed</span>';
         } else if (product.started) {
+            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
+            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
             columns[8] = '<span class="ontologystore-text-info">Download In Progress</span>';
+        } else {
+            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
+            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
         }
 
         datatable.row.add(columns);
