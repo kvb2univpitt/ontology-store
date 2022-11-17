@@ -165,6 +165,7 @@ i2b2.OntologyStore.refreshProductTable = function () {
         columns[6] = '';
         columns[7] = '';
         columns[8] = '';
+        columns[9] = '<input type="checkbox" name="disable-dummy" disabled="disabled" />';
 
         if (product.downloaded) {
             columns[4] = product.includeNetworkPackage
@@ -184,6 +185,12 @@ i2b2.OntologyStore.refreshProductTable = function () {
             if (product.installed) {
                 columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-success">Installed</span>';
+
+                if (product.disabled) {
+                    columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" checked="checked" />';
+                } else {
+                    columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" />';
+                }
             } else if (product.failed) {
                 columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
@@ -235,9 +242,9 @@ i2b2.OntologyStore.syncFromCloud = function () {
 };
 
 i2b2.OntologyStore.getSelectedProductIndexes = function () {
+    let index = 0;
     let indexes = [];
 
-    let index = 0;
     let selections = document.querySelectorAll('input[name="download"]:checked');
     for (let i = 0; i < selections.length; i++) {
         if (!selections[i].disabled) {
@@ -251,6 +258,16 @@ i2b2.OntologyStore.getSelectedProductIndexes = function () {
             indexes[index++] = selections[i].dataset.id;
         }
     }
+
+    // check disable checkboxes
+    jQuery.each(i2b2.OntologyStore.products, function (productIndex, product) {
+        if ((product.downloaded && product.installed)) {
+            let disableChkbx = document.getElementById('disable-' + productIndex);
+            if (disableChkbx && !disableChkbx.disabled && (product.disabled !== disableChkbx.checked)) {
+                indexes[index++] = productIndex;
+            }
+        }
+    });
 
     // get unique ids
     indexes = indexes.filter(function (value, index, self) {
@@ -268,13 +285,15 @@ i2b2.OntologyStore.getSelectedProducts = function (products) {
         let includeNetChkbx = document.getElementById('network-' + productIndex);
         let downloadChkbx = document.getElementById('download-' + productIndex);
         let installChkbx = document.getElementById('install-' + productIndex);
+        let disableChkbx = document.getElementById('disable-' + productIndex);
 
         data[index] = {
             title: product.title,
             key: product.fileName,
             includeNetworkPackage: includeNetChkbx.checked,
             download: downloadChkbx.disabled ? false : downloadChkbx.checked,
-            install: installChkbx.disabled ? false : installChkbx.checked
+            install: installChkbx.disabled ? false : installChkbx.checked,
+            disableEnable: (product.downloaded && product.installed && (product.disabled !== disableChkbx.checked))
         };
     });
 
@@ -325,7 +344,7 @@ i2b2.OntologyStore.execute = function () {
 
                             // check to see if refresh is required    
                             for (let i = 0; i < data.length; i++) {
-                                if (data[i].actionType === 'Install') {
+                                if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
                                     i2b2.ONT.view.nav.doRefreshAll();
                                     break;
                                 }
@@ -358,6 +377,7 @@ i2b2.OntologyStore.productToXml = function (product) {
     tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
     tags.push('                <download>' + product.download + '</download>');
     tags.push('                <install>' + product.install + '</install>');
+    tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');
     tags.push('            </product_action>');
 
     return tags.join('\n');
@@ -378,7 +398,8 @@ i2b2.OntologyStore.Init = function (loadedDiv) {
             {'targets': 0, 'className': 'ontologystore-title'},
             {'targets': 4, 'className': 'dt-center ontologystore-network-chkbx'},
             {'targets': 6, 'className': 'dt-center ontologystore-download-chkbx'},
-            {'targets': 7, 'className': 'dt-center ontologystore-install-chkbx'}
+            {'targets': 7, 'className': 'dt-center ontologystore-install-chkbx'},
+            {'targets': 9, 'className': 'dt-center ontologystore-disable-chkbx'}
         ]
     });
 

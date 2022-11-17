@@ -50,6 +50,10 @@ table#OntologyStore-ProductTable tr:hover td {
     max-width: 50px
 }
 
+.ontologystore-disable-chkbx {
+    max-width: 50px
+}
+
 #OntologyStore-ProductTable_paginate {
     padding-top: 20px;
 }
