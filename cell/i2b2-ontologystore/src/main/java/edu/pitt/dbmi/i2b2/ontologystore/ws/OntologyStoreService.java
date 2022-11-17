@@ -23,6 +23,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import javax.xml.stream.XMLStreamException;
@@ -45,17 +46,20 @@ public class OntologyStoreService extends AbstractWebService {
     private final AmazonS3Service amazonS3Service;
     private final OntologyDownloadService downloadService;
     private final OntologyInstallService installService;
+    private final OntologyDisableService disableService;
 
     @Autowired
     public OntologyStoreService(
             PmDBAccess pmDBAccess,
             AmazonS3Service amazonS3Service,
             OntologyDownloadService downloadService,
-            OntologyInstallService installService) {
+            OntologyInstallService installService,
+            OntologyDisableService disableService) {
         this.pmDBAccess = pmDBAccess;
         this.amazonS3Service = amazonS3Service;
         this.downloadService = downloadService;
         this.installService = installService;
+        this.disableService = disableService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -85,7 +89,7 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, installService, pmDBAccess), waitTime);
+        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, installService, disableService, pmDBAccess), waitTime);
     }
 
 }

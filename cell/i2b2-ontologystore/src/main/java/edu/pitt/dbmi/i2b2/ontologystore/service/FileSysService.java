@@ -197,6 +197,10 @@ public class FileSysService {
         return Files.exists(networkDir) && !listFiles(networkDir).isEmpty();
     }
 
+    public boolean hasOntologyDisabled(String productFolder) {
+        return Files.exists(getOntologyDisabledIndicatorFile(productFolder));
+    }
+
     public Path getProductDirectory(String productFolder) {
         return Paths.get(downloadDirectory, productFolder);
     }
@@ -241,6 +245,10 @@ public class FileSysService {
         return Paths.get(downloadDirectory, productFolder, "install.finished");
     }
 
+    public Path getOntologyDisabledIndicatorFile(String productFolder) {
+        return Paths.get(downloadDirectory, productFolder, "ontology.disabled");
+    }
+
     public boolean createDownloadStartedIndicatorFile(String productFolder) {
         deleteFile(getDownloadFailedIndicatorFile(productFolder));
         deleteFile(getDownloadFinishedIndicatorFile(productFolder));
@@ -281,6 +289,14 @@ public class FileSysService {
         deleteFile(getInstallStartedIndicatorFile(productFolder));
 
         return createFile(getInstallFinishedIndicatorFile(productFolder));
+    }
+
+    public boolean createOntologyDisabledIndicatorFile(String productFolder) {
+        return createFile(getOntologyDisabledIndicatorFile(productFolder));
+    }
+
+    public boolean removeOntologyDisabledIndicatorFile(String productFolder) {
+        return deleteFile(getOntologyDisabledIndicatorFile(productFolder));
     }
 
     public List<Path> listFiles(Path dir) {

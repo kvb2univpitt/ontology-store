@@ -19,6 +19,10 @@
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
+import javax.sql.DataSource;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 /**
  *
@@ -27,6 +31,8 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
 public abstract class AbstractOntologyService {
+
+    private static final Log LOGGER = LogFactory.getLog(AbstractOntologyService.class);
 
     protected ActionSummaryType createActionSummary(String title, String actionType, boolean inProgress, boolean success, String detail) {
         ActionSummaryType summary = new ActionSummaryType();
@@ -37,6 +43,16 @@ public abstract class AbstractOntologyService {
         summary.setDetail(detail);
 
         return summary;
+    }
+
+    protected DataSource getDataSource(String datasourceJNDIName) {
+        try {
+            return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
+        } catch (Exception exception) {
+            String errMsg = String.format("Unable to get datasource for JNDI name '%s'.", datasourceJNDIName);
+            LOGGER.error(errMsg, exception);
+            return null;
+        }
     }
 
 }

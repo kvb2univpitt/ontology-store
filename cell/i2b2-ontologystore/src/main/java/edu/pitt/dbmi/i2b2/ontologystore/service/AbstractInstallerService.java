@@ -220,6 +220,26 @@ public abstract class AbstractInstallerService {
         }
     }
 
+    protected void deleteFromTableAccessByTableName(JdbcTemplate jdbcTemplate, String table, String columnName, String columnValue) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                int[] columnTypes = {Types.VARCHAR};
+                String[] values = {columnValue};
+
+                String sql = createDeleteStatement(conn.getSchema(), table.toLowerCase(), columnName);
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                try {
+                    setColumns(stmt, columnTypes, values);
+                    stmt.execute();
+                } catch (Exception exception) {
+                    LOGGER.error("", exception);
+                    throw new SQLException(exception);
+                }
+            }
+        }
+    }
+
     protected void insertUnique(JdbcTemplate jdbcTemplate, String table, Path file, String pkColumn) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
@@ -358,6 +378,10 @@ public abstract class AbstractInstallerService {
         String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
 
         return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columns, placeholder);
+    }
+
+    protected String createDeleteStatement(String schema, String tableName, String columnName) {
+        return String.format("DELETE FROM  %s.%s WHERE %s = ?", schema, tableName, columnName);
     }
 
 }

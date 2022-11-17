@@ -41,6 +41,7 @@ public class OntInstallerService extends AbstractInstallerService {
     protected static final String SCHEMES_TABLE_PK = "c_key";
 
     protected static final String TABLE_ACCESS_TABLE_NAME = "table_access";
+    protected static final String TABLE_ACCESS_TABLE_NAME_COLUMN = "c_table_name";
     protected static final String TABLE_ACCESS_TABLE_PK = "c_table_cd";
 
     @Autowired
@@ -66,12 +67,16 @@ public class OntInstallerService extends AbstractInstallerService {
         insertUnique(jdbcTemplate, SCHEMES_TABLE_NAME, file, SCHEMES_TABLE_PK);
     }
 
-    private void createOntologyTableIndices(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "ontology_table_indices.sql"));
+    public void deleteFromTableAccessTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+        deleteFromTableAccessByTableName(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, TABLE_ACCESS_TABLE_NAME_COLUMN, tableName);
     }
 
     private void insertIntoOntologyTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         batchInsert(jdbcTemplate, tableName, file, DEFAULT_BATCH_SIZE);
+    }
+
+    private void createOntologyTableIndices(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+        createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "ontology_table_indices.sql"));
     }
 
     private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {

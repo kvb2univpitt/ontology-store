@@ -28,6 +28,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
@@ -50,12 +51,19 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private final ProductActionDataMessage productActionDataMsg;
     private final OntologyDownloadService downloadService;
     private final OntologyInstallService installService;
+    private final OntologyDisableService disableService;
 
-    public ProductActionsRequestHandler(ProductActionDataMessage productActionDataMsg, OntologyDownloadService downloadService, OntologyInstallService installService, PmDBAccess pmDBAccess) {
+    public ProductActionsRequestHandler(
+            ProductActionDataMessage productActionDataMsg,
+            OntologyDownloadService downloadService,
+            OntologyInstallService installService,
+            OntologyDisableService disableService,
+            PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
         this.downloadService = downloadService;
         this.installService = installService;
+        this.disableService = disableService;
     }
 
     @Override
@@ -80,9 +88,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
-
-        downloadService.performDownload(actions, summaries);
         try {
+            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
+            downloadService.performDownload(actions, summaries);
             installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());

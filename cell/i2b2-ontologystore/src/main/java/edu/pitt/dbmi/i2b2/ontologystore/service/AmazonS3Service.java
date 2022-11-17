@@ -101,6 +101,9 @@ public class AmazonS3Service {
 
             if (fileSysService.hasFinshedInstall(productFolder)) {
                 product.setInstalled(true);
+                if (fileSysService.hasOntologyDisabled(productFolder)) {
+                    product.setDisabled(true);
+                }
             } else if (fileSysService.hasFailedInstall(productFolder)) {
                 product.setFailed(true);
             } else if (fileSysService.hasStartedInstall(productFolder)) {
