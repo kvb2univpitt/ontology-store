@@ -14,16 +14,16 @@
 
     <!-- application.properties -->
     <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <!--<property name="location" value="classpath:application.properties" />-->
-        <property name="location" value="file:${user.home}/.spring/ontologystore.properties" />
+        <property name="location" value="classpath:application.properties" />
+        <!--<property name="location" value="file:${user.home}/.spring/ontologystore.properties" />-->
     </bean>
 
     <!-- datasource -->
     <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="${spring.pm.datasource.jndi-name}"/>
+        <property name="jndiName" value="${spring.pm.datasource.jndi-name}" />
     </bean>
     <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="${spring.hive.datasource.jndi-name}"/>
+        <property name="jndiName" value="${spring.hive.datasource.jndi-name}" />
     </bean>
 
     <!-- peform database tasks -->
@@ -41,5 +41,4 @@
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
-
 </beans>
