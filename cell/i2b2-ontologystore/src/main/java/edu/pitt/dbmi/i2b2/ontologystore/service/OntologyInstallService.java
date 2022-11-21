@@ -67,7 +67,7 @@ public class OntologyInstallService extends AbstractOntologyService {
     }
 
     public synchronized void performInstallation(String project, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
-        actions = actions.stream().filter(e -> !e.isDisableEnable() && e.isInstall()).collect(Collectors.toList());
+        actions = actions.stream().filter(e -> e.isInstall()).collect(Collectors.toList());
         actions = validateProgress(actions, summaries);
         actions = validateFilesExistence(actions, summaries);
 

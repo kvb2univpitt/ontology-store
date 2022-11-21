@@ -145,10 +145,15 @@ i2b2.OntologyStore.downloadCheckboxAction = function (productIndex) {
 i2b2.OntologyStore.installCheckboxAction = function (productIndex) {
     let installChkbx = document.getElementById('install-' + productIndex);
     let downloadChkbx = document.getElementById('download-' + productIndex);
+    let disableChkbx = document.getElementById('disable-' + productIndex);
 
     if (installChkbx.checked) {
         downloadChkbx.checked = true;
+    } else {
+        disableChkbx.checked = false;
     }
+
+    disableChkbx.disabled = !installChkbx.checked;
 };
 
 i2b2.OntologyStore.refreshProductTable = function () {
@@ -165,7 +170,7 @@ i2b2.OntologyStore.refreshProductTable = function () {
         columns[6] = '';
         columns[7] = '';
         columns[8] = '';
-        columns[9] = '<input type="checkbox" name="disable-dummy" disabled="disabled" />';
+        columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" disabled="disabled" />';
 
         if (product.downloaded) {
             columns[4] = product.includeNetworkPackage
@@ -222,10 +227,10 @@ i2b2.OntologyStore.refreshProductTable = function () {
 i2b2.OntologyStore.syncFromCloud = function () {
     i2b2.OntologyStore.modal.progress.show('Sync From Clould');
 
-    var scopedCallback = new i2b2_scopedCallback();
+    let scopedCallback = new i2b2_scopedCallback();
     scopedCallback.callback = function (results) {
         if (results.error) {
-            var errorMsg = results.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
+            let errorMsg = results.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
             document.getElementById("OntologyStore-ExecuteBtn").disabled = true;
             i2b2.OntologyStore.modal.progress.hide();
             i2b2.OntologyStore.modal.message.show('Sync From Cloud Failed', errorMsg);
@@ -241,33 +246,32 @@ i2b2.OntologyStore.syncFromCloud = function () {
     i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, scopedCallback);
 };
 
-i2b2.OntologyStore.getSelectedProductIndexes = function () {
+i2b2.OntologyStore.getSelectedProductIndexes = function (products) {
     let index = 0;
     let indexes = [];
 
-    let selections = document.querySelectorAll('input[name="download"]:checked');
+    // download actions
+    let selections = document.querySelectorAll('input[name="download"]:checked:not(:disabled)');
     for (let i = 0; i < selections.length; i++) {
-        if (!selections[i].disabled) {
-            indexes[index++] = selections[i].dataset.id;
-        }
+        indexes[index++] = selections[i].dataset.id;
     }
 
-    selections = document.querySelectorAll('input[name="install"]:checked');
+    // install actions
+    selections = document.querySelectorAll('input[name="install"]:checked:not(:disabled)');
     for (let i = 0; i < selections.length; i++) {
-        if (!selections[i].disabled) {
-            indexes[index++] = selections[i].dataset.id;
-        }
+        indexes[index++] = selections[i].dataset.id;
     }
 
-    // check disable checkboxes
-    jQuery.each(i2b2.OntologyStore.products, function (productIndex, product) {
-        if ((product.downloaded && product.installed)) {
-            let disableChkbx = document.getElementById('disable-' + productIndex);
-            if (disableChkbx && !disableChkbx.disabled && (product.disabled !== disableChkbx.checked)) {
-                indexes[index++] = productIndex;
-            }
+    // disable actions
+    selections = document.querySelectorAll('input[name="disable"]:not(:disabled)');
+    for (let i = 0; i < selections.length; i++) {
+        let chkbox = selections[i];
+        let productIndex = chkbox.dataset.id;
+        let product = products[productIndex];
+        if (!(product.disabled === chkbox.checked)) {
+            indexes[index++] = productIndex;
         }
-    });
+    }
 
     // get unique ids
     indexes = indexes.filter(function (value, index, self) {
@@ -280,31 +284,59 @@ i2b2.OntologyStore.getSelectedProductIndexes = function () {
 i2b2.OntologyStore.getSelectedProducts = function (products) {
     let data = [];
 
-    jQuery.each(i2b2.OntologyStore.getSelectedProductIndexes(), function (index, productIndex) {
+    let selectedProductIndexes = i2b2.OntologyStore.getSelectedProductIndexes(products);
+    for (let i = 0; i < selectedProductIndexes.length; i++) {
+        let productIndex = selectedProductIndexes[i];
         let product = products[productIndex];
         let includeNetChkbx = document.getElementById('network-' + productIndex);
         let downloadChkbx = document.getElementById('download-' + productIndex);
         let installChkbx = document.getElementById('install-' + productIndex);
         let disableChkbx = document.getElementById('disable-' + productIndex);
 
-        data[index] = {
-            title: product.title,
-            key: product.fileName,
-            includeNetworkPackage: includeNetChkbx.checked,
-            download: downloadChkbx.disabled ? false : downloadChkbx.checked,
-            install: installChkbx.disabled ? false : installChkbx.checked,
-            disableEnable: (product.downloaded && product.installed && (product.disabled !== disableChkbx.checked))
-        };
-    });
+        data.push(
+                {
+                    title: product.title,
+                    key: product.fileName,
+                    includeNetworkPackage: includeNetChkbx.checked,
+                    download: downloadChkbx.disabled ? false : downloadChkbx.checked,
+                    install: installChkbx.disabled ? false : installChkbx.checked,
+                    disableEnable: !(product.disabled === disableChkbx.checked)
+                }
+        );
+    }
 
     return data;
 };
 
+i2b2.OntologyStore.productToXml = function (product) {
+    let tags = [];
+
+    tags.push('            <product_action>');
+    tags.push('                <title>' + product.title + '</title>');
+    tags.push('                <key>' + product.key + '</key>');
+    tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
+    tags.push('                <download>' + product.download + '</download>');
+    tags.push('                <install>' + product.install + '</install>');
+    tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');
+    tags.push('            </product_action>');
+
+    return tags.join('\n');
+};
+
+i2b2.OntologyStore.productsToXml = function (products) {
+    let xml = [];
+    for (let i = 0; i < products.length; i++) {
+        xml.push(i2b2.OntologyStore.productToXml(products[i]));
+    }
+
+    return xml.join('\n');
+};
+
 i2b2.OntologyStore.execute = function () {
-    var products = i2b2.OntologyStore.products;
+    let products = i2b2.OntologyStore.products;
     if (products && products.length > 0) {
         if (i2b2.PM.model.isAdmin) {
-            var selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
+            let selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
             if (selectedProducts.length > 0) {
                 let executeBtn = document.getElementById("OntologyStore-ExecuteBtn");
                 executeBtn.disabled = true;
@@ -315,7 +347,7 @@ i2b2.OntologyStore.execute = function () {
                     version: i2b2.ClientVersion,
                     products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
                 };
-                var scopedCallback = new i2b2_scopedCallback();
+                let scopedCallback = new i2b2_scopedCallback();
                 scopedCallback.callback = function (productActionResults) {
                     executeBtn.disabled = false;
                     if (productActionResults.error) {
@@ -350,7 +382,6 @@ i2b2.OntologyStore.execute = function () {
                                 }
                             }
 
-
                             i2b2.OntologyStore.modal.progress.hide();
                             i2b2.OntologyStore.modal.summary.show(data);
                         };
@@ -360,36 +391,13 @@ i2b2.OntologyStore.execute = function () {
                 i2b2.ONTSTORE.ajax.PerformProductActions("OntologyStore Plugin", options, scopedCallback);
             } else {
                 // at least one ontology must be selected to download/install.
-                i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
+                i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download, install or disable/enable.');
             }
         } else {
             // must be admin to download/install ontology
             i2b2.OntologyStore.modal.message.show('Insufficient Privileges', 'Administrative privileges required!');
         }
     }
-}
-
-i2b2.OntologyStore.productToXml = function (product) {
-    var tags = [];
-    tags.push('            <product_action>');
-    tags.push('                <title>' + product.title + '</title>');
-    tags.push('                <key>' + product.key + '</key>');
-    tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
-    tags.push('                <download>' + product.download + '</download>');
-    tags.push('                <install>' + product.install + '</install>');
-    tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');
-    tags.push('            </product_action>');
-
-    return tags.join('\n');
-};
-
-i2b2.OntologyStore.productsToXml = function (products) {
-    var xml = [];
-    for (var i = 0; i < products.length; i++) {
-        xml.push(i2b2.OntologyStore.productToXml(products[i]));
-    }
-
-    return xml.join('\n');
 };
 
 i2b2.OntologyStore.Init = function (loadedDiv) {

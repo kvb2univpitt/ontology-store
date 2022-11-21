@@ -59,7 +59,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
     }
 
     public synchronized void performDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
-        actions = actions.stream().filter(e -> !e.isDisableEnable() && e.isDownload()).collect(Collectors.toList());
+        actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
         actions = validate(actions, summaries);
         actions = prepare(actions, summaries);
         actions.forEach(action -> summaries.add(download(action)));

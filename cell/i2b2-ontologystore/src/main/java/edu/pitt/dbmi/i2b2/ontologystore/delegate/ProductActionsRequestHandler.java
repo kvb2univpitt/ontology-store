@@ -89,9 +89,10 @@ public class ProductActionsRequestHandler extends RequestHandler {
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
         try {
-            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
             downloadService.performDownload(actions, summaries);
             installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
+
+            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }
