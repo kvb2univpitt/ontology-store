@@ -135,12 +135,62 @@ i2b2.hive.tempCellsList = [
 
 ## Making SOAP Calls to the Cell
 
-Assume the i2b2 hive, with the OntologyStore cell installed, is deployed on a Wildfly server with the domain name ***localhost*** on port ***9090*** and has the following credentials:
+### Example Setup
+
+Assume the i2b2 hive containing the OntologyStore cell is deployed on a Wildfly server with the following configurations:
+
+| Domain    | Port |
+|-----------|------|
+| localhost | 9090 |
+
+Assume the i2b2 database contains the following user credentials:
 
 | Username | Password | Role  | Domain   | Project ID |
 |----------|----------|-------|----------|------------|
 | demo     | demouser | user  | i2b2demo | Demo       |
 | i2b2     | demouser | admin | i2b2demo | Demo       |
+
+Assume the AWS Cloud has the following ontologies:
+
+| Ontology          | Title                      | Metadata File             |
+|-------------------|----------------------------|---------------------------|
+| ACT Visit Details | ACT Visit Details Ontology | act_visit_details_v4.json |
+| ACT Vital Signs   | ACT Vital Signs Ontology   | act_vital_signs_v4.json   |
+
+### SOAP Request Template
+
+Below is the basic template for making a SOAP call to the OntologyStore cell:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>*** SOAP endpoint goes here ***</redirect_url>
+        </proxy>
+        <sending_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <security>
+            *** User credentials go here. ***
+        </security>
+        <project_id>Demo</project_id>
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        *** Request payload goes here. ***
+    </message_body>
+</ns3:request>
+```
+
+The SOAP endpoint is enclosed in the ```<redirect_url></redirect_url>``` tags.  The user credentials is enclosed in the ```<security></security>``` tags.  The request payload is enclosed in the ```<message_body></message_body>``` tags.
 
 ### Getting a List of Ontologies
 
@@ -265,7 +315,7 @@ Below is an example of the SOAP response:
 </ns2:response>
 ```
 
-#### Making the Call Using Javascript API (Webclient)
+#### Making the Call Using the Javascript API (Webclient)
 
 Below is the Javascript code to get a list of ontologies using the i2b2 webclient:
 
@@ -284,22 +334,32 @@ scopedCallback.callback = function (results) {
 i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, scopedCallback);
 ```
 
-### Downloading and Installing Ontologies
+### Downloading, Installing, and Disable/Enable Ontologies
 
-Assume we have the following ontologies on the AWS Cloud:
+The request payload contains a list of actions enclosed in the ```<ns4:product_actions></ns4:product_actions>``` tags.  Each action is enclosed in the ```<product_action></product_action>``` tags.
 
-| Ontology          | Title                      | Metadata File             |
-|-------------------|----------------------------|---------------------------|
-| ACT Visit Details | ACT Visit Details Ontology | act_visit_details_v4.json |
-| ACT Vital Signs   | ACT Vital Signs Ontology   | act_vital_signs_v4.json   |
+> Administrator privileges are required to dowloand, install, and disable/enable ontologies.
 
+#### Product Action Parameters
+
+| Parameter               | Description                                              | Requirement                                               | Default Value |
+|-------------------------|----------------------------------------------------------|-----------------------------------------------------------|---------------|
+| title                   | Ontology title.                                          | <span style="color:red;font-weight:bold;">Required</span> |               |
+| key                     | Ontology metadata file (JSON).                           | <span style="color:red;font-weight:bold;">Required</span> |               |
+| include_network_package | Indicates additional file for Shrine to be downloaded    | Optional                                                  | false         |
+| download                | Indicates the ontology to be downloaded.                 | Optional                                                  | false         |
+| install                 | Indicates the ontology to be installed.                  | Optional                                                  | false         |
+| disable_enable          | Indicates the ontology to be either disabled or enabled. | Optional                                                  | false         |
+
+
+#### Downloading and Installing
 
 Assume we want to do the following:
 
 - Download the ***ACT Visit Details*** ontology.
 - Download and install the ***ACT Vital Signs*** ontology.
 
-#### Making the Call Manually
+##### Making the Call Manually
 
 Make the following SOAP call to the endpoint **http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions**:
 
@@ -335,7 +395,6 @@ Make the following SOAP call to the endpoint **http://localhost:9090/i2b2/servic
                 <key>act_visit_details_v4.json</key>
                 <include_network_package>false</include_network_package>
                 <download>true</download>
-                <install>false</install>
             </product_action>
             <product_action>
                 <title>ACT Vital Signs Ontology</title>
@@ -349,9 +408,11 @@ Make the following SOAP call to the endpoint **http://localhost:9090/i2b2/servic
 </ns3:request>
 ```
 
-> Note that the user must have an **admin** role in order to download/install the ontologies.
+We can omit the ```<install></install>``` tags and the ```<disable_enable></disable_enable>``` tags in the download request, since they are set to false by default.
 
-Below is the SOAP response for the above SOAP call:
+> Note that the user has the **administrator** privileges.
+
+Below is an example of the SOAP response for the above call:
 
 ```xml
 <ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
@@ -432,7 +493,47 @@ Below is the SOAP response for the above SOAP call:
 </ns2:response>
 ```
 
-When making multiple identical SOAP call to download or install the ontologies the effect is the same as making a single call.  If you make the above call again, the ontologies will not be downloaded or installed again; you will the get following response:
+##### Making the Call Using Javascript API (Webclient)
+
+```javascript
+// creating the payload
+var payload = '<product_action>\n' +
+'    <title>ACT Visit Details Ontology</title>\n' +
+'    <key>act_visit_details_v4.json</key>\n' +
+'    <include_network_package>false</include_network_package>\n' +
+'    <download>true</download>\n' +
+'</product_action>\n' +
+'<product_action>\n' +
+'    <title>ACT Vital Signs Ontology</title>\n' +
+'    <key>act_vital_signs_v4.json</key>\n' +
+'    <include_network_package>false</include_network_package>\n' +
+'    <download>true</download>\n' +
+'    <install>true</install>\n' +
+'</product_action>';
+
+// creating the SOAP options
+let options = {
+    version: i2b2.ClientVersion,
+    products_str_xml: payload
+};
+
+// creating a callback
+var scopedCallback = new i2b2_scopedCallback();
+scopedCallback.callback = function (results) {
+    if (results.error) {
+        // handle error
+    } else {
+        // handle successful call
+    }
+};
+
+// making a SOAP call
+i2b2.ONTSTORE.ajax.PerformProductActions("OntologyStore Plugin", options, scopedCallback);
+```
+
+#### Idempotence
+
+Making multiple identical SOAP calls to ***download*** and/or  ***install*** the ontologies have no effect on the ontologies.  If we make another SOAP call to the above request, we would get the following SOAP response:
 
 ```xml
 <ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
@@ -506,7 +607,379 @@ When making multiple identical SOAP call to download or install the ontologies t
 </ns2:response>
 ```
 
-#### Making the Call Using Javascript API (Webclient)
+#### Disabling Ontologies
+
+When an ontology is disbled, it is removed from the ***Terms*** list in the i2b2 webclient.  The ontology gets put back on the ***Terms*** list when it is enabled.  Disabling ontologies can be useful if we want to prevent the user from using certain ontologies.  Note that only **installed ontologies** can be disabled or enabled.
+
+
+Assume we want to disable the installed ***ACT Vital Signs*** ontology.
+
+##### Making the Call Manually
+
+Make the following SOAP call to the endpoint **http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions**:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions</redirect_url>
+        </proxy>
+        <sending_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <project_id>Demo</project_id>
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:product_actions>
+            <product_action>
+                <title>ACT Vital Signs Ontology</title>
+                <key>act_vital_signs_v4.json</key>
+                <disable_enable>true</disable_enable>
+            </product_action>
+        </ns4:product_actions>
+    </message_body>
+</ns3:request>
+```
+
+Below is an example of the SOAP response for the above call:
+
+```xml
+<ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
+              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
+              xmlns:ns3="http://www.i2b2.org/xsd/cell/pm/1.1/">
+    <message_header>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>OntologyStore Cell</application_name>
+            <application_version>1.700</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <receiving_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </receiving_application>
+        <receiving_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </receiving_facility>
+        <datetime_of_message>2022-11-23T21:49:30.611-05:00</datetime_of_message>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <message_control_id>
+            <instance_num>1</instance_num>
+        </message_control_id>
+        <processing_id>
+            <processing_id>P</processing_id>
+            <processing_mode>I</processing_mode>
+        </processing_id>
+        <accept_acknowledgement_type>AL</accept_acknowledgement_type>
+        <application_acknowledgement_type>AL</application_acknowledgement_type>
+        <country_code>US</country_code>
+        <project_id>Demo</project_id>
+    </message_header>
+    <response_header>
+        <result_status>
+            <status type="DONE">OntologyStore processing completed</status>
+        </result_status>
+    </response_header>
+    <message_body>
+        <ns4:action_summaries>
+            <action_summary>
+                <title>ACT Vital Signs Ontology</title>
+                <action_type>Disable</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>Disabled.</detail>
+            </action_summary>
+        </ns4:action_summaries>
+    </message_body>
+</ns2:response>
+```
+
+##### Making the Call Using Javascript API (Webclient)
+
+```javascript
+// creating the payload
+var payload = '<product_action>\n' +
+'    <title>ACT Vital Signs Ontology</title>\n' +
+'    <key>act_vital_signs_v4.json</key>\n' +
+'    <disable_enable>true</disable_enable>\n' +
+'</product_action>';
+
+// creating the SOAP options
+let options = {
+    version: i2b2.ClientVersion,
+    products_str_xml: payload
+};
+
+// creating a callback
+var scopedCallback = new i2b2_scopedCallback();
+scopedCallback.callback = function (results) {
+    if (results.error) {
+        // handle error
+    } else {
+        // handle successful call
+    }
+};
+
+// making a SOAP call
+i2b2.ONTSTORE.ajax.PerformProductActions("OntologyStore Plugin", options, scopedCallback);
+```
+
+#### Enabling Ontologies
+
+Assume the ***ACT Vital Signs*** ontology was previously disabled.  To enable the ontology, we would make the identical SOAP called as above to the same endpoint:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions</redirect_url>
+        </proxy>
+        <sending_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <project_id>Demo</project_id>
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:product_actions>
+            <product_action>
+                <title>ACT Vital Signs Ontology</title>
+                <key>act_vital_signs_v4.json</key>
+                <disable_enable>true</disable_enable>
+            </product_action>
+        </ns4:product_actions>
+    </message_body>
+</ns3:request>
+```
+
+Below is an example of the SOAP response for the above call:
+
+```xml
+<ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
+              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
+              xmlns:ns3="http://www.i2b2.org/xsd/cell/pm/1.1/">
+    <message_header>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>OntologyStore Cell</application_name>
+            <application_version>1.700</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <receiving_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </receiving_application>
+        <receiving_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </receiving_facility>
+        <datetime_of_message>2022-11-23T22:08:27.263-05:00</datetime_of_message>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <message_control_id>
+            <instance_num>1</instance_num>
+        </message_control_id>
+        <processing_id>
+            <processing_id>P</processing_id>
+            <processing_mode>I</processing_mode>
+        </processing_id>
+        <accept_acknowledgement_type>AL</accept_acknowledgement_type>
+        <application_acknowledgement_type>AL</application_acknowledgement_type>
+        <country_code>US</country_code>
+        <project_id>Demo</project_id>
+    </message_header>
+    <response_header>
+        <result_status>
+            <status type="DONE">OntologyStore processing completed</status>
+        </result_status>
+    </response_header>
+    <message_body>
+        <ns4:action_summaries>
+            <action_summary>
+                <title>ACT Vital Signs Ontology</title>
+                <action_type>Enable</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>Enabled.</detail>
+            </action_summary>
+        </ns4:action_summaries>
+    </message_body>
+</ns2:response>
+```
+
+Note that the SOAP call to disable or enable ontology is ***not Idempotent***.  If the ontology is enabled, calling the above SOAP call will disable it and vice-versa.
+
+#### Downloading, Installing and Disabling Ontologies
+
+You can download the ontology, install the ontology, and disable the ontology in one request.
+
+Assume we want to download, install, and disable ***ACT Visit Details*** ontology.
+
+##### Making the Call Manually
+
+Make the following SOAP call to the endpoint **http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions**:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions</redirect_url>
+        </proxy>
+        <sending_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <project_id>Demo</project_id>
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:product_actions>
+            <product_action>
+                <title>ACT Visit Details Ontology</title>
+                <key>act_visit_details_v4.json</key>
+                <include_network_package>false</include_network_package>
+                <download>true</download>
+                <install>true</install>
+                <disable_enable>true</disable_enable>
+            </product_action>
+        </ns4:product_actions>
+    </message_body>
+</ns3:request>
+```
+
+Below is an example of the SOAP response for the above call:
+
+```xml
+<ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
+              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
+              xmlns:ns3="http://www.i2b2.org/xsd/cell/pm/1.1/">
+    <message_header>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>OntologyStore Cell</application_name>
+            <application_version>1.700</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <receiving_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </receiving_application>
+        <receiving_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </receiving_facility>
+        <datetime_of_message>2022-11-23T22:24:39.628-05:00</datetime_of_message>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <message_control_id>
+            <instance_num>1</instance_num>
+        </message_control_id>
+        <processing_id>
+            <processing_id>P</processing_id>
+            <processing_mode>I</processing_mode>
+        </processing_id>
+        <accept_acknowledgement_type>AL</accept_acknowledgement_type>
+        <application_acknowledgement_type>AL</application_acknowledgement_type>
+        <country_code>US</country_code>
+        <project_id>Demo</project_id>
+    </message_header>
+    <response_header>
+        <result_status>
+            <status type="DONE">OntologyStore processing completed</status>
+        </result_status>
+    </response_header>
+    <message_body>
+        <ns4:action_summaries>
+            <action_summary>
+                <title>ACT Visit Details Ontology</title>
+                <action_type>Download</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>Downloaded.</detail>
+            </action_summary>
+            <action_summary>
+                <title>ACT Visit Details Ontology</title>
+                <action_type>Install</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>Metadata Installed.</detail>
+            </action_summary>
+            <action_summary>
+                <title>ACT Visit Details Ontology</title>
+                <action_type>Install</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>CRC Data Installed.</detail>
+            </action_summary>
+            <action_summary>
+                <title>ACT Visit Details Ontology</title>
+                <action_type>Disable</action_type>
+                <in_progress>false</in_progress>
+                <success>true</success>
+                <detail>Disabled.</detail>
+            </action_summary>
+        </ns4:action_summaries>
+    </message_body>
+</ns2:response>
+```
+
+##### Making the Call Using Javascript API (Webclient)
 
 ```javascript
 // creating the payload
@@ -515,14 +988,8 @@ var payload = '<product_action>\n' +
 '    <key>act_visit_details_v4.json</key>\n' +
 '    <include_network_package>false</include_network_package>\n' +
 '    <download>true</download>\n' +
-'    <install>false</install>\n' +
-'</product_action>\n' +
-'<product_action>\n' +
-'    <title>ACT Vital Signs Ontology</title>\n' +
-'    <key>act_vital_signs_v4.json</key>\n' +
-'    <include_network_package>false</include_network_package>\n' +
-'    <download>true</download>\n' +
 '    <install>true</install>\n' +
+'    <disable_enable>true</disable_enable>\n' +
 '</product_action>';
 
 // creating the SOAP options
