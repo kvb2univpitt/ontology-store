@@ -1,10 +1,18 @@
 # ontology-store
 
-An i2b2 software for downloading and installing ontologies.  The software consists of the following software components:
+An i2b2 software for downloading and installing ontologies.
+
+<figure>
+    <img src = "./img/ontologystore_flow.png" alt="OntologyStore Design" width="100%" height="100%" />
+    <figcaption align="center">
+        <b>Fig. 1 - Ontology Store Flow</b>
+    </figcaption>
+</figure>
+
+The software consists of the following software components:
 
 - [i2b2-ontologystore](cell), a backend API (i2b2 cell).
 - [OntologyStore](plugin), a frontend client (i2b2 plug-in).
-
 
 ## Installing the Software
 
