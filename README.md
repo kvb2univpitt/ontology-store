@@ -3,7 +3,7 @@
 An i2b2 software for downloading and installing ontologies.
 
 <figure>
-    <img src = "./img/ontologystore_flow.png" alt="OntologyStore Design" width="100%" height="100%" />
+    <img src = "./img/ontology-plugin.svg" alt="OntologyStore Design" width="100%" height="100%" />
     <figcaption align="center">
         <b>Fig. 1 - Ontology Store Flow</b>
     </figcaption>
