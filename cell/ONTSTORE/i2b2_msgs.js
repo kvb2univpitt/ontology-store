@@ -119,4 +119,4 @@ i2b2.ONTSTORE.cfg.msgs.PerformProductActions = '<?xml version="1.0" encoding="UT
         '        </ns4:product_actions>\n' +
         '    </message_body>\n' +
         '</ns3:request>';
-i2b2.ONTSTORE.ajax._addFunctionCall("PerformProductActions", "{{{URL}}}getProductActions", i2b2.ONTSTORE.cfg.msgs.PerformProductActions, null, i2b2.ONTSTORE.cfg.parsers.ExtractProductActionResults);
+i2b2.ONTSTORE.ajax._addFunctionCall("PerformProductActions", "{{{URL}}}getProductActions", i2b2.ONTSTORE.cfg.msgs.PerformProductActions, ['products_str_xml'], i2b2.ONTSTORE.cfg.parsers.ExtractProductActionResults);
