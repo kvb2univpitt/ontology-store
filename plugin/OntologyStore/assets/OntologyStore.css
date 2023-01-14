@@ -69,8 +69,6 @@ table#OntologyStore-ActionSummary {
     border-collapse: collapse;
     width: 100%;
     font-size:13px;
-    margin-bottom:20px;
-    margin-top:20px;
 }
 
 table#OntologyStore-ActionSummary td, th {
@@ -89,6 +87,49 @@ table#OntologyStore-ActionSummary tr:hover td {
     background-color: #DCDCDC;
 }
 
-#OntologyStore-MessageModalMessage {
+#OntologyStore-ProgressModal.yui-panel .hd {
+    border: 0;
     background-color: #FFF;
+}
+
+#OntologyStore-ProgressModal.yui-panel .bd {
+    padding: 10px;
+    border: 0;
+    background-color: #FFF;
+}
+
+#OntologyStore-MessageModal.yui-panel .hd {
+    border: 0;
+    background-color: #FFF;
+}
+
+#OntologyStore-MessageModal.yui-panel .bd {
+    font-size: 15px;
+    padding: 10px;
+    border: 0;
+    background-color: #FFF;
+}
+
+#OntologyStore-MessageModal.yui-panel .ft {
+    border: 0;
+    background-color: #FFF;
+    padding-bottom: 10px;
+}
+
+#OntologyStore-SummaryMessageModal.yui-panel .hd {
+    border: 0;
+    background-color: #FFF;
+}
+
+#OntologyStore-SummaryMessageModal.yui-panel .bd {
+    font-size: 15px;
+    padding: 10px;
+    border: 0;
+    background-color: #FFF;
+}
+
+#OntologyStore-SummaryMessageModal.yui-panel .ft {
+    border: 0;
+    background-color: #FFF;
+    padding-bottom: 10px;
 }

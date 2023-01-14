@@ -7,7 +7,7 @@ i2b2.OntologyStore.modal = {
                 i2b2.OntologyStore.modal.progress.panel = new YAHOO.widget.Panel('OntologyStore-ProgressModal', {
                     width: "200px",
                     fixedcenter: true,
-                    close: true,
+                    close: false,
                     draggable: false,
                     zindex: 100,
                     modal: true,
