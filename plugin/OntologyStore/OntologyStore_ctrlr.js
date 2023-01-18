@@ -33,7 +33,7 @@ i2b2.OntologyStore.modal = {
                 i2b2.OntologyStore.modal.message.panel = new YAHOO.widget.Panel('OntologyStore-MessageModal', {
                     width: "400px",
                     fixedcenter: true,
-                    close: true,
+                    close: false,
                     draggable: true,
                     zindex: 100,
                     modal: true,
@@ -59,7 +59,7 @@ i2b2.OntologyStore.modal = {
                 i2b2.OntologyStore.modal.summary.panel = new YAHOO.widget.Panel('OntologyStore-SummaryMessageModal', {
                     width: '800px',
                     fixedcenter: true,
-                    close: true,
+                    close: false,
                     draggable: true,
                     zindex: 100,
                     modal: true,
