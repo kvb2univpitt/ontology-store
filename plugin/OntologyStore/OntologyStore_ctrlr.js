@@ -230,22 +230,21 @@ i2b2.OntologyStore.syncFromCloud = function () {
     let scopedCallback = new i2b2_scopedCallback();
     scopedCallback.callback = function (results) {
         if (results.error) {
-            if (results.refXML) {
-                let errorMsg = results.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
-                document.getElementById("OntologyStore-ExecuteBtn").disabled = true;
-                i2b2.OntologyStore.modal.progress.hide();
-                i2b2.OntologyStore.modal.message.show('Sync From Cloud Failed', errorMsg);
-                console.log(errorMsg);
-            } else {
-                i2b2.OntologyStore.modal.progress.hide();
-                i2b2.OntologyStore.modal.message.show('Sync From Cloud Failed', 'Unable to retrieve list from server.');
-                console.log(results.errorMsg);
+            let errorMsg;
+            try {
+                errorMsg = results.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
+            } catch (exception) {
+                errorMsg = 'Server error: ' + results.errorMsg;
             }
+            document.getElementById("OntologyStore-ExecuteBtn").disabled = true;
+            i2b2.OntologyStore.modal.progress.hide();
+            i2b2.OntologyStore.modal.message.show('Sync From Cloud Failed', errorMsg);
+            console.log(errorMsg);
         } else {
             i2b2.OntologyStore.products = results.parse();
             i2b2.OntologyStore.refreshProductTable();
 
-            document.getElementById("OntologyStore-ExecuteBtn").disabled = false;
+            document.getElementById("OntologyStore-ExecuteBtn").disabled = (i2b2.OntologyStore.products.length === 0);
             i2b2.OntologyStore.modal.progress.hide();
             jQuery('#OntologyStore-Product').show();
         }
@@ -365,16 +364,15 @@ i2b2.OntologyStore.execute = function () {
                                 i2b2.OntologyStore.refreshProductTable();
                             }
 
-                            i2b2.OntologyStore.modal.progress.hide();
-
-                            if (productActionResults.refXML) {
-                                let errorMsg = productActionResults.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
-                                i2b2.OntologyStore.modal.message.show("Download/Install Ontology Failed", errorMsg);
-                                console.log(errorMsg);
-                            } else {
-                                i2b2.OntologyStore.modal.message.show("Download/Install Ontology Failed", 'Unable to download/install ontology.');
-                                console.log(productActionResults.errorMsg);
+                            let errorMsg;
+                            try {
+                                errorMsg = productActionResults.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
+                            } catch (exception) {
+                                errorMsg = 'Server error: ' + productActionResults.errorMsg;
                             }
+                            i2b2.OntologyStore.modal.progress.hide();
+                            i2b2.OntologyStore.modal.message.show("Download/Install Ontology Failed", errorMsg);
+                            console.log(errorMsg);
                         };
                         i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, innerScopedCallback);
                     } else {
