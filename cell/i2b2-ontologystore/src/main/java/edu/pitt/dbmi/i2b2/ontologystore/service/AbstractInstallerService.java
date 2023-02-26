@@ -62,7 +62,7 @@ public abstract class AbstractInstallerService {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
-    protected static final int DEFAULT_BATCH_SIZE = 50000;
+    protected static final int DEFAULT_BATCH_SIZE = 10000;
 
     protected final FileSysService fileSysService;
 

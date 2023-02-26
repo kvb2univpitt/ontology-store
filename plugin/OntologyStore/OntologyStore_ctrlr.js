@@ -350,6 +350,7 @@ i2b2.OntologyStore.execute = function () {
                 i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
 
                 let options = {
+                    result_wait_time: -1,
                     version: i2b2.ClientVersion,
                     products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
                 };
