@@ -128,6 +128,11 @@ public abstract class AbstractInstallerService {
     protected void createTableIndexes(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         List<String> queries = fileSysService.getResourceFileContentByLines(file);
         for (String query : queries) {
+            // skip lines that are commented out
+            if (query.startsWith("--")) {
+                continue;
+            }
+
             query = query
                     .replaceAll(";", "")
                     .replaceAll("i2b2", tableName.toLowerCase())
@@ -149,7 +154,7 @@ public abstract class AbstractInstallerService {
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
                 Files.lines(file)
                         .skip(1)
-                        .filter(line -> !line.trim().isEmpty())
+                        .filter(line -> !(line.trim().isEmpty() || line.startsWith("--")))
                         .map(TAB_DELIM::split)
                         .forEach(values -> {
                             try {
@@ -187,6 +192,11 @@ public abstract class AbstractInstallerService {
                     reader.readLine();
 
                     for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                        // skip lines that are commented out
+                        if (line.trim().startsWith("--")) {
+                            continue;
+                        }
+
                         try {
                             String[] values = TAB_DELIM.split(line);
 
