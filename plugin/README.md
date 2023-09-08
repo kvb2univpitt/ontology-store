@@ -25,6 +25,7 @@ To register the plug-in with the i2b2 webclient, add the following code to the a
 {code: "OntologyStore",
     forceLoading: true,
     forceConfigMsg: {params: []},
+    roles: [ "MANAGER" ],
     forceDir: "cells/plugins/standard"
 }
 ```
@@ -44,9 +45,12 @@ i2b2.hive.tempCellsList = [
     {code: "OntologyStore",
         forceLoading: true,
         forceConfigMsg: {params: []},
+        roles: [ "MANAGER" ],
         forceDir: "cells/plugins/standard"
     }
 ];
 ```
+
+> Note that the role for the plug-in is "MANAGER".  This will hide the plug-in from non-admin users.
 
 For more information on installing the plug-in, please visit [Web Client Plug-in Developers Guide](https://community.i2b2.org/wiki/display/webclient/Web+Client+Plug-in+Developers+Guide).
