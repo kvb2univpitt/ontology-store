@@ -356,8 +356,7 @@ i2b2.OntologyStore.execute = function () {
                 };
                 let scopedCallback = new i2b2_scopedCallback();
                 scopedCallback.callback = function (productActionResults) {
-                    executeBtn.disabled = false;
-                    if (productActionResults.error) {
+                    setTimeout(function () {
                         let innerScopedCallback = new i2b2_scopedCallback();
                         innerScopedCallback.callback = function (getProductResults) {
                             if (!getProductResults.error) {
@@ -365,40 +364,43 @@ i2b2.OntologyStore.execute = function () {
                                 i2b2.OntologyStore.refreshProductTable();
                             }
 
-                            let errorMsg;
-                            try {
-                                errorMsg = productActionResults.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
-                            } catch (exception) {
-                                errorMsg = 'Server error: ' + productActionResults.errorMsg;
-                            }
-                            i2b2.OntologyStore.modal.progress.hide();
-                            i2b2.OntologyStore.modal.message.show("Download/Install Ontology Failed", errorMsg);
-                            console.log(errorMsg);
-                        };
-                        i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, innerScopedCallback);
-                    } else {
-                        let innerScopedCallback = new i2b2_scopedCallback();
-                        innerScopedCallback.callback = function (getProductResults) {
-                            if (!getProductResults.error) {
-                                i2b2.OntologyStore.products = getProductResults.parse();
-                                i2b2.OntologyStore.refreshProductTable();
-                            }
-
-                            let data = productActionResults.parse();
-
-                            // check to see if refresh is required    
-                            for (let i = 0; i < data.length; i++) {
-                                if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
-                                    i2b2.ONT.view.nav.doRefreshAll();
-                                    break;
+                            if (productActionResults.error) {
+                                let msgTitle = '';
+                                let msgBody = '';
+                                if (productActionResults.msgResponse.includes('504 Gateway Timeout')) {
+                                    msgTitle = 'Request Timeout';
+                                    msgBody = 'The current request takes longer than normal.'
+                                            + '  If set to installed, the ontologies will appear in the "Terms" panel the next time you log back in after the installation is done.'
+                                } else {
+                                    msgTitle = 'Download/Install Ontology Failed';
+                                    try {
+                                        msgBody = productActionResults.refXML.getElementsByTagName('status')[0].firstChild.nodeValue;
+                                    } catch (exception) {
+                                        msgBody = 'Server error: ' + productActionResults.errorMsg;
+                                    }
                                 }
-                            }
+                                i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
 
-                            i2b2.OntologyStore.modal.progress.hide();
-                            i2b2.OntologyStore.modal.summary.show(data);
+                                executeBtn.disabled = false;
+                                i2b2.OntologyStore.modal.progress.hide();
+                            } else {
+                                let data = productActionResults.parse();
+
+                                // check to see if refresh is required    
+                                for (let i = 0; i < data.length; i++) {
+                                    if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
+                                        i2b2.ONT.view.nav.doRefreshAll();
+                                        break;
+                                    }
+                                }
+
+                                executeBtn.disabled = false;
+                                i2b2.OntologyStore.modal.progress.hide();
+                                i2b2.OntologyStore.modal.summary.show(data);
+                            }
                         };
                         i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, innerScopedCallback);
-                    }
+                    }, 500);
                 };
                 i2b2.ONTSTORE.ajax.PerformProductActions("OntologyStore Plugin", options, scopedCallback);
             } else {
