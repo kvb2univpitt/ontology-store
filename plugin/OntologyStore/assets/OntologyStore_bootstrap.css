@@ -1,6 +1,178 @@
-/* Selected styles extracted from Bootstrap v4.6 (https://getbootstrap.com/docs/4.6/getting-started/introduction/) */
+#OntologyStore-mainDiv *,
+#OntologyStore-mainDiv *::before,
+#OntologyStore-mainDiv *::after {
+    box-sizing: border-box;
+}
 
-.ontologystore-btn {
+#OntologyStore-mainDiv button,
+#OntologyStore-mainDiv input {
+    overflow: visible;
+}
+
+#OntologyStore-mainDiv button {
+    text-transform: none;
+}
+
+#OntologyStore-mainDiv input,
+#OntologyStore-mainDiv button {
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+#OntologyStore-mainDiv button,
+#OntologyStore-mainDiv [type="button"] {
+    -webkit-appearance: button;
+}
+
+#OntologyStore-mainDiv button:not(:disabled),
+[type="button"]:not(:disabled) {
+    cursor: pointer;
+}
+
+#OntologyStore-mainDiv button::-moz-focus-inner,
+#OntologyStore-mainDiv [type="button"]::-moz-focus-inner {
+    padding: 0;
+    border-style: none;
+}
+
+#OntologyStore-mainDiv input[type="checkbox"] {
+    box-sizing: border-box;
+    padding: 0;
+}
+
+#OntologyStore-mainDiv table {
+    border-collapse: collapse;
+}
+#OntologyStore-mainDiv th {
+    text-align: inherit;
+    text-align: -webkit-match-parent;
+}
+
+.ontstore-bs-text-info {
+    color: #17a2b8 !important;
+}
+.ontstore-bs-text-success {
+    color: #28a745 !important;
+}
+.ontstore-bs-text-danger {
+    color: #dc3545 !important;
+}
+
+.ontstore-bs-align-items-center {
+    -ms-flex-align: center !important;
+    align-items: center !important;
+}
+.ontstore-bs-justify-content-between {
+    -ms-flex-pack: justify !important;
+    justify-content: space-between !important;
+}
+
+.ontstore-bs-d-flex {
+    display: -ms-flexbox !important;
+    display: flex !important;
+}
+
+.ontstore-bs-m-0 {
+    margin: 0 !important;
+}
+
+.ontstore-bs-pb-4,
+.ontstore-bs-py-4 {
+    padding-bottom: 1.5rem !important;
+}
+
+.ontstore-bs-text-center {
+    text-align: center !important;
+}
+
+.ontstore-bs-float-right {
+    float: right !important;
+}
+
+.ontstore-bs-table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+}
+.ontstore-bs-table th,
+.ontstore-bs-table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+.ontstore-bs-table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+}
+.ontstore-bs-table-sm th,
+.ontstore-bs-table-sm td {
+    padding: 0.3rem;
+}
+.ontstore-bs-table-bordered {
+    border: 1px solid #dee2e6;
+}
+.ontstore-bs-table-bordered th,
+.ontstore-bs-table-bordered td {
+    border: 1px solid #dee2e6;
+}
+.ontstore-bs-table-bordered thead th,
+.ontstore-bs-table-bordered thead td {
+    border-bottom-width: 2px;
+}
+.ontstore-bs-table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.ontstore-bs-table-responsive > .ontstore-bs-table-bordered {
+    border: 0;
+}
+.ontstore-bs-table-hover tbody tr:hover {
+    color: #212529;
+    background-color: rgba(0, 0, 0, 0.075);
+}
+
+.ontstore-bs-card {
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.25rem;
+}
+.ontstore-bs-card-header {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.ontstore-bs-card-header:first-child {
+    border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+}
+.ontstore-bs-card-body {
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    min-height: 1px;
+    padding: 1.25rem;
+}
+.ontstore-bs-card-footer {
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+.ontstore-bs-card-footer:last-child {
+    border-radius: 0 0 calc(0.25rem - 1px) calc(0.25rem - 1px);
+}
+
+.ontstore-bs-btn {
     display: inline-block;
     font-weight: 400;
     color: #212529;
@@ -18,180 +190,95 @@
     border-radius: 0.25rem;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
-
-.ontologystore-btn:hover {
+@media (prefers-reduced-motion: reduce) {
+    .ontstore-bs-btn {
+        transition: none;
+    }
+}
+.ontstore-bs-btn:hover {
     color: #212529;
     text-decoration: none;
 }
-
-.ontologystore-btn:focus, .ontologystore-btn.focus {
+.ontstore-bs-btn:focus, .ontstore-bs-btn.ontstore-bs-focus {
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
-
-.ontologystore-btn.disabled, .ontologystore-btn:disabled {
+.ontstore-bs-btn.ontstore-bs-disabled, .ontstore-bs-btn:disabled {
     opacity: 0.65;
 }
-
-.ontologystore-btn:not(:disabled):not(.disabled) {
+.ontstore-bs-btn:not(:disabled):not(.ontstore-bs-disabled) {
     cursor: pointer;
 }
-
-.ontologystore-btn-primary {
+.ontstore-bs-btn-primary {
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
 }
-
-.ontologystore-btn-primary:hover {
+.ontstore-bs-btn-primary:hover {
     color: #fff;
     background-color: #0069d9;
     border-color: #0062cc;
 }
-
-.ontologystore-btn-primary:focus, .ontologystore-btn-primary.focus {
+.ontstore-bs-btn-primary:focus, .ontstore-bs-btn-primary.ontstore-bs-focus {
     color: #fff;
     background-color: #0069d9;
     border-color: #0062cc;
     box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
 }
-
-.ontologystore-btn-primary.disabled, .ontologystore-btn-primary:disabled {
+.ontstore-bs-btn-primary.ontstore-bs-disabled, .ontstore-bs-btn-primary:disabled {
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
 }
-
-.ontologystore-btn-primary:not(:disabled):not(.disabled):active, .ontologystore-btn-primary:not(:disabled):not(.disabled).active,
-.show > .ontologystore-btn-primary.dropdown-toggle {
+.ontstore-bs-btn-primary:not(:disabled):not(.ontstore-bs-disabled):active, .ontstore-bs-btn-primary:not(:disabled):not(.ontstore-bs-disabled).ontstore-bs-active {
     color: #fff;
     background-color: #0062cc;
     border-color: #005cbf;
 }
-
-.ontologystore-btn-primary:not(:disabled):not(.disabled):active:focus, .ontologystore-btn-primary:not(:disabled):not(.disabled).active:focus,
-.show > .ontologystore-btn-primary.dropdown-toggle:focus {
+.ontstore-bs-btn-primary:not(:disabled):not(.ontstore-bs-disabled):active:focus, .ontstore-bs-btn-primary:not(:disabled):not(.ontstore-bs-disabled).ontstore-bs-active:focus {
     box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
 }
-
-.ontologystore-btn-success {
+.ontstore-bs-btn-success {
     color: #fff;
     background-color: #28a745;
     border-color: #28a745;
 }
-
-.ontologystore-btn-success:hover {
+.ontstore-bs-btn-success:hover {
     color: #fff;
     background-color: #218838;
     border-color: #1e7e34;
 }
-
-.ontologystore-btn-success:focus, .ontologystore-btn-success.focus {
+.ontstore-bs-btn-success:focus, .ontstore-bs-btn-success.ontstore-bs-focus {
     color: #fff;
     background-color: #218838;
     border-color: #1e7e34;
     box-shadow: 0 0 0 0.2rem rgba(72, 180, 97, 0.5);
 }
-
-.ontologystore-btn-success.disabled, .ontologystore-btn-success:disabled {
+.ontstore-bs-btn-success.ontstore-bs-disabled, .ontstore-bs-btn-success:disabled {
     color: #fff;
     background-color: #28a745;
     border-color: #28a745;
 }
-
-.ontologystore-btn-success:not(:disabled):not(.disabled):active, .ontologystore-btn-success:not(:disabled):not(.disabled).active,
-.show > .ontologystore-btn-success.dropdown-toggle {
+.ontstore-bs-btn-success:not(:disabled):not(.ontstore-bs-disabled):active, .ontstore-bs-btn-success:not(:disabled):not(.ontstore-bs-disabled).ontstore-bs-active,
+.show > .ontstore-bs-btn-success.ontstore-bs-dropdown-toggle {
     color: #fff;
     background-color: #1e7e34;
     border-color: #1c7430;
 }
-
-.ontologystore-btn-success:not(:disabled):not(.disabled):active:focus, .ontologystore-btn-success:not(:disabled):not(.disabled).active:focus,
-.show > .ontologystore-btn-success.dropdown-toggle:focus {
+.ontstore-bs-btn-success:not(:disabled):not(.ontstore-bs-disabled):active:focus, .ontstore-bs-btn-success:not(:disabled):not(.ontstore-bs-disabled).ontstore-bs-active:focus,
+.show > .ontstore-bs-btn-success.ontstore-bs-dropdown-toggle:focus {
     box-shadow: 0 0 0 0.2rem rgba(72, 180, 97, 0.5);
 }
 
-.ontologystore-mb-4,
-.ontologystore-my-4 {
-    margin-bottom: 1.5rem !important;
+.ontstore-bs-btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
 }
 
-.ontologystore-card {
-    position: relative;
-    display: -ms-flexbox;
-    display: flex;
-    -ms-flex-direction: column;
-    flex-direction: column;
-    min-width: 0;
-    word-wrap: break-word;
-    background-color: #fff;
-    background-clip: border-box;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0.25rem;
-}
-
-
-.ontologystore-card > .ontologystore-card-header + .list-group,
-.ontologystore-card > .list-group + .ontologystore-card-footer {
-    border-top: 0;
-}
-
-.ontologystore-card-header {
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 0;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.ontologystore-card-header:first-child {
-    border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
-}
-
-.ontologystore-card-body {
-    -ms-flex: 1 1 auto;
-    flex: 1 1 auto;
-    min-height: 1px;
-    padding: 1.25rem;
-}
-
-.ontologystore-card-footer {
-    padding: 0.75rem 1.25rem;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-top: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.ontologystore-card-footer:last-child {
-    border-radius: 0 0 calc(0.25rem - 1px) calc(0.25rem - 1px);
-}
-
-.ontologystore-table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2rem;
-}
-
-.ontologystore-float-right {
-    float: right !important;
-}
-
-.ontologystore-text-danger {
-    color: #ff0000 !important;
-    font-weight: 700 !important;
-}
-
-.ontologystore-text-info {
-    color: #17a2b8 !important;
-    font-weight: 700 !important;
-}
-
-.ontologystore-text-warning {
-    color: darkorange !important;
-    font-weight: 700 !important;
-}
-
-.ontologystore-text-success {
-    color: darkgreen !important;
-    font-weight: 700 !important;
+.ontstore-bs-form-check-input {
+    position: absolute;
+    margin-top: 0.3rem;
+    margin-left: -1.25rem;
 }

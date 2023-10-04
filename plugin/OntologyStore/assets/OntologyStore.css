@@ -1,65 +1,59 @@
 /*** main plugin wrapper ***/
-
-#OntologyStore-mainDiv *,
-#OntologyStore-mainDiv *::before,
-#OntologyStore-mainDiv *::after {
-    box-sizing: border-box;
-}
-
 #OntologyStore-mainDiv {
-    padding: 1.0rem 1.0rem 2.0rem 1.0rem;
+    margin: 0;
+    padding: 1.25rem;
 }
 
 /*** OntologyStore main page ***/
-
-table#OntologyStore-ProductTable {
-    border: 1px solid dimgray;
-    border-collapse: collapse !important;
-    width: 100%;
-}
 
 table#OntologyStore-ProductTable th {
     border: 1px solid dimgray;
     text-align: inherit;
     text-align: -webkit-match-parent;
+    padding: 0.5rem;
+    vertical-align: top;
     background-color: #216288 !important;
     color: lightgrey;
 }
 
-table#OntologyStore-ProductTable td {
-    border: 1px solid dimgray;
-}
-
-table#OntologyStore-ProductTable tr:hover td {
-    background-color: #DCDCDC;
-}
-
-.ontologystore-title {
+.ontstore-title {
     min-width: 40%;
 }
 
-.ontologystore-network-chkbx {
+.ontstore-network-chkbx {
     max-width: 70px
 }
 
-.ontologystore-download-chkbx {
+.ontstore-download-chkbx {
     max-width: 70px
 }
 
-.ontologystore-install-chkbx {
+.ontstore-install-chkbx {
     max-width: 50px
 }
 
-.ontologystore-disable-chkbx {
+.ontstore-disable-chkbx {
     max-width: 50px
-}
-
-#OntologyStore-ProductTable_paginate {
-    padding-top: 20px;
 }
 
 #OntologyStore-ProductTable_filter {
-    padding-bottom: 10px;
+    padding-bottom: 20px;
+}
+#OntologyStore-ProductTable_info {
+    padding-top: 20px;
+}
+#OntologyStore-ProductTable_paginate {
+    padding-top: 15px;
+}
+
+.ontstore-border {
+    border: 1px solid #216288;
+}
+
+.ontstore-panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #314455;
 }
 
 /*** summary table ***/

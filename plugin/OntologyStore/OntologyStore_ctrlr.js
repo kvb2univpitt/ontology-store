@@ -82,19 +82,19 @@ i2b2.OntologyStore.summary = {
     getSummaryProgress: function (summary) {
         if (summary.actionType === 'Download') {
             if (summary.inProgress) {
-                return '<span class="ontologystore-text-info"><i class="bi bi-file-earmark-arrow-down"></i> In Progress</span>';
+                return '<span class="ontstore-bs-text-info"><i class="bi bi-file-earmark-arrow-down"></i> In Progress</span>';
             } else {
                 return summary.success
-                        ? '<span class="ontologystore-text-success"><i class="bi bi-file-earmark-arrow-down"></i> Success</span>'
-                        : '<span class="ontologystore-text-danger"><i class="bi bi-file-earmark-arrow-down"></i> Failed</span>';
+                        ? '<span class="ontstore-bs-text-success"><i class="bi bi-file-earmark-arrow-down"></i> Success</span>'
+                        : '<span class="ontstore-bs-text-danger"><i class="bi bi-file-earmark-arrow-down"></i> Failed</span>';
             }
         } else {
             if (summary.inProgress) {
-                return '<span class="ontologystore-text-info"><i class="bi bi-server"></i> In Progress</span>';
+                return '<span class="ontstore-bs-text-info"><i class="bi bi-server"></i> In Progress</span>';
             } else {
                 return summary.success
-                        ? '<span class="ontologystore-text-success"><i class="bi bi-server"></i> Success</span>'
-                        : '<span class="ontologystore-text-danger"><i class="bi bi-server"></i> Failed</span>';
+                        ? '<span class="ontstore-bs-text-success"><i class="bi bi-server"></i> Success</span>'
+                        : '<span class="ontstore-bs-text-danger"><i class="bi bi-server"></i> Failed</span>';
             }
         }
     },
@@ -125,8 +125,6 @@ i2b2.OntologyStore.summary = {
             columns[1].innerHTML = summary.actionType;
             columns[2].innerHTML = this.getSummaryProgress(summary);
             columns[3].innerHTML = summary.detail;
-
-            columns[2].className = 'text-center';
         }
 
         return table;
@@ -159,6 +157,7 @@ i2b2.OntologyStore.installCheckboxAction = function (productIndex) {
 i2b2.OntologyStore.refreshProductTable = function () {
     let datatable = i2b2.OntologyStore.productTable;
     datatable.clear();
+
     jQuery.each(i2b2.OntologyStore.products, function (index, product) {
         let columns = [];
         columns[0] = product.title;
@@ -170,53 +169,53 @@ i2b2.OntologyStore.refreshProductTable = function () {
         columns[6] = '';
         columns[7] = '';
         columns[8] = '';
-        columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" disabled="disabled" />';
+        columns[9] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" disabled="disabled" />';
 
         if (product.downloaded) {
             columns[4] = product.includeNetworkPackage
-                    ? '<input id="network-' + index + '" type="checkbox" name="network" checked="checked" disabled="disabled" />'
-                    : '<input id="network-' + index + '" type="checkbox" name="network" disabled="disabled" />';
+                    ? '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" checked="checked" disabled="disabled" />'
+                    : '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" disabled="disabled" />';
         } else {
             columns[4] = product.includeNetworkPackage
-                    ? '<input id="network-' + index + '" type="checkbox" name="network" checked="checked" />'
-                    : '<input id="network-' + index + '" type="checkbox" name="network" />';
+                    ? '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" checked="checked" />'
+                    : '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" />';
         }
 
         columns[5] = product.terminologies.join(',');
 
         if (product.downloaded) {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
+            columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
 
             if (product.installed) {
-                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
+                columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-success">Installed</span>';
 
                 if (product.disabled) {
-                    columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" checked="checked" />';
+                    columns[9] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" checked="checked" />';
                 } else {
-                    columns[9] = '<input id="disable-' + index + '" data-id="' + index + '" type="checkbox" name="disable" />';
+                    columns[9] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" />';
                 }
             } else if (product.failed) {
-                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
+                columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
             } else if (product.started) {
-                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" checked="checked" disabled="disabled" />';
+                columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontologystore-text-info">Installation In Progress</span>';
             } else {
-                columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
+                columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
                 columns[8] = '<span class="ontologystore-text-warning">Ready To Be Installed</span>';
             }
         } else if (product.failed) {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
+            columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
+            columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
             columns[8] = '<span class="ontologystore-text-danger">Download Failed</span>';
         } else if (product.started) {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" checked="checked" disabled="disabled" />';
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" disabled="disabled" />';
+            columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
+            columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
             columns[8] = '<span class="ontologystore-text-info">Download In Progress</span>';
         } else {
-            columns[6] = '<input id="download-' + index + '" data-id="' + index + '" type="checkbox" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
-            columns[7] = '<input id="install-' + index + '" data-id="' + index + '" type="checkbox" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
+            columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
+            columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
         }
 
         datatable.row.add(columns);
@@ -236,7 +235,7 @@ i2b2.OntologyStore.syncFromCloud = function () {
             } catch (exception) {
                 errorMsg = 'Server error: ' + results.errorMsg;
             }
-            document.getElementById("OntologyStore-ExecuteBtn").disabled = true;
+            jQuery('#OntologyStore-ExecuteBtn').prop("disabled", true);
             i2b2.OntologyStore.modal.progress.hide();
             i2b2.OntologyStore.modal.message.show('Sync From Cloud Failed', errorMsg);
             console.log(errorMsg);
@@ -244,7 +243,7 @@ i2b2.OntologyStore.syncFromCloud = function () {
             i2b2.OntologyStore.products = results.parse();
             i2b2.OntologyStore.refreshProductTable();
 
-            document.getElementById("OntologyStore-ExecuteBtn").disabled = (i2b2.OntologyStore.products.length === 0);
+            jQuery('#OntologyStore-ExecuteBtn').prop("disabled", (i2b2.OntologyStore.products.length === 0));
             i2b2.OntologyStore.modal.progress.hide();
             jQuery('#OntologyStore-Product').show();
         }
@@ -344,9 +343,7 @@ i2b2.OntologyStore.execute = function () {
         if (i2b2.PM.model.isAdmin) {
             let selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
             if (selectedProducts.length > 0) {
-                let executeBtn = document.getElementById("OntologyStore-ExecuteBtn");
-                executeBtn.disabled = true;
-
+                jQuery('#OntologyStore-ExecuteBtn').prop("disabled", true);
                 i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
 
                 let options = {
@@ -381,7 +378,7 @@ i2b2.OntologyStore.execute = function () {
                                 }
                                 i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
 
-                                executeBtn.disabled = false;
+                                jQuery('#OntologyStore-ExecuteBtn').prop("disabled", false);
                                 i2b2.OntologyStore.modal.progress.hide();
                             } else {
                                 let data = productActionResults.parse();
@@ -394,7 +391,7 @@ i2b2.OntologyStore.execute = function () {
                                     }
                                 }
 
-                                executeBtn.disabled = false;
+                                jQuery('#OntologyStore-ExecuteBtn').prop("disabled", false);
                                 i2b2.OntologyStore.modal.progress.hide();
                                 i2b2.OntologyStore.modal.summary.show(data);
                             }
@@ -417,22 +414,31 @@ i2b2.OntologyStore.execute = function () {
 i2b2.OntologyStore.Init = function (loadedDiv) {
     i2b2.OntologyStore.productTable = jQuery('#OntologyStore-ProductTable').DataTable({
         'columnDefs': [
-            {'targets': 0, 'className': 'ontologystore-title'},
-            {'targets': 4, 'className': 'dt-center ontologystore-network-chkbx'},
-            {'targets': 6, 'className': 'dt-center ontologystore-download-chkbx'},
-            {'targets': 7, 'className': 'dt-center ontologystore-install-chkbx'},
-            {'targets': 9, 'className': 'dt-center ontologystore-disable-chkbx'}
+            {'targets': 0, 'className': 'ontstore-title'},
+            {'targets': 4, 'className': 'ontstore-bs-text-center ontstore-network-chkbx', 'orderable': false},
+            {'targets': 6, 'className': 'ontstore-bs-text-center ontstore-download-chkbx', 'orderable': false},
+            {'targets': 7, 'className': 'ontstore-bs-text-center ontstore-install-chkbx', 'orderable': false},
+            {'targets': 9, 'className': 'ontstore-bs-text-center ontstore-disable-chkbx', 'orderable': false}
         ]
     });
 
-    document.getElementById('OntologyStore-ExecuteBtn').disabled = true;
+    i2b2.OntologyStore.products = [];
+
+    jQuery('#OntologyStore-SyncFromCloud').click(function () {
+        i2b2.OntologyStore.syncFromCloud();
+    });
+    jQuery('#OntologyStore-ExecuteBtn').click(function () {
+        i2b2.OntologyStore.execute();
+    });
+    jQuery('#OntologyStore-ExecuteBtn').prop("disabled", true);
+
     i2b2.OntologyStore.syncFromCloud();
 };
 
 i2b2.OntologyStore.Unload = function () {
     i2b2.OntologyStore.products = [];
 
-    document.getElementById('OntologyStore-ExecuteBtn').disabled = true;
+    jQuery('#OntologyStore-ExecuteBtn').prop("disabled", true);
 
     return true;
 };

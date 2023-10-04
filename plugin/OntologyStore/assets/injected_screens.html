@@ -7,13 +7,16 @@
     </head>
     <body>
         <div id="OntologyStore-mainDiv">
-            <button type="button" class="ontologystore-btn ontologystore-btn-primary ontologystore-mb-4" id="OntologyStore-SyncFromCloud" onclick="i2b2.OntologyStore.syncFromCloud();">
-                <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
-            </button>
-            <div class="ontologystore-card" id="OntologyStore-Product" style="display: none;">
-                <div class="ontologystore-card-body">
-                    <div class="ontologystore-table-responsive">
-                        <table id="OntologyStore-ProductTable">
+            <div class="ontstore-bs-card">
+                <div class="ontstore-bs-card-header ontstore-bs-border ontstore-bs-d-flex ontstore-bs-justify-content-between ontstore-bs-align-items-center ontstore-border">
+                    <h6 class="ontstore-panel-title ontstore-bs-m-0">Ontologies</h6>
+                    <button id="OntologyStore-SyncFromCloud" class="ontstore-bs-btn ontstore-bs-btn-sm ontstore-bs-btn-primary">
+                        <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
+                    </button>
+                </div>
+                <div class="ontstore-bs-card-body ontstore-border">
+                    <div class="ontstore-bs-table-responsive ontstore-bs-pb-4">
+                        <table class="ontstore-bs-table ontstore-bs-table-sm ontstore-bs-table-bordered ontstore-bs-table-hover" id="OntologyStore-ProductTable">
                             <thead>
                                 <tr>
                                     <th>Title</th>
@@ -32,8 +35,8 @@
                         </table>
                     </div>
                 </div>
-                <div class="ontologystore-card-footer">
-                    <button type="button" class="ontologystore-btn ontologystore-btn-success ontologystore-float-right" id="OntologyStore-ExecuteBtn" onclick="i2b2.OntologyStore.execute();">
+                <div class="ontstore-bs-card-footer ontstore-border">
+                    <button type="button" class="ontstore-bs-btn ontstore-bs-btn-success ontstore-bs-float-right" id="OntologyStore-ExecuteBtn">
                         <i class="bi bi-play-fill"></i> Execute
                     </button>
                 </div>
@@ -51,7 +54,7 @@
                     <div id="OntologyStore-MessageModalMessage"></div>
                 </div>
                 <div class="ft">
-                    <button class="ontologystore-btn ontologystore-btn-success ontologystore-float-right" onclick="i2b2.OntologyStore.modal.message.hide();">OK</button>
+                    <button class="ontstore-bs-btn ontstore-bs-btn-success ontstore-bs-float-right" onclick="i2b2.OntologyStore.modal.message.hide();">OK</button>
                 </div>
             </div>
             <div id="OntologyStore-SummaryMessageModal" style="visibility:hidden">
@@ -60,7 +63,7 @@
                     <div id="OntologyStore-SummaryMessageModalMessage"></div>
                 </div>
                 <div class="ft">
-                    <button class="ontologystore-btn ontologystore-btn-success ontologystore-float-right" onclick="i2b2.OntologyStore.modal.summary.panel.hide();">OK</button>
+                    <button class="ontstore-bs-btn ontstore-bs-btn-success ontstore-bs-float-right" onclick="i2b2.OntologyStore.modal.summary.panel.hide();">OK</button>
                 </div>
             </div>
         </div>
