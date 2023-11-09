@@ -14,8 +14,9 @@
 
     <!-- application.properties -->
     <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="location" value="classpath:application.properties" />
+        <!--<property name="location" value="classpath:application.properties" />-->
         <!--<property name="location" value="file:${user.home}/.spring/ontologystore.properties" />-->
+        <property name="location" value="file:${jboss.server.config.dir}/ontologystore.properties" />
     </bean>
 
     <!-- datasource -->
