@@ -1,4 +1,4 @@
-# OntologyStore Quick Installation
+# OntologyStore Quick Installation Guide
 
 A guide for quick installation of OntologyStore cell and plugin.
 
@@ -7,14 +7,16 @@ A guide for quick installation of OntologyStore cell and plugin.
 The following are required:
 
 - i2b2 (Core Server and Web Client) 1.7.13 Release.
-- i2b2 administrator privileges.
-- Server administrator privileges.
+- i2b2 administrator privileges (webclient).
+- Server administrator privileges (web server and Wildfly)
 
 ## Installing the OntologyStore Cell
 
+Assume the Wildfly directory is **/opt/wildfly**.
+
 ### 1. Stop the Current Running Services
 
-Stop the Wildfly server and the web server.
+- Stop the Wildfly server running the i2b2 core server.
 
 ### 2. Download the OntologyStore Cell
 
@@ -23,8 +25,61 @@ Stop the Wildfly server and the web server.
 
 ### 3. Add the Files to the i2b2 Cell
 
-Assuming the Wildfly director is **/opt/wildfly**.
-
 - Copy the aar file ***OntologyStore.aar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services**.
 
 - Copy the jar file ***OntologyStore.jar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib**.
+
+### 4. Configure the i2b2 OntologyStore cell
+
+- Create a file called ***ontologystore.properties*** in the Wildfly configuration directory **/opt/wildfly/standalone/configuration** with the following content:
+
+```properties
+ontology.dir.download=ontology_download_storage_directory
+
+aws.s3.json.product.list=https://ontology-store.s3.amazonaws.com/product-list.json
+
+# datasources
+spring.hive.datasource.jndi-name=java:/OntologyBootStrapDS
+spring.pm.datasource.jndi-name=java:/PMBootStrapDS
+```
+
+- Replace the ***ontology_download_storage_directory*** with the path to the directory where the ontologies should be downloaded to.
+
+### 5. Restart the Services
+
+- Restart the Wildfly server running the i2b2 core server.
+
+## Installing the OntologyStore Plugin
+
+Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
+
+### 1. Stop the Current Running Services
+
+- Stop the web server running the i2b2 webclient.
+
+### 2. Download the OntologyStore Cell
+
+- Click on the link to download [ontologystore_plugin.zip](https://drive.google.com/file/d/1YqbbO-nFtcdfRXQWbaFAfdSBkXbQzGrY/view?usp=sharing).
+- Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
+
+### 3. Add the Plugin to the i2b2 Webclient
+
+- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory **/var/www/html/webclient/js-i2b2/cells/plugins/standard**.
+
+### 4. Configure the i2b2 Webclient
+
+- Add the following code to the array i2b2.hive.tempCellsList in the module loader configuration file ***i2b2_loader.js*** located in the directory **/var/www/html/webclient/js-i2b2**.
+
+```js
+{code: "ONTSTORE"},
+{code: "OntologyStore",
+    forceLoading: true,
+    forceConfigMsg: {params: []},
+    roles: [ "MANAGER" ],
+    forceDir: "cells/plugins/standard"
+}
+```
+
+### 5. Restart the Services
+
+- Restart the web server running the i2b2 webcleint.
