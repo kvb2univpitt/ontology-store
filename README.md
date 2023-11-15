@@ -16,8 +16,7 @@ The software consists of the following software components:
 
 ## Installing the Software
 
-- Instructions for building and installing the [i2b2-ontologystore](cell).
-- Instructions for installing the  [OntologyStore](plugin).
+- [Quick installation guide](docs/QUICK_INSTALL.md).
 
 ## Using the Software
 

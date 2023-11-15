@@ -1,6 +1,6 @@
 # OntologyStore Quick Installation Guide
 
-A simple guide for installing the OntologyStore software.
+A guide for installing the OntologyStore software.
 
 ## Prerequisites
 
@@ -16,7 +16,7 @@ A simple guide for installing the OntologyStore software.
 
 ## Installing the OntologyStore Cell
 
-Assume the Wildfly directory is **/opt/wildfly**.
+Assume that the Wildfly directory is **/opt/wildfly**.
 
 ### 1. Stop the Current Running Services
 
@@ -87,3 +87,34 @@ Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
 ### 5. Restart the Services
 
 - Restart the web server running the i2b2 webcleint.
+
+## Adding the OntologyStore Cell
+
+Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***.
+
+### 1. Log into the i2b2 Administration Module.
+
+### 2. In the Navigation panel, click on ***Manage Cells***.
+
+![Manged Cell](../cell/img/managed_cell.png)
+
+### 3. In the Manage Cells page click on Add New Cell.
+
+![Add Cell](../cell/img/add_cell.png)
+
+### 4. Enter the following cell information and click on the "Save" button:
+
+| Field        | Value                                                     |
+|--------------|-----------------------------------------------------------|
+| Cell ID      | ONTSTORE                                                  |
+| Cell Name    | OntologyStore Cell                                        |
+| Cell URL     | http://localhost:9090/i2b2/services/OntologyStoreService/ |
+| Project Path | /                                                         |
+| Method       | REST                                                      |
+
+![Save Cell](../cell/img/save_cell.png)
+> Note that the URL must end with a foward slash (**/**).
+
+### 5. The cell will be added to the list of cells on the Manage Cells page.  In the Navigation panel click on Manage Cells to refresh the hierarchical tree and display the new cell:
+
+![Refresh Cell List](../cell/img/refresh_managed_cell.png)
