@@ -1,14 +1,18 @@
 # OntologyStore Quick Installation Guide
 
-A guide for quick installation of OntologyStore cell and plugin.
+A simple guide for installing the OntologyStore software.
 
 ## Prerequisites
 
-The following are required:
+### i2b2 System Requirements
 
-- i2b2 (Core Server and Web Client) 1.7.13 Release.
-- i2b2 administrator privileges (webclient).
-- Server administrator privileges (web server and Wildfly)
+- i2b2 Core Server 1.7.13 Release.
+- i2b2 Webclient 1.7.13 Release.
+
+### Required Permissions
+
+- System administrator privileges is needed to install the OntologyStore plugin and to install the OntologyStore cell.
+- i2b2 administrator privileges is needed to log into the i2b2 Administration Module to add new cell.
 
 ## Installing the OntologyStore Cell
 
