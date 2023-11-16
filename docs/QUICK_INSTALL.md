@@ -63,12 +63,18 @@ Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
 
 - Stop the web server running the i2b2 webclient.
 
-### 2. Download the OntologyStore Cell
+### 2. Add the Ontology Cell
 
-- Click on the link to download [ontologystore_plugin.zip](https://drive.google.com/file/d/1YqbbO-nFtcdfRXQWbaFAfdSBkXbQzGrY/view?usp=sharing).
-- Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
+-  Click on the link to download [ONTSTORE.zip](https://drive.google.com/file/d/1P8nwjQOcvQEOqI9c6wmhD9WLHmZVNCHb/view?usp=sharing).
+
+- Extract ***ONTSTORE.zip*** file to the i2b2 webclient directory **/var/www/html/webclient/js-i2b2/cells**.
+
 
 ### 3. Add the Plugin to the i2b2 Webclient
+
+- Click on the link to download [ontologystore_plugin.zip](https://drive.google.com/file/d/1YqbbO-nFtcdfRXQWbaFAfdSBkXbQzGrY/view?usp=sharing).
+
+- Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
 
 - Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory **/var/www/html/webclient/js-i2b2/cells/plugins/standard**.
 
