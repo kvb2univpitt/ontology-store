@@ -16,7 +16,7 @@ A guide for installing the OntologyStore software.
 
 ## Installing the OntologyStore Cell
 
-Assume that the Wildfly directory is **/opt/wildfly**.
+Assume that the Wildfly directory on the server is **/opt/wildfly**.
 
 ### 1. Stop the Current Running Services
 
@@ -27,11 +27,13 @@ Assume that the Wildfly directory is **/opt/wildfly**.
 - Click on the link to download [ontologystore_cell.zip](https://drive.google.com/file/d/1Pjkmc1AO2WWyg2jhUMrqn3PUZ8YmNHWS/view?usp=sharing).
 - Extract ***ontologystore_cell.zip*** file.  Once the file has been unzip, there should be two files (***OntologyStore.aar*** and ***OntologyStore.jar***) in the folder **ontologystore_cell**.
 
-### 3. Add the Files to the i2b2 Cell
+### 3. Add the Files to the i2b2 Cell on the Server
 
 - Copy the aar file ***OntologyStore.aar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services**.
 
 - Copy the jar file ***OntologyStore.jar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib**.
+
+> Note that the ***i2b2.war*** in the Wildfly directory **/opt/wildfly/standalone/deployments** may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the **WEB-INF/services** folder and the ***OntologyStore.jar*** file to the **WEB-INF/lib** folder.
 
 ### 4. Configure the i2b2 OntologyStore cell
 
