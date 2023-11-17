@@ -16,7 +16,7 @@ A guide for installing the OntologyStore software.
 
 ## Installing the OntologyStore Cell
 
-Assume that the Wildfly directory on the server is **/opt/wildfly**.
+The following instructions assume that the Wildfly directory on the server is **/opt/wildfly**.
 
 ### 1. Stop the Current Running Services
 
@@ -25,17 +25,17 @@ Assume that the Wildfly directory on the server is **/opt/wildfly**.
 ### 2. Download the OntologyStore Cell
 
 - Click on the link to download [ontologystore_cell.zip](https://drive.google.com/file/d/1Pjkmc1AO2WWyg2jhUMrqn3PUZ8YmNHWS/view?usp=sharing).
-- Extract ***ontologystore_cell.zip*** file.  Once the file has been unzip, there should be two files (***OntologyStore.aar*** and ***OntologyStore.jar***) in the folder **ontologystore_cell**.
+- Extract ***ontologystore_cell.zip*** file.  Once the file has been unzipped, there should be two files (***OntologyStore.aar*** and ***OntologyStore.jar***) in the folder **ontologystore_cell**.
 
 ### 3. Add the Files to the i2b2 Cell on the Server
 
-- Copy the aar file ***OntologyStore.aar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services**.
+- Copy the aar file ***OntologyStore.aar*** from the **ontologystore_cell** folder to the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services**.
 
-- Copy the jar file ***OntologyStore.jar*** into the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib**.
+- Copy the jar file ***OntologyStore.jar*** **ontologystore_cell** folder to the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib**.
 
 > Note that the ***i2b2.war*** in the Wildfly directory **/opt/wildfly/standalone/deployments** may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the **WEB-INF/services** folder and the ***OntologyStore.jar*** file to the **WEB-INF/lib** folder.
 
-### 4. Configure the i2b2 OntologyStore cell
+### 4. Configure the i2b2 OntologyStore Cell
 
 - Create a file called ***ontologystore.properties*** in the Wildfly configuration directory **/opt/wildfly/standalone/configuration** with the following content:
 
@@ -49,7 +49,7 @@ spring.hive.datasource.jndi-name=java:/OntologyBootStrapDS
 spring.pm.datasource.jndi-name=java:/PMBootStrapDS
 ```
 
-- Replace the ***ontology_download_storage_directory*** with the path to the directory where the ontologies should be downloaded to.
+- Replace the ***ontology_download_storage_directory*** with the path to the directory where the ontologies should be downloaded to.  Note that ***Wildfly*** must have a read/write permission to that directory.
 
 ### 5. Restart the Services
 
@@ -57,13 +57,13 @@ spring.pm.datasource.jndi-name=java:/PMBootStrapDS
 
 ## Installing the OntologyStore Plugin
 
-Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
+The following instructions assume that the i2b2 webclient directory is **/var/www/html/webclient**.
 
 ### 1. Stop the Current Running Services
 
 - Stop the web server running the i2b2 webclient.
 
-### 2. Add the Ontology Cell
+### 2. Add the OntologyStore Cell
 
 -  Click on the link to download [ONTSTORE.zip](https://drive.google.com/file/d/1P8nwjQOcvQEOqI9c6wmhD9WLHmZVNCHb/view?usp=sharing).
 
@@ -76,7 +76,7 @@ Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
 
 - Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
 
-- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory **/var/www/html/webclient/js-i2b2/cells/plugins/standard**.
+- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory **/var/www/html/webclient/js-i2b2/cells/plugins/community**.
 
 ### 4. Configure the i2b2 Webclient
 
@@ -88,9 +88,11 @@ Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
     forceLoading: true,
     forceConfigMsg: {params: []},
     roles: [ "MANAGER" ],
-    forceDir: "cells/plugins/standard"
+    forceDir: "cells/plugins/community"
 }
 ```
+
+> Remember to make a backup copy of the file before modifying it.
 
 ### 5. Restart the Services
 
@@ -98,7 +100,7 @@ Assume that the i2b2 webclient directory is **/var/www/html/webclient**.
 
 ## Adding the OntologyStore Cell
 
-Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***.
+The following instructions assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***.
 
 ### 1. Log into the i2b2 Administration Module.
 
