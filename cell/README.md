@@ -7,57 +7,79 @@ An i2b2 cell providing the following functionalities:
 
 The ontologies are provided by the community and are publicly available on the AWS cloud.
 
-## Building the Cell
+## Installing the OntologyStore Cell
 
 ### Prerequisites
 
-The following software and tools are required:
+#### Required Software and Tools:
 
 - OpenJDK 8 or [Oracle JDK 8](https://www.oracle.com/java/technologies/downloads/#java8)
 - [Apache Maven 3.x.x](https://maven.apache.org/download.cgi)
 
-The following third-party Maven dependencies are required:
+#### Required i2b2 Software
+
+- i2b2 Core Server 1.7.13 Release.
+- i2b2 Webclient 1.7.13 Release.
+
+#### Required Permissions
+
+- System administrator privileges is needed to install the OntologyStore plugin and to install the OntologyStore cell.
+- i2b2 administrator privileges is needed to log into the i2b2 Administration Module to add new cell.
+
+#### Required Third-party Maven Dependencies:
 
 - [i2b2-server-common](https://github.com/kvb2univpitt/i2b2-server-common)
 
-### Compiling the Code
+### Building the Cell
 
-1. Install the 3rd-party dependency [i2b2-server-common](https://github.com/kvb2univpitt/i2b2-server-common).
+#### 1. Install the 3rd-party dependency [i2b2-server-common](https://github.com/kvb2univpitt/i2b2-server-common).
 
-2. Open up a terminal in the project directory ```ontology-store/cell/i2b2-ontologystore``` and execute the following command:
+#### 2. Open up a terminal in the project directory ```ontology-store/cell/i2b2-ontologystore``` and execute the following Maven command to compile the code and package it in its distributable format:
 
-    ```
-    mvn clean package
-    ```
+```
+mvn clean package
+```
 
-The code is compiled into the following files in the project directory ```ontology-store/cell/i2b2-ontologystore/target```:
+The output files of the build is located in the project folder ```ontology-store/cell/i2b2-ontologystore/target```.  The OntologyStore cell consists of following output files:
 
 - OntologyStore.jar
 - OntologyStore.aar
 
-## Installing the Cell
+### Adding the Cell to the Hives
 
-### Configuring the Cell
+The instructions assume the following:
 
-The settings for OntologyStore cell are stored in a file called **ontologystore.properties** located in the project directory ```ontology-store/cell/i2b2-ontologystore/src/main/resources```.
+- The Wildfly directory on the server is ```/opt/wildfly```.
+- The i2b2 webclient directory on the server is ```/var/www/html/webclient```
+- The directory to download the ontology files is ```/home/wildfly/ontology```
 
-#### Setting the Download Directory
+#### 1. Stop the Wildfly server.
 
-Set the value for the attribute **ontology.dir.download** with the location to where the ontologies will be downloaded to on the server.
+#### 2. Add the compiled modules to the i2b2 cell on the server.
 
-For an example, assume that the download directory is ```/home/wildfly/ontology```.  The **ontologystore.properties** would look like this:
+- Copy the aar file OntologyStore.aar from the ontologystore_cell folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
 
-```properties
-ontology.dir.download=/home/wildfly/ontology
+- Copy the jar file OntologyStore.jar ontologystore_cell folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib```.
 
-aws.s3.json.product.list=https://ontology-store.s3.amazonaws.com/product-list.json
+> Note that the i2b2.war in the Wildfly directory /opt/wildfly/standalone/deployments may be an actual WAR file instead of a directory. In this case, you will need to open up the i2b2.war file and add the OntologyStore.aar file to the ```WEB-INF/services``` folder and the OntologyStore.jar file to the ```WEB-INF/lib``` folder.
 
-# datasources
-spring.hive.datasource.jndi-name=java:/OntologyBootStrapDS
-spring.pm.datasource.jndi-name=java:/PMBootStrapDS
-```
+#### 3. Configure the i2b2 OntologyStore cell.
 
-#### Moving the Configuration File to Different Directory
+- Create a file called **ontologystore.properties** in the Wildfly configuration directory ```/opt/wildfly/standalone/configuration``` with the following content:
+
+    ```
+    ontology.dir.download=/home/wildfly/ontology
+    
+    aws.s3.json.product.list=https://ontology-store.s3.amazonaws.com/product-list.json
+
+    # datasources
+    spring.hive.datasource.jndi-name=java:/OntologyBootStrapDS
+    spring.pm.datasource.jndi-name=java:/PMBootStrapDS
+    ```
+
+    > Remember to change the property value for the **ontology.dir.download** to the actual location where the ontology files should be downloaded to.
+    
+##### Moving the configuration file to different directory
 
 If you prefer the **ontologystore.properties** to be in a different directory, change the value of the property **location** in the **applicationContext.xml** file located in the project directory ```ontology-store/cell/i2b2-ontologystore/src/main/resources```.
 
@@ -66,58 +88,28 @@ For an example, assume the **ontologystore.properties** is located in the direct
 ```xml
 <!-- application.properties -->
 <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-    <!--<property name="location" value="classpath:application.properties" />-->
+    <!--<property name="location" value="file:${jboss.server.config.dir}/ontologystore.properties" />-->
     <property name="location" value="file:/home/wildfly/i2b2/ontologystore.properties" />
 </bean>
 ```
 
-### Installing into the i2b2 Hive
+#### 4. Start the Wildfly server.
 
-#### Copying the Files into the i2b2 War File
 
-1. Stop Wildfly.
-2. Copy the JAR file **OntologyStore.jar** from the directory ```ontology-store/cell/i2b2-ontologystore/target/``` to the folder ```WEB-INF/lib``` inside the WAR file **i2b2.war**.
-3. Copy the AAR file **OntologyStore.aar** from the directory ```ontology-store/cell/i2b2-ontologystore/target/``` to the folder ```WEB-INF/services``` inside the i2b2 WAR file **i2b2.war**.
-4. Restart Wildfly.
+The instructions assume the following:
 
-#### Adding to the Cell
+- The i2b2 webclient directory on the server is ```/var/www/html/webclient```
 
-The i2b2 webclient needs to know about the OntologyStore cell.  Assume the i2b2 hive is deployed on a Wildfly server with the domain name ***localhost*** on port ***9090***, the following cell information will be added in the i2b2 Administration Module:
+### Adding the OntologyStore Cell module in the i2b2 Webclient.
 
-| Field        | Description                                                           | Value                                                     |
-|--------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
-| Cell ID      | A unique identifier for the cell.                                     | ONTSTORE                                                  |
-| Cell Name    | The name of the cell.                                                 | OntologyStore Cell                                        |
-| Cell URL     | The url contains the IP or domain name for where the cell is located. | http://localhost:9090/i2b2/services/OntologyStoreService/ |
-| Project Path |                                                                       | /                                                         |
-| Method       | The method of communication.                                          | REST                                                      |
+#### 1.  Copy to the folder **ONTSTORE** from the project directory ```ontology-store/cell``` to the webclient directory ```/var/www/html/webclient/js-i2b2/cells```
 
-1. Log into the i2b2 Administration Module.
-2. In the Navigation panel, click on ***Manage Cells***.
-    ![Manged Cell](img/managed_cell.png)
-3. In the Manage Cells page click on Add New Cell.
-    ![Add Cell](img/add_cell.png)
-4. Enter the above cell information and click on the "Save" button:
-    ![Save Cell](img/save_cell.png)
-    > Note that the URL must end with a foward slash (**/**).
-5. The cell will be added to the list of cells on the Manage Cells page.  In the Navigation panel click on Manage Cells to refresh the hierarchical tree and display the new cell:
-    ![Refresh Cell List](img/refresh_managed_cell.png)
+#### 2. Add the following code to the array ***i2b2.hive.tempCellsList*** in the module loader configuration file **i2b2_loader.js** located in the directory ```/var/www/html/webclient/js-i2b2```:
 
-### Installing the Cell in the i2b2 Webclient
-
-#### Installing the Javascript API
-
-The communication between the webclient and the i2b2 cells is through the Javascript API.
-
-The folder **ONTSTORE**, located in the project directory ```ontology-store/cell/```, contains the Javascript API.  Copy the folder **ONTSTORE** to the webclient directory ```webclient/js-i2b2/cells/```.
-
-#### Registering the Cell
-
-To register the cell with the i2b2 webclient, add the following code to the array ***i2b2.hive.tempCellsList*** in the module loader configuration file **i2b2_loader.js** located in the i2b2 webclient directory ```webclient/js-i2b2```:
-
-```js
-{code: "ONTSTORE"}
 ```
+{code: "ONTSTORE"},
+```
+
 For an example, the **i2b2_loader.js** file should look similar to this:
 
 ```js
@@ -132,6 +124,38 @@ i2b2.hive.tempCellsList = [
     ...
 ];
 ```
+
+### Registering the Cell in the Webclient
+
+The i2b2 webclient needs to know about the OntologyStore cell.  Assume the i2b2 hive is deployed on a Wildfly server with the domain name ***localhost*** on port ***9090***, the following cell information will be added in the i2b2 Administration Module:
+
+| Field        | Description                                                           | Value                                                     |
+|--------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
+| Cell ID      | A unique identifier for the cell.                                     | ONTSTORE                                                  |
+| Cell Name    | The name of the cell.                                                 | OntologyStore Cell                                        |
+| Cell URL     | The url contains the IP or domain name for where the cell is located. | http://localhost:9090/i2b2/services/OntologyStoreService/ |
+| Project Path |                                                                       | /                                                         |
+| Method       | The method of communication.                                          | REST                                                      |
+
+#### 1. Log into the i2b2 Administration Module.
+
+#### 2. In the Navigation panel, click on ***Manage Cells***.
+
+![Manged Cell](img/managed_cell.png)
+
+#### 3. In the Manage Cells page click on Add New Cell.
+
+![Add Cell](img/add_cell.png)
+
+#### 4. Enter the above cell information and click on the "Save" button:
+
+![Save Cell](img/save_cell.png)
+
+> Note that the URL must end with a foward slash (**/**).
+
+#### 5. The cell will be added to the list of cells on the Manage Cells page.  In the Navigation panel click on Manage Cells to refresh the hierarchical tree and display the new cell:
+
+![Refresh Cell List](img/refresh_managed_cell.png)
 
 ## Making SOAP Calls to the Cell
 
