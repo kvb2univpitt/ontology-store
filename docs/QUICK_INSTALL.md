@@ -24,7 +24,7 @@ The following instructions assume that the Wildfly directory on the server is **
 
 ### 2. Download the OntologyStore Cell
 
-- Click on the link to download [ontologystore_cell.zip](https://drive.google.com/file/d/1Pjkmc1AO2WWyg2jhUMrqn3PUZ8YmNHWS/view?usp=sharing).
+- Click on the link to download [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ontologystore_cell.zip).
 - Extract ***ontologystore_cell.zip*** file.  Once the file has been unzipped, there should be two files (***OntologyStore.aar*** and ***OntologyStore.jar***) in the folder **ontologystore_cell**.
 
 ### 3. Add the Files to the i2b2 Cell on the Server
@@ -65,14 +65,14 @@ The following instructions assume that the i2b2 webclient directory is **/var/ww
 
 ### 2. Add the OntologyStore Cell
 
--  Click on the link to download [ONTSTORE.zip](https://drive.google.com/file/d/1P8nwjQOcvQEOqI9c6wmhD9WLHmZVNCHb/view?usp=sharing).
+-  Click on the link to download [ONTSTORE.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ONTSTORE.zip).
 
 - Extract ***ONTSTORE.zip*** file to the i2b2 webclient directory **/var/www/html/webclient/js-i2b2/cells**.
 
 
 ### 3. Add the Plugin to the i2b2 Webclient
 
-- Click on the link to download [ontologystore_plugin.zip](https://drive.google.com/file/d/1YqbbO-nFtcdfRXQWbaFAfdSBkXbQzGrY/view?usp=sharing).
+- Click on the link to download [ontologystore_plugin.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ontologystore_plugin.zip).
 
 - Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
 
