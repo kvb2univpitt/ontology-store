@@ -16,7 +16,7 @@ A guide for installing the OntologyStore software.
 
 ## Installing the OntologyStore Cell
 
-The following instructions assume that the Wildfly directory on the server is **/opt/wildfly**.
+The following instructions assume that the Wildfly directory on the server is ```/opt/wildfly```.
 
 ### 1. Stop the Current Running Services
 
@@ -29,15 +29,15 @@ The following instructions assume that the Wildfly directory on the server is **
 
 ### 3. Add the Files to the i2b2 Cell on the Server
 
-- Copy the aar file ***OntologyStore.aar*** from the **ontologystore_cell** folder to the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services**.
+- Copy the aar file ***OntologyStore.aar*** from the **ontologystore_cell** folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
 
-- Copy the jar file ***OntologyStore.jar*** **ontologystore_cell** folder to the Wildfly directory **/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib**.
+- Copy the jar file ***OntologyStore.jar*** **ontologystore_cell** folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib```.
 
-> Note that the ***i2b2.war*** in the Wildfly directory **/opt/wildfly/standalone/deployments** may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the **WEB-INF/services** folder and the ***OntologyStore.jar*** file to the **WEB-INF/lib** folder.
+> Note that the ***i2b2.war*** in the Wildfly directory ```/opt/wildfly/standalone/deployments``` may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the ```WEB-INF/services``` folder and the ***OntologyStore.jar*** file to the ```WEB-INF/lib``` folder.
 
 ### 4. Configure the i2b2 OntologyStore Cell
 
-- Create a file called ***ontologystore.properties*** in the Wildfly configuration directory **/opt/wildfly/standalone/configuration** with the following content:
+- Create a file called ***ontologystore.properties*** in the Wildfly configuration directory ```/opt/wildfly/standalone/configuration``` with the following content:
 
 ```properties
 ontology.dir.download=ontology_download_storage_directory
@@ -57,7 +57,7 @@ spring.pm.datasource.jndi-name=java:/PMBootStrapDS
 
 ## Installing the OntologyStore Plugin
 
-The following instructions assume that the i2b2 webclient directory is **/var/www/html/webclient**.
+The following instructions assume that the i2b2 webclient directory is ```/var/www/html/webclient```.
 
 ### 1. Stop the Current Running Services
 
@@ -67,7 +67,7 @@ The following instructions assume that the i2b2 webclient directory is **/var/ww
 
 -  Click on the link to download [ONTSTORE.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ONTSTORE.zip).
 
-- Extract ***ONTSTORE.zip*** file to the i2b2 webclient directory **/var/www/html/webclient/js-i2b2/cells**.
+- Extract ***ONTSTORE.zip*** file to the i2b2 webclient directory ```/var/www/html/webclient/js-i2b2/cells```.
 
 
 ### 3. Add the Plugin to the i2b2 Webclient
@@ -76,11 +76,11 @@ The following instructions assume that the i2b2 webclient directory is **/var/ww
 
 - Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
 
-- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory **/var/www/html/webclient/js-i2b2/cells/plugins/community**.
+- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory ```/var/www/html/webclient/js-i2b2/cells/plugins/community```.
 
 ### 4. Configure the i2b2 Webclient
 
-- Add the following code to the array i2b2.hive.tempCellsList in the module loader configuration file ***i2b2_loader.js*** located in the directory **/var/www/html/webclient/js-i2b2**.
+- Add the following code to the array i2b2.hive.tempCellsList in the module loader configuration file ***i2b2_loader.js*** located in the directory ```/var/www/html/webclient/js-i2b2```.
 
 ```js
 {code: "ONTSTORE"},
