@@ -56,6 +56,9 @@
 .ontstore-bs-text-success {
     color: #28a745 !important;
 }
+.ontstore-bs-text-warning {
+    color: #ffc107 !important;
+}
 .ontstore-bs-text-danger {
     color: #dc3545 !important;
 }
@@ -281,4 +284,8 @@
     position: absolute;
     margin-top: 0.3rem;
     margin-left: -1.25rem;
+}
+
+.ontstore-bs-font-weight-bold {
+    font-weight: 700 !important;
 }
