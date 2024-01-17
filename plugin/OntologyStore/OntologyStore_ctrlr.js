@@ -188,7 +188,7 @@ i2b2.OntologyStore.refreshProductTable = function () {
 
             if (product.installed) {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<span class="ontologystore-text-success">Installed</span>';
+                columns[8] = '<span class="ontstore-bs-text-success">Installed</span>';
 
                 if (product.disabled) {
                     columns[9] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" checked="checked" />';
@@ -197,22 +197,22 @@ i2b2.OntologyStore.refreshProductTable = function () {
                 }
             } else if (product.failed) {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<span class="ontologystore-text-danger">Installation Failed</span>';
+                columns[8] = '<span class="ontstore-bs-text-danger">Installation Failed</span>';
             } else if (product.started) {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<span class="ontologystore-text-info">Installation In Progress</span>';
+                columns[8] = '<span class="ontstore-bs-text-info">Installation In Progress</span>';
             } else {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
-                columns[8] = '<span class="ontologystore-text-warning">Ready To Be Installed</span>';
+                columns[8] = '<span class="ontstore-bs-text-warning">Ready To Be Installed</span>';
             }
         } else if (product.failed) {
             columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
             columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
-            columns[8] = '<span class="ontologystore-text-danger">Download Failed</span>';
+            columns[8] = '<span class="ontstore-bs-text-danger">Download Failed</span>';
         } else if (product.started) {
             columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
             columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
-            columns[8] = '<span class="ontologystore-text-info">Download In Progress</span>';
+            columns[8] = '<span class="ontstore-bs-text-info">Download In Progress</span>';
         } else {
             columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" onclick="i2b2.OntologyStore.downloadCheckboxAction(' + index + ')" />';
             columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.installCheckboxAction(' + index + ')" />';
