@@ -171,15 +171,9 @@ i2b2.OntologyStore.refreshProductTable = function () {
         columns[8] = '';
         columns[9] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" disabled="disabled" />';
 
-        if (product.downloaded) {
-            columns[4] = product.includeNetworkPackage
-                    ? '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" disabled="disabled" checked="checked" />'
-                    : '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" disabled="disabled" />';
-        } else {
-            columns[4] = product.includeNetworkPackage
-                    ? '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" checked="checked" />'
-                    : '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" />';
-        }
+        columns[4] = product.includeNetworkPackage
+                ? '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" disabled="disabled" checked="checked" />'
+                : '<input type="checkbox" class="ontstore-bs-form-check-input" id="network-' + index + '" name="network" disabled="disabled" />';
 
         columns[5] = product.terminologies.join(',');
 
@@ -293,16 +287,13 @@ i2b2.OntologyStore.getSelectedProducts = function (products) {
     for (let i = 0; i < selectedProductIndexes.length; i++) {
         let productIndex = selectedProductIndexes[i];
         let product = products[productIndex];
-        let includeNetChkbx = document.getElementById('network-' + productIndex);
         let downloadChkbx = document.getElementById('download-' + productIndex);
         let installChkbx = document.getElementById('install-' + productIndex);
         let disableChkbx = document.getElementById('disable-' + productIndex);
 
         data.push(
                 {
-                    title: product.title,
-                    key: product.fileName,
-                    includeNetworkPackage: includeNetChkbx.checked,
+                    id: product.id,
                     download: downloadChkbx.disabled ? false : downloadChkbx.checked,
                     install: installChkbx.disabled ? false : installChkbx.checked,
                     disableEnable: !(product.disabled === disableChkbx.checked)
@@ -317,9 +308,7 @@ i2b2.OntologyStore.productToXml = function (product) {
     let tags = [];
 
     tags.push('            <product_action>');
-    tags.push('                <title>' + product.title + '</title>');
-    tags.push('                <key>' + product.key + '</key>');
-    tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
+    tags.push('                <id>' + product.id + '</id>');
     tags.push('                <download>' + product.download + '</download>');
     tags.push('                <install>' + product.install + '</install>');
     tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');

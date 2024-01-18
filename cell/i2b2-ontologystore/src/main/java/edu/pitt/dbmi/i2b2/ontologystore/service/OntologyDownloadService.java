@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2024 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,11 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
-import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItems;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.file.Files;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
- * Oct 19, 2022 8:29:46 PM
+ * Dec 6, 2023 7:02:12 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
@@ -47,120 +42,116 @@ public class OntologyDownloadService extends AbstractOntologyService {
 
     private static final String ACTION_TYPE = "Download";
 
-    private final AmazonS3Service amazonS3Service;
-    private final FileSysService fileSysService;
-
     @Autowired
-    public OntologyDownloadService(
-            AmazonS3Service amazonS3Service,
-            FileSysService fileSysService) {
-        this.amazonS3Service = amazonS3Service;
-        this.fileSysService = fileSysService;
+    public OntologyDownloadService(FileSysService fileSysService, OntologyFileService ontologyFileService) {
+        super(fileSysService, ontologyFileService);
     }
 
     public synchronized void performDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+        // get actions that are marked for download
         actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
-        actions = validate(actions, summaries);
-        actions = prepare(actions, summaries);
-        actions.forEach(action -> summaries.add(download(action)));
+
+        List<ProductItem> productsToDownload = getValidProductsToDownload(actions, summaries);
+        productsToDownload = downloadFiles(productsToDownload, summaries);
+        verifyFileIntegrity(productsToDownload, summaries);
     }
 
-    private List<ProductActionType> validate(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
-        List<ProductActionType> downloadActions = new LinkedList<>();
+    /**
+     * Verify the integrity of the downloaded products by computing the SHA-256
+     * checksum and compare it with the ones given in the product list.
+     *
+     * @param productsToDownload
+     * @param summaries
+     */
+    private void verifyFileIntegrity(List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
+        productsToDownload.forEach(productItem -> {
+            String productFolder = productItem.getId();
 
-        actions.forEach(action -> {
-            String productFolder = action.getKey().replaceAll(".json", "");
-            if (fileSysService.hasFinshedDownload(productFolder)) {
-                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
-            } else if (fileSysService.hasFailedDownload(productFolder)) {
-                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download previously failed."));
-            } else if (fileSysService.hasStartedDownload(productFolder)) {
-                summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, true, false, "Download already started."));
-            } else {
-                downloadActions.add(action);
-            }
-        });
-
-        return downloadActions;
-    }
-
-    private List<ProductActionType> prepare(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
-        List<ProductActionType> downloadActions = new LinkedList<>();
-
-        actions.forEach(action -> {
-            String productFolder = action.getKey().replaceAll(".json", "");
+            String fileURI = productItem.getFile();
             Path productDir = fileSysService.getProductDirectory(productFolder);
-            Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
-            Path crcDir = fileSysService.getCRCDirectory(productFolder);
-            Path tableAccessDir = fileSysService.getTableAccessDirectory(productFolder);
-            if (action.isIncludeNetworkPackage()) {
-                Path networkDir = fileSysService.getNetworkDirectory(productFolder);
-                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, tableAccessDir, networkDir)) {
-                    fileSysService.createDownloadStartedIndicatorFile(productFolder);
-                    downloadActions.add(action);
-                } else {
-                    summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
-                }
-
+            String generatedSha256Checksum = fileSysService.getSha256Checksum(fileURI, productDir);
+            if (generatedSha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
+                fileSysService.createDownloadFinishedIndicatorFile(productFolder);
+                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Downloaded successfully."));
             } else {
-                if (fileSysService.createDirectories(productDir, metadataDir, crcDir, tableAccessDir)) {
-                    fileSysService.createDownloadStartedIndicatorFile(productFolder);
-                    downloadActions.add(action);
+                String errorMsg = "File verification failed.  SHA-256 checksum does not match.";
+                fileSysService.createDownloadFailedIndicatorFile(productFolder, errorMsg);
+                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+            }
+        });
+    }
+
+    /**
+     * Download production from the given product list.
+     *
+     * @param productsToDownload a list of products to download
+     * @param summaries a list to store download summaries
+     * @return a list products that are successfully downloaded
+     */
+    private List<ProductItem> downloadFiles(List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
+        List<ProductItem> downloadedProducts = new LinkedList<>();
+
+        productsToDownload.forEach(productItem -> {
+            String productFolder = productItem.getId();
+            Path productDir = fileSysService.getProductDirectory(productFolder);
+            if (fileSysService.createDirectory(productDir)
+                    && fileSysService.createDownloadStartedIndicatorFile(productFolder)) {
+                try {
+                    fileSysService.downloadFile(productItem.getFile(), productDir);
+                    downloadedProducts.add(productItem);
+                } catch (Exception exception) {
+                    LOGGER.error("", exception);
+                    String errorMsg = "Unable to download from the given URL.";
+                    fileSysService.createDownloadFailedIndicatorFile(productFolder, errorMsg);
+                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+                }
+            } else {
+                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+            }
+        });
+
+        return downloadedProducts;
+    }
+
+    /**
+     * Get a list of product items based on the download-action list that meet
+     * the following conditions:
+     *
+     * <ul>
+     * <li>Products that have not been downloaded.</li>
+     * <li>Products that have not previous failed to download.</li>
+     * <li>Products that are currently been downloaded.</li>
+     * </ul>
+     *
+     * @param actions a list of download actions
+     * @param summaries a list to store download summaries
+     * @return a list of products to download
+     */
+    private List<ProductItem> getValidProductsToDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+        List<ProductItem> validProductItems = new LinkedList<>();
+
+        Map<String, ProductItem> products = ontologyFileService.getProductItems();
+        actions.forEach(action -> {
+            String productFolder = action.getId();
+            if (products.containsKey(productFolder)) {
+                ProductItem productItem = products.get(productFolder);
+                if (fileSysService.hasDirectory(productFolder)) {
+                    if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductrFileExists(productItem, productFolder)) {
+                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+                    } else if (fileSysService.hasFailedDownload(productFolder)) {
+                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(productFolder)));
+                    } else if (fileSysService.hasStartedDownload(productFolder)) {
+                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, true, false, "Download already started."));
+                    } else {
+                        validProductItems.add(productItem);
+                    }
                 } else {
-                    summaries.add(createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                    validProductItems.add(productItem);
                 }
             }
         });
 
-        return downloadActions;
-    }
-
-    private ActionSummaryType download(ProductActionType action) {
-        String productFolder = action.getKey().replaceAll(".json", "");
-        Path productDir = fileSysService.getProductDirectory(productFolder);
-        Path metadataDir = fileSysService.getMetadataDirectory(productFolder);
-        Path crcDir = fileSysService.getCRCDirectory(productFolder);
-        Path tableAccessDir = fileSysService.getTableAccessDirectory(productFolder);
-        try {
-            ProductItems storeObject = amazonS3Service.getProductItemsObject(action.getKey());
-            if (storeObject != null) {
-                downloadFile(storeObject.getSchemes(), productDir);
-                downloadFile(storeObject.getBreakdownPath(), productDir);
-                if (action.isIncludeNetworkPackage()) {
-                    Path networkDir = fileSysService.getNetworkDirectory(productFolder);
-                    downloadFile(storeObject.getAdapterMapping(), networkDir);
-                }
-
-                for (String domainOntologyURI : storeObject.getListOfDomainOntologies()) {
-                    downloadFile(domainOntologyURI, metadataDir);
-                }
-
-                for (String conceptDimensionURI : storeObject.getConceptDimensions()) {
-                    downloadFile(conceptDimensionURI, crcDir);
-                }
-
-                for (String tableAccessURI : storeObject.getTableAccess()) {
-                    downloadFile(tableAccessURI, tableAccessDir);
-                }
-            }
-        } catch (Exception exception) {
-            LOGGER.error("", exception);
-            fileSysService.createDownloadFailedIndicatorFile(productFolder);
-
-            return createActionSummary(action.getTitle(), ACTION_TYPE, false, false, "Download Failed!");
-        }
-        fileSysService.createDownloadFinishedIndicatorFile(productFolder);
-
-        return createActionSummary(action.getTitle(), ACTION_TYPE, false, true, "Downloaded.");
-    }
-
-    private static void downloadFile(String uri, Path productDir) throws IOException {
-        String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
-        Path file = Paths.get(productDir.toString(), fileName);
-
-        try (InputStream inputStream = URI.create(uri).toURL().openStream()) {
-            Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
-        }
+        return validProductItems;
     }
 
 }

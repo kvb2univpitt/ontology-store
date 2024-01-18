@@ -22,10 +22,8 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
-import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
@@ -43,23 +41,14 @@ public class OntologyStoreService extends AbstractWebService {
     private static final Log LOGGER = LogFactory.getLog(OntologyStoreService.class);
 
     private final PmDBAccess pmDBAccess;
-    private final AmazonS3Service amazonS3Service;
-    private final OntologyDownloadService downloadService;
-    private final OntologyInstallService installService;
-    private final OntologyDisableService disableService;
+    private final OntologyFileService ontologyFileService;
+    private final OntologyDownloadService ontologyDownloadService;
 
     @Autowired
-    public OntologyStoreService(
-            PmDBAccess pmDBAccess,
-            AmazonS3Service amazonS3Service,
-            OntologyDownloadService downloadService,
-            OntologyInstallService installService,
-            OntologyDisableService disableService) {
+    public OntologyStoreService(PmDBAccess pmDBAccess, OntologyFileService ontologyFileService, OntologyDownloadService ontologyDownloadService) {
         this.pmDBAccess = pmDBAccess;
-        this.amazonS3Service = amazonS3Service;
-        this.downloadService = downloadService;
-        this.installService = installService;
-        this.disableService = disableService;
+        this.ontologyFileService = ontologyFileService;
+        this.ontologyDownloadService = ontologyDownloadService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -74,7 +63,7 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = responseDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new GetProductsRequestHandler(responseDataMsg, amazonS3Service, pmDBAccess), waitTime);
+        return execute(new GetProductsRequestHandler(responseDataMsg, ontologyFileService, pmDBAccess), waitTime);
     }
 
     public OMElement getProductActions(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -89,7 +78,7 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new ProductActionsRequestHandler(productActionDataMsg, downloadService, installService, disableService, pmDBAccess), waitTime);
+        return execute(new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, pmDBAccess), waitTime);
     }
 
 }

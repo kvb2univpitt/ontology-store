@@ -20,7 +20,6 @@ package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
-import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
@@ -28,9 +27,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
 import java.util.LinkedList;
@@ -49,21 +46,15 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private static final Log LOGGER = LogFactory.getLog(ProductActionsRequestHandler.class);
 
     private final ProductActionDataMessage productActionDataMsg;
-    private final OntologyDownloadService downloadService;
-    private final OntologyInstallService installService;
-    private final OntologyDisableService disableService;
+    private final OntologyDownloadService ontologyDownloadService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
-            OntologyDownloadService downloadService,
-            OntologyInstallService installService,
-            OntologyDisableService disableService,
+            OntologyDownloadService ontologyDownloadService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
-        this.downloadService = downloadService;
-        this.installService = installService;
-        this.disableService = disableService;
+        this.ontologyDownloadService = ontologyDownloadService;
     }
 
     @Override
@@ -88,14 +79,15 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
-        try {
-            downloadService.performDownload(actions, summaries);
-            installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
-
-            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
-        } catch (InstallationException exception) {
-            throw new I2B2Exception(exception.getMessage());
-        }
+//        try {
+//            ontologyDownloadService.performDownload(actions, summaries);
+////            installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
+//
+////            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
+//        } catch (InstallationException exception) {
+//            throw new I2B2Exception(exception.getMessage());
+//        }
+        ontologyDownloadService.performDownload(actions, summaries);
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetActionSummariesResponse(messageHeader, actionSummariesType);

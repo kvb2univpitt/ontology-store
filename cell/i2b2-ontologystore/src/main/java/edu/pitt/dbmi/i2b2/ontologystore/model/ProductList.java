@@ -28,16 +28,16 @@ import java.util.List;
  */
 public class ProductList {
 
-    private List<String> products;
+    private List<ProductItem> products;
 
     public ProductList() {
     }
 
-    public List<String> getProducts() {
+    public List<ProductItem> getProducts() {
         return products;
     }
 
-    public void setProducts(List<String> products) {
+    public void setProducts(List<ProductItem> products) {
         this.products = products;
     }
 

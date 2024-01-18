@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2024 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,38 +18,39 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
-import java.io.BufferedReader;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.stereotype.Service;
 
 /**
  *
- * Oct 19, 2022 3:37:13 PM
+ * Dec 6, 2023 12:13:19 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class FileSysService {
 
     private static final Log LOGGER = LogFactory.getLog(FileSysService.class);
-
-    public static final String SCHEMES_FILE = "SCHEMES.tsv";
-    public static final String QT_BREAKDOWN_PATH_FILE = "QT_BREAKDOWN_PATH.tsv";
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 
@@ -60,111 +61,12 @@ public class FileSysService {
     public FileSysService(
             @Value("${ontology.dir.download}") String downloadDirectory,
             ResourcePatternResolver resourcePatternResolver) {
-        this.downloadDirectory = Paths.get(downloadDirectory, "products").toString();
+        this.downloadDirectory = downloadDirectory;
         this.resourcePatternResolver = resourcePatternResolver;
     }
 
-    public String getNewDownloadFinishedIndicatorFile(String productFolder) {
-        return getDownloadFinishedIndicatorFile(productFolder).toString();
-    }
-
-    public String getResourceFileContents(Path file) throws IOException {
-        List<String> list = new LinkedList<>();
-
-        Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    list.add(line);
-                }
-            }
-        }
-
-        return list.stream().collect(Collectors.joining());
-    }
-
-    public List<String> getResourceFileContentByLines(Path file) throws IOException {
-        List<String> list = new LinkedList<>();
-
-        Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    list.add(line);
-                }
-            }
-        }
-
-        return list;
-    }
-
-    /**
-     * Get the file header (the first line of the file).
-     *
-     * @param file
-     * @return
-     * @throws IOException
-     */
-    public List<String> getHeaders(Path file) throws IOException {
-        Optional<String> header = Files.lines(file).findFirst();
-        if (header.isPresent()) {
-            return Arrays.stream(TAB_DELIM.split(header.get()))
-                    .map(String::trim)
-                    .filter(e -> !e.isEmpty())
-                    .map(String::toLowerCase)
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.EMPTY_LIST;
-        }
-    }
-
-    public Path getSchemesFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, SCHEMES_FILE);
-    }
-
-    public Path getQtBreakdownPathFile(String productFolder) {
-        return Paths.get(downloadDirectory, productFolder, QT_BREAKDOWN_PATH_FILE);
-    }
-
-    public List<Path> getMetadata(String productFolder) {
-        List<Path> ontologies = new LinkedList<>();
-        try {
-            Files.list(getMetadataDirectory(productFolder))
-                    .filter(Files::isRegularFile)
-                    .forEach(ontologies::add);
-        } catch (IOException exception) {
-            LOGGER.error("Unable to get ontology files.", exception);
-        }
-
-        return ontologies;
-    }
-
-    public List<Path> getCrcData(String productFolder) {
-        List<Path> ontologies = new LinkedList<>();
-        try {
-            Files.list(getCRCDirectory(productFolder))
-                    .filter(Files::isRegularFile)
-                    .forEach(ontologies::add);
-        } catch (IOException exception) {
-            LOGGER.error("Unable to get ontology files.", exception);
-        }
-
-        return ontologies;
-    }
-
-    public List<Path> getTableAccess(String productFolder) {
-        List<Path> ontologies = new LinkedList<>();
-        try {
-            Files.list(getTableAccessDirectory(productFolder))
-                    .filter(Files::isRegularFile)
-                    .forEach(ontologies::add);
-        } catch (IOException exception) {
-            LOGGER.error("Unable to get ontology files.", exception);
-        }
-
-        return ontologies;
+    public boolean hasDirectory(String productFolder) {
+        return Files.exists(Paths.get(downloadDirectory, productFolder));
     }
 
     public boolean hasStartedDownload(String productFolder) {
@@ -256,18 +158,23 @@ public class FileSysService {
         return createFile(getDownloadStartedIndicatorFile(productFolder));
     }
 
-    public boolean createDownloadFailedIndicatorFile(String productFolder) {
-        deleteFile(getDownloadFinishedIndicatorFile(productFolder));
-        deleteFile(getDownloadStartedIndicatorFile(productFolder));
-
-        return createFile(getDownloadFailedIndicatorFile(productFolder));
-    }
-
     public boolean createDownloadFinishedIndicatorFile(String productFolder) {
         deleteFile(getDownloadFailedIndicatorFile(productFolder));
         deleteFile(getDownloadStartedIndicatorFile(productFolder));
 
         return createFile(getDownloadFinishedIndicatorFile(productFolder));
+    }
+
+    public boolean createDownloadFailedIndicatorFile(String productFolder, String reason) {
+        deleteFile(getDownloadFinishedIndicatorFile(productFolder));
+        deleteFile(getDownloadStartedIndicatorFile(productFolder));
+
+        Path file = getDownloadFailedIndicatorFile(productFolder);
+        if (reason == null || reason.trim().isEmpty()) {
+            return createFile(file);
+        } else {
+            return createFileAndWriteMessage(file, reason);
+        }
     }
 
     public boolean createInstallStartedIndicatorFile(String productFolder) {
@@ -277,18 +184,23 @@ public class FileSysService {
         return createFile(getInstallStartedIndicatorFile(productFolder));
     }
 
-    public boolean createInstallFailedIndicatorFile(String productFolder) {
-        deleteFile(getInstallFinishedIndicatorFile(productFolder));
-        deleteFile(getInstallStartedIndicatorFile(productFolder));
-
-        return createFile(getInstallFailedIndicatorFile(productFolder));
-    }
-
     public boolean createInstallFinishedIndicatorFile(String productFolder) {
         deleteFile(getInstallFailedIndicatorFile(productFolder));
         deleteFile(getInstallStartedIndicatorFile(productFolder));
 
         return createFile(getInstallFinishedIndicatorFile(productFolder));
+    }
+
+    public boolean createInstallFailedIndicatorFile(String productFolder, String reason) {
+        deleteFile(getInstallFinishedIndicatorFile(productFolder));
+        deleteFile(getInstallStartedIndicatorFile(productFolder));
+
+        Path file = getInstallFailedIndicatorFile(productFolder);
+        if (reason == null || reason.trim().isEmpty()) {
+            return createFile(file);
+        } else {
+            return createFileAndWriteMessage(file, reason);
+        }
     }
 
     public boolean createOntologyDisabledIndicatorFile(String productFolder) {
@@ -299,6 +211,14 @@ public class FileSysService {
         return deleteFile(getOntologyDisabledIndicatorFile(productFolder));
     }
 
+    public String getFailedDownloadMessage(String productFolder) {
+        return readFromFile(getDownloadFailedIndicatorFile(productFolder), "Download previously failed.");
+    }
+
+    public String getFailedInstallMessage(String productFolder) {
+        return readFromFile(getInstallFailedIndicatorFile(productFolder), "Install previously failed.");
+    }
+
     public List<Path> listFiles(Path dir) {
         List<Path> files = new LinkedList<>();
 
@@ -307,7 +227,7 @@ public class FileSysService {
                     .filter(Files::isRegularFile)
                     .forEach(files::add);
         } catch (IOException exception) {
-            LOGGER.error(String.format("Unable to list files in directory '%s'.", dir.toString()), exception);
+            LOGGER.error(String.format("Unable to list files in directory %s.", dir.toString()), exception);
         }
 
         return files;
@@ -358,6 +278,76 @@ public class FileSysService {
         }
 
         return success;
+    }
+
+    private boolean createFileAndWriteMessage(Path file, String message) {
+        if (message == null || message.trim().isEmpty()) {
+            return true;
+        } else {
+            try {
+                Files.write(file, message.getBytes(), StandardOpenOption.CREATE);
+            } catch (IOException exception) {
+                LOGGER.error(String.format("Unable to write message to file: '%s'.", file.toString()), exception);
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public String readFromFile(Path file, String defaultMessage) {
+        try {
+            return new String(Files.readAllBytes(file));
+        } catch (IOException exception) {
+            LOGGER.error(String.format("Unable to read file: %s.", file.toString()), exception);
+        }
+
+        return defaultMessage;
+    }
+
+    public void downloadFile(String uri, Path productDir) throws IOException {
+        String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
+        Path file = Paths.get(productDir.toString(), fileName);
+
+        try (InputStream inputStream = URI.create(uri).toURL().openStream()) {
+            Files.copy(inputStream, file, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    public String getSha256Checksum(String uri, Path productDir) {
+        StringBuilder hexValue = new StringBuilder();
+
+        String fileName = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
+        Path file = Paths.get(productDir.toString(), fileName);
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            try (DigestInputStream dis = new DigestInputStream(new BufferedInputStream(Files.newInputStream(file)), md)) {
+                //empty loop to clear the data
+                while (dis.read() != -1);
+
+                md = dis.getMessageDigest();
+
+                // byte to hex
+                for (byte b : md.digest()) {
+                    hexValue.append(String.format("%02x", b));
+                }
+            }
+        } catch (NoSuchAlgorithmException | IOException exception) {
+            LOGGER.error(String.format("Unable to create the SHA-256 checksum for file: %s.", file.toString()), exception);
+        }
+
+        return hexValue.toString();
+    }
+
+    protected boolean isProductrFileExists(ProductItem productItem, String productFolder) {
+        String fileURI = productItem.getFile();
+        String fileName = fileURI.substring(fileURI.lastIndexOf("/") + 1, fileURI.length());
+
+        Path productDir = getProductDirectory(productFolder);
+        Path file = Paths.get(productDir.toString(), fileName);
+
+        return Files.exists(file);
     }
 
 }

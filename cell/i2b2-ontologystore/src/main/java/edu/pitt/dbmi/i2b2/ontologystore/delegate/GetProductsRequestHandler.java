@@ -23,7 +23,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
-import edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
 
@@ -36,15 +36,15 @@ import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
 public class GetProductsRequestHandler extends RequestHandler {
 
     private final ResponseDataMessage responseDataMessage;
-    private final AmazonS3Service amazonS3Service;
+    private final OntologyFileService ontologyFileService;
 
     public GetProductsRequestHandler(
             ResponseDataMessage responseDataMessage,
-            AmazonS3Service amazonS3Service,
+            OntologyFileService ontologyFileService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.responseDataMessage = responseDataMessage;
-        this.amazonS3Service = amazonS3Service;
+        this.ontologyFileService = ontologyFileService;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class GetProductsRequestHandler extends RequestHandler {
         }
 
         ProductsType productsType = new ProductsType();
-        productsType.getProduct().addAll(amazonS3Service.getProducts());
+        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts());
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetProductsResponse(messageHeader, productsType);

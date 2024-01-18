@@ -33,12 +33,12 @@
 
     <!-- provide specific services -->
     <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
-    <bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService" />
-    <bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService" />
-    <bean id="amazonS3Service" class="edu.pitt.dbmi.i2b2.ontologystore.service.AmazonS3Service" />
-    <bean id="downloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
-    <bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
-    <bean id="disableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />
+    <bean id="ontologyFileService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService" />
+    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
+    <!--<bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService" />-->
+    <!--<bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService" />-->
+    <!--<bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />-->
+    <!--<bean id="disableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />-->
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
