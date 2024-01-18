@@ -35,7 +35,7 @@
     <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
     <bean id="ontologyFileService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService" />
     <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
-    <!--<bean id="ontInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntInstallerService" />-->
+    <bean id="ontologyInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
     <!--<bean id="crcInstallerService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallerService" />-->
     <!--<bean id="installService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />-->
     <!--<bean id="disableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />-->

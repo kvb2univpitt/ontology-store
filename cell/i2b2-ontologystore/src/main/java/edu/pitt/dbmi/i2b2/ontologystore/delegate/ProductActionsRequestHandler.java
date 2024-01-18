@@ -20,6 +20,7 @@ package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
+import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
@@ -28,6 +29,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
 import java.util.LinkedList;
@@ -47,14 +49,17 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
     private final ProductActionDataMessage productActionDataMsg;
     private final OntologyDownloadService ontologyDownloadService;
+    private final OntologyInstallService ontologyInstallService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
             OntologyDownloadService ontologyDownloadService,
+            OntologyInstallService ontologyInstallService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
         this.ontologyDownloadService = ontologyDownloadService;
+        this.ontologyInstallService = ontologyInstallService;
     }
 
     @Override
@@ -87,7 +92,12 @@ public class ProductActionsRequestHandler extends RequestHandler {
 //        } catch (InstallationException exception) {
 //            throw new I2B2Exception(exception.getMessage());
 //        }
-        ontologyDownloadService.performDownload(actions, summaries);
+        try {
+            ontologyDownloadService.performDownload(actions, summaries);
+            ontologyInstallService.performInstallation(messageHeader.getProjectId(), actions, summaries);
+        } catch (InstallationException exception) {
+            throw new I2B2Exception(exception.getMessage());
+        }
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetActionSummariesResponse(messageHeader, actionSummariesType);

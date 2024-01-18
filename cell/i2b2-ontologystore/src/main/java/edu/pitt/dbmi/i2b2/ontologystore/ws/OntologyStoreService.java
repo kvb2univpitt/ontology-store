@@ -24,6 +24,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.apache.commons.logging.Log;
@@ -43,12 +44,18 @@ public class OntologyStoreService extends AbstractWebService {
     private final PmDBAccess pmDBAccess;
     private final OntologyFileService ontologyFileService;
     private final OntologyDownloadService ontologyDownloadService;
+    private final OntologyInstallService ontologyInstallService;
 
     @Autowired
-    public OntologyStoreService(PmDBAccess pmDBAccess, OntologyFileService ontologyFileService, OntologyDownloadService ontologyDownloadService) {
+    public OntologyStoreService(
+            PmDBAccess pmDBAccess,
+            OntologyFileService ontologyFileService,
+            OntologyDownloadService ontologyDownloadService,
+            OntologyInstallService ontologyInstallService) {
         this.pmDBAccess = pmDBAccess;
         this.ontologyFileService = ontologyFileService;
         this.ontologyDownloadService = ontologyDownloadService;
+        this.ontologyInstallService = ontologyInstallService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -78,7 +85,9 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, pmDBAccess), waitTime);
+        return execute(
+                new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, ontologyInstallService, pmDBAccess),
+                waitTime);
     }
 
 }
