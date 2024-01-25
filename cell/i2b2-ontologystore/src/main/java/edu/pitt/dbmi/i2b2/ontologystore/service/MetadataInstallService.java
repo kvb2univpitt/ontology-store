@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -50,6 +52,11 @@ public class MetadataInstallService extends AbstractInstallService {
 
     public MetadataInstallService(FileSysService fileSysService) {
         super(fileSysService);
+    }
+
+    public void deleteFromTableAccessTable(PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws IOException, SQLException {
+        List<String> tableNames = getMetadataTableNames(packageFile);
+        deleteFromTableAccess(ontJdbcTemplate, TABLE_ACCESS_TABLE_NAME, TABLE_ACCESS_TABLE_NAME_COLUMN, tableNames);
     }
 
     public void insertIntoTableAccessTable(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
@@ -96,6 +103,20 @@ public class MetadataInstallService extends AbstractInstallService {
                 throw new InstallationException(exception.getMessage());
             }
         }
+    }
+
+    private List<String> getMetadataTableNames(PackageFile packageFile) {
+        List<String> tableNames = new LinkedList<>();
+
+        String[] ontologyFiles = packageFile.getDomainOntologies();
+        for (String ontologyFile : ontologyFiles) {
+            Path zipFilePath = Paths.get(ontologyFile);
+            String tableName = zipFilePath.getFileName().toString().replace(".tsv", "").replace(".TSV", "");
+
+            tableNames.add(tableName);
+        }
+
+        return tableNames;
     }
 
     private void insertTableAccess(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {

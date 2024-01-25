@@ -28,6 +28,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
@@ -50,16 +51,19 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private final ProductActionDataMessage productActionDataMsg;
     private final OntologyDownloadService ontologyDownloadService;
     private final OntologyInstallService ontologyInstallService;
+    private final OntologyDisableService ontologyDisableService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
             OntologyDownloadService ontologyDownloadService,
             OntologyInstallService ontologyInstallService,
+            OntologyDisableService ontologyDisableService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
         this.ontologyDownloadService = ontologyDownloadService;
         this.ontologyInstallService = ontologyInstallService;
+        this.ontologyDisableService = ontologyDisableService;
     }
 
     @Override
@@ -84,17 +88,10 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
-//        try {
-//            ontologyDownloadService.performDownload(actions, summaries);
-////            installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
-//
-////            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
-//        } catch (InstallationException exception) {
-//            throw new I2B2Exception(exception.getMessage());
-//        }
         try {
             ontologyDownloadService.performDownload(actions, summaries);
             ontologyInstallService.performInstallation(messageHeader.getProjectId(), actions, summaries);
+            ontologyDisableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }

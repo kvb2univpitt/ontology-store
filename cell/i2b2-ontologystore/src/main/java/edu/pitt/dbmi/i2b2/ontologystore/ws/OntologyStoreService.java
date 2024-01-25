@@ -22,6 +22,7 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
@@ -45,17 +46,20 @@ public class OntologyStoreService extends AbstractWebService {
     private final OntologyFileService ontologyFileService;
     private final OntologyDownloadService ontologyDownloadService;
     private final OntologyInstallService ontologyInstallService;
+    private final OntologyDisableService ontologyDisableService;
 
     @Autowired
     public OntologyStoreService(
             PmDBAccess pmDBAccess,
             OntologyFileService ontologyFileService,
             OntologyDownloadService ontologyDownloadService,
-            OntologyInstallService ontologyInstallService) {
+            OntologyInstallService ontologyInstallService,
+            OntologyDisableService ontologyDisableService) {
         this.pmDBAccess = pmDBAccess;
         this.ontologyFileService = ontologyFileService;
         this.ontologyDownloadService = ontologyDownloadService;
         this.ontologyInstallService = ontologyInstallService;
+        this.ontologyDisableService = ontologyDisableService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -86,7 +90,7 @@ public class OntologyStoreService extends AbstractWebService {
         }
 
         return execute(
-                new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, ontologyInstallService, pmDBAccess),
+                new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, ontologyInstallService, ontologyDisableService, pmDBAccess),
                 waitTime);
     }
 

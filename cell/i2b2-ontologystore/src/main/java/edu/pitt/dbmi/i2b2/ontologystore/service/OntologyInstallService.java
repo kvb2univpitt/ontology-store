@@ -41,7 +41,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 /**
  *
@@ -193,16 +192,6 @@ public class OntologyInstallService extends AbstractOntologyService {
         });
 
         return validProductItems;
-    }
-
-    private DataSource getDataSource(String datasourceJNDIName) {
-        try {
-            return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
-        } catch (Exception exception) {
-            String errMsg = String.format("Unable to get datasource for JNDI name '%s'.", datasourceJNDIName);
-            LOGGER.error(errMsg, exception);
-            return null;
-        }
     }
 
 }

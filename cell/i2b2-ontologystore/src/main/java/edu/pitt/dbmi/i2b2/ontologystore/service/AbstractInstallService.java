@@ -74,6 +74,27 @@ public abstract class AbstractInstallService {
         this.fileSysService = fileSysService;
     }
 
+    protected void deleteFromTableAccess(JdbcTemplate jdbcTemplate, String table, String columnName, List<String> tableNames) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            tableNames.forEach(tableName -> {
+                try {
+                    String sql = createDeleteStatement(conn.getSchema(), table.toLowerCase(), columnName);
+                    PreparedStatement stmt = conn.prepareStatement(sql);
+
+                    stmt.setString(1, tableName);
+                    stmt.execute();
+                } catch (Exception exception) {
+                    LOGGER.error("", exception);
+                }
+            });
+        }
+    }
+
     protected void batchInsert(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {

@@ -38,7 +38,7 @@
     <bean id="ontologyInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
     <bean id="crcInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallService" />
     <bean id="metadataInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.MetadataInstallService" />
-    <!--<bean id="disableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />-->
+    <bean id="ontologyDisableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
