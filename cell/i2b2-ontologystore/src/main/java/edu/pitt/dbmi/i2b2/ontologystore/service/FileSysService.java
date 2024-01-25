@@ -20,8 +20,10 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,10 +36,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +67,38 @@ public class FileSysService {
             ResourcePatternResolver resourcePatternResolver) {
         this.downloadDirectory = downloadDirectory;
         this.resourcePatternResolver = resourcePatternResolver;
+    }
+
+    public String getResourceFileContents(Path file) throws IOException {
+        List<String> list = new LinkedList<>();
+
+        Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    list.add(line);
+                }
+            }
+        }
+
+        return list.stream().collect(Collectors.joining());
+    }
+
+    public List<String> getResourceFileContentByLines(Path file) throws IOException {
+        List<String> list = new LinkedList<>();
+
+        Resource resource = resourcePatternResolver.getResource("classpath:/" + file.toString());
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    list.add(line);
+                }
+            }
+        }
+
+        return list;
     }
 
     public boolean hasDirectory(String productFolder) {
@@ -340,14 +376,18 @@ public class FileSysService {
         return hexValue.toString();
     }
 
-    protected boolean isProductrFileExists(ProductItem productItem, String productFolder) {
+    public boolean isProductFileExists(ProductItem productItem) {
+        return Files.exists(getProductFile(productItem));
+    }
+
+    public Path getProductFile(ProductItem productItem) {
+        String productFolder = productItem.getId();
         String fileURI = productItem.getFile();
         String fileName = fileURI.substring(fileURI.lastIndexOf("/") + 1, fileURI.length());
 
         Path productDir = getProductDirectory(productFolder);
-        Path file = Paths.get(productDir.toString(), fileName);
 
-        return Files.exists(file);
+        return Paths.get(productDir.toString(), fileName);
     }
 
 }

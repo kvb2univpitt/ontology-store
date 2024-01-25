@@ -36,7 +36,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 /**
  *
@@ -44,7 +43,6 @@ import org.springframework.stereotype.Service;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-@Service
 public class OntologyFileService {
 
     private static final Log LOGGER = LogFactory.getLog(OntologyFileService.class);
@@ -97,7 +95,7 @@ public class OntologyFileService {
     private void getStatus(ProductType product, ProductItem productItem) {
         String productFolder = product.getId();
         if (fileSysService.hasDirectory(productFolder)) {
-            if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductrFileExists(productItem, productFolder)) {
+            if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductFileExists(productItem)) {
                 product.setDownloaded(true);
                 product.setIncludeNetworkPackage(fileSysService.hasNetworkFiles(productFolder));
 

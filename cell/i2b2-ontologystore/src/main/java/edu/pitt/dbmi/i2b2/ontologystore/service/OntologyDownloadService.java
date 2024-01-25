@@ -136,7 +136,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
             if (products.containsKey(productFolder)) {
                 ProductItem productItem = products.get(productFolder);
                 if (fileSysService.hasDirectory(productFolder)) {
-                    if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductrFileExists(productItem, productFolder)) {
+                    if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductFileExists(productItem)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
                     } else if (fileSysService.hasFailedDownload(productFolder)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(productFolder)));
