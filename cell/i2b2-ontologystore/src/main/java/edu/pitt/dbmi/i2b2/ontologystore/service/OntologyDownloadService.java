@@ -21,7 +21,9 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -94,10 +96,27 @@ public class OntologyDownloadService extends AbstractOntologyService {
         productsToDownload.forEach(productItem -> {
             String productFolder = productItem.getId();
             Path productDir = fileSysService.getProductDirectory(productFolder);
-            if (fileSysService.createDirectory(productDir)
-                    && fileSysService.createDownloadStartedIndicatorFile(productFolder)) {
+            if (fileSysService.createDirectory(productDir) && fileSysService.createDownloadStartedIndicatorFile(productFolder)) {
                 try {
+                    // download product file
                     fileSysService.downloadFile(productItem.getFile(), productDir);
+
+                    //download network files, if any
+                    String[] networkFiles = productItem.getNetworkFiles();
+                    if (hasNetworkFiles(networkFiles)) {
+                        Path networkDir = Paths.get(productDir.toString(), "network_files");
+                        if (fileSysService.createDirectory(networkDir)) {
+                            try {
+                                for (String networkFile : networkFiles) {
+                                    fileSysService.downloadFile(networkFile, networkDir);
+                                }
+                            } catch (IOException exception) {
+                                LOGGER.error("", exception);
+                            }
+                        } else {
+                            summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
+                        }
+                    }
                     downloadedProducts.add(productItem);
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
@@ -111,6 +130,10 @@ public class OntologyDownloadService extends AbstractOntologyService {
         });
 
         return downloadedProducts;
+    }
+
+    private boolean hasNetworkFiles(String[] networkFiles) {
+        return !(networkFiles == null || networkFiles.length == 0);
     }
 
     /**
@@ -138,16 +161,21 @@ public class OntologyDownloadService extends AbstractOntologyService {
                 if (fileSysService.hasDirectory(productFolder)) {
                     if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductFileExists(productItem)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+                        return;
                     } else if (fileSysService.hasFailedDownload(productFolder)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(productFolder)));
+                        return;
                     } else if (fileSysService.hasStartedDownload(productFolder)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, true, false, "Download already started."));
-                    } else {
-                        validProductItems.add(productItem);
+                        return;
                     }
-                } else {
-                    validProductItems.add(productItem);
                 }
+
+                if (!action.isIncludeNetworkPackage()) {
+                    productItem.setNetworkFiles(new String[0]);
+                }
+
+                validProductItems.add(productItem);
             }
         });
 

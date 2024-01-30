@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2023 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,13 +18,19 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.model;
 
+import java.io.Serializable;
+
 /**
+ * This class represents an item in
+ * <pre>product-list.json.</pre> file.
  *
- * Oct 19, 2022 8:49:27 PM
+ * Dec 6, 2023 2:12:26 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class ProductItem {
+public class ProductItem implements Serializable {
+
+    private static final long serialVersionUID = -1767821426125126472L;
 
     private String id;
 
@@ -36,7 +42,7 @@ public class ProductItem {
 
     private String type;
 
-    private boolean includeNetworkPackage;
+    private String[] networkFiles;
 
     private String[] terminologies;
 
@@ -87,12 +93,12 @@ public class ProductItem {
         this.type = type;
     }
 
-    public boolean isIncludeNetworkPackage() {
-        return includeNetworkPackage;
+    public String[] getNetworkFiles() {
+        return networkFiles;
     }
 
-    public void setIncludeNetworkPackage(boolean includeNetworkPackage) {
-        this.includeNetworkPackage = includeNetworkPackage;
+    public void setNetworkFiles(String[] networkFiles) {
+        this.networkFiles = networkFiles;
     }
 
     public String[] getTerminologies() {

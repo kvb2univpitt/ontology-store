@@ -38,6 +38,7 @@
     <xs:complexType name="productActionType">
         <xs:sequence>
             <xs:element name="id" type="xs:string" />
+            <xs:element name="include_network_package" type="xs:boolean" default="false"/>
             <xs:element name="download" type="xs:boolean" default="false"/>
             <xs:element name="install" type="xs:boolean" default="false"/>
             <xs:element name="disable_enable" type="xs:boolean" default="false"/>
