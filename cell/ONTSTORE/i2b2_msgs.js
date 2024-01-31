@@ -24,6 +24,7 @@ i2b2.ONTSTORE.cfg.parsers.ExtractProductResults = function () {
             obj.started = 'true' === i2b2.h.getXNodeVal(product, 'started');
             obj.failed = 'true' === i2b2.h.getXNodeVal(product, 'failed');
             obj.disabled = 'true' === i2b2.h.getXNodeVal(product, 'disabled');
+            obj.statusDetail = i2b2.h.getXNodeVal(product, 'status_detail');
 
             // populate terminologies
             var terminologies = i2b2.h.XPath(product, "descendant-or-self::terminology/node()");
