@@ -256,6 +256,7 @@ i2b2.OntologyStore.showFailedInstallStatusDetails = function (index) {
     if (product) {
         let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
         msg += '<p>To reinstall, please fix the issue and then delete the file <b>install.failed</b> from the folder <b><i>' + product.id + '</i></b> in the download directory on the server.</p>';
+        msg += '<p>Please search for "OntologyInstallService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
         i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
@@ -265,6 +266,7 @@ i2b2.OntologyStore.showFailedDownloadStatusDetails = function (index) {
     if (product) {
         let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
         msg += '<p>To redownload, please fix the issue and then delete the folder <b><i>' + product.id + '</i></b> from the download directory on the server.</p>';
+         msg += '<p>Please search for "OntologyDownloadService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
         i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
