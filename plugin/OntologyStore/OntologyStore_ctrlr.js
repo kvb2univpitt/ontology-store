@@ -197,7 +197,7 @@ i2b2.OntologyStore.refreshProductTable = function () {
                 }
             } else if (product.failed) {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<a href="#" class="ontstore-bs-text-decoration-none" onclick="i2b2.OntologyStore.showStatusDetails(' + index + '); return false;"><span class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">Installation Failed</span></a>';
+                columns[8] = '<a href="#" class="ontstore-bs-text-decoration-none" onclick="i2b2.OntologyStore.showFailedInstallStatusDetails(' + index + '); return false;"><span class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">Installation Failed</span></a>';
             } else if (product.started) {
                 columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
                 columns[8] = '<span class="ontstore-bs-text-info ontstore-bs-font-weight-bold">Installation In Progress</span>';
@@ -208,7 +208,7 @@ i2b2.OntologyStore.refreshProductTable = function () {
         } else if (product.failed) {
             columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
             columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
-            columns[8] = '<a href="#" class="ontstore-bs-text-decoration-none" onclick="i2b2.OntologyStore.showStatusDetails(' + index + '); return false;"><span class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">Download Failed</span></a>';
+            columns[8] = '<a href="#" class="ontstore-bs-text-decoration-none" onclick="i2b2.OntologyStore.showFailedDownloadStatusDetails(' + index + '); return false;"><span class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">Download Failed</span></a>';
         } else if (product.started) {
             columns[6] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
             columns[7] = '<input type="checkbox" class="ontstore-bs-form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
@@ -251,10 +251,21 @@ i2b2.OntologyStore.syncFromCloud = function () {
     i2b2.ONTSTORE.ajax.GetProducts("OntologyStore Plugin", {version: i2b2.ClientVersion}, scopedCallback);
 };
 
-i2b2.OntologyStore.showStatusDetails = function (index) {
+i2b2.OntologyStore.showFailedInstallStatusDetails = function (index) {
     let product = i2b2.OntologyStore.products[index];
     if (product) {
-        i2b2.OntologyStore.modal.message.show('Status Detail', product.statusDetail);
+        let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
+        msg += '<p>To reinstall, please fix the issue and then delete the file <b>install.failed</b> from the folder <b><i>' + product.id + '</i></b> in the download directory on the server.</p>';
+        i2b2.OntologyStore.modal.message.show('Status Detail', msg);
+    }
+};
+
+i2b2.OntologyStore.showFailedDownloadStatusDetails = function (index) {
+    let product = i2b2.OntologyStore.products[index];
+    if (product) {
+        let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
+        msg += '<p>To redownload, please fix the issue and then delete the folder <b><i>' + product.id + '</i></b> from the download directory on the server.</p>';
+        i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
 
