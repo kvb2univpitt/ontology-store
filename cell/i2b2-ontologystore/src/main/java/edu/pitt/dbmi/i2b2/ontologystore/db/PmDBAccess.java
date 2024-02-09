@@ -60,12 +60,10 @@ public class PmDBAccess {
 
     public static final String PM_ENDPOINT_REFERENCE = "ontology.ws.pm.url";
 
-    private final JdbcTemplate pmJdbcTemplate;
     private final JdbcTemplate hiveJdbcTemplate;
 
     @Autowired
-    public PmDBAccess(DataSource pmDataSource, DataSource hiveDataSource) {
-        this.pmJdbcTemplate = new JdbcTemplate(pmDataSource);
+    public PmDBAccess(DataSource hiveDataSource) {
         this.hiveJdbcTemplate = new JdbcTemplate(hiveDataSource);
     }
 

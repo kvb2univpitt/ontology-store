@@ -20,11 +20,8 @@
     </bean>
 
     <!-- datasource -->
-    <bean id="pmDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="${spring.pm.datasource.jndi-name}" />
-    </bean>
     <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
-        <property name="jndiName" value="${spring.hive.datasource.jndi-name}" />
+        <property name="jndiName" value="OntologyStoreBootStrapDS" />
     </bean>
 
     <!-- peform database tasks -->
