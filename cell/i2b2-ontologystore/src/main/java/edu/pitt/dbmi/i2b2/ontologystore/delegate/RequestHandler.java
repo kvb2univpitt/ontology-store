@@ -55,6 +55,10 @@ public abstract class RequestHandler {
         return !pmDBAccess.isAdmin(messageHeader);
     }
 
+    public String getProductListUrl() throws I2B2Exception {
+        return pmDBAccess.getOntStoreProductListUrl();
+    }
+
     protected String createInvalidUserResponse(MessageHeaderType messageHeader) throws I2B2Exception {
         return createErrorResponse(messageHeader, "User was not validated.");
     }

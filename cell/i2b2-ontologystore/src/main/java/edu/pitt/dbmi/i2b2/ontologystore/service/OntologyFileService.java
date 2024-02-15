@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -49,22 +48,18 @@ public class OntologyFileService {
 
     private final ObjectMapper objMapper = new ObjectMapper();
 
-    private final String ontologyListFileUrl;
     private final FileSysService fileSysService;
 
     @Autowired
-    public OntologyFileService(
-            @Value("${aws.s3.json.product.list}") String ontologyListFileUrl,
-            FileSysService fileSysService) {
-        this.ontologyListFileUrl = ontologyListFileUrl;
+    public OntologyFileService(FileSysService fileSysService) {
         this.fileSysService = fileSysService;
     }
 
-    public List<ProductType> getAvailableProducts() {
+    public List<ProductType> getAvailableProducts(String productListUrl) {
         List<ProductType> productDisplays = new LinkedList<>();
 
         try {
-            getProducts().stream()
+            getProducts(productListUrl).stream()
                     .map(this::toProductTypes)
                     .forEach(productDisplays::add);
         } catch (IOException exception) {
@@ -123,17 +118,17 @@ public class OntologyFileService {
         }
     }
 
-    public Map<String, ProductItem> getProductItems() {
+    public Map<String, ProductItem> getProductItems(String productListUrl) {
         try {
-            return getProducts().stream()
+            return getProducts(productListUrl).stream()
                     .collect(Collectors.toMap(e -> e.getId(), Function.identity()));
         } catch (IOException exception) {
             return Collections.EMPTY_MAP;
         }
     }
 
-    private List<ProductItem> getProducts() throws IOException {
-        ProductList productList = objMapper.readValue(new URL(ontologyListFileUrl), ProductList.class);
+    private List<ProductItem> getProducts(String productListUrl) throws IOException {
+        ProductList productList = objMapper.readValue(new URL(productListUrl), ProductList.class);
 
         return (productList == null) ? Collections.EMPTY_LIST : productList.getProducts();
     }

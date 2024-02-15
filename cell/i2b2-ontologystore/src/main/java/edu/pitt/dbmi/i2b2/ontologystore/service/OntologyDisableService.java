@@ -63,11 +63,11 @@ public class OntologyDisableService extends AbstractOntologyService {
         this.metadataInstallService = metadataInstallService;
     }
 
-    public synchronized void performDisableEnable(String project, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
+    public synchronized void performDisableEnable(String project, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
         // get actions that are marked for disable/enable
         actions = actions.stream().filter(ProductActionType::isDisableEnable).collect(Collectors.toList());
 
-        List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(actions, summaries);
+        List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(actions, summaries, productListUrl);
         if (!productsToDisableEnable.isEmpty()) {
             String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
             if (ontJNDIName == null) {
@@ -123,12 +123,15 @@ public class OntologyDisableService extends AbstractOntologyService {
         }
     }
 
-    private List<ProductItem> getValidProductsToDisableEnable(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    private List<ProductItem> getValidProductsToDisableEnable(
+            List<ProductActionType> actions,
+            List<ActionSummaryType> summaries,
+            String productListUrl) {
         List<ProductItem> validProductItems = new LinkedList<>();
 
         // get products from the disable list that are in the product list
         Map<String, ProductItem> productsToDisableEnable = new HashMap<>();
-        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems();
+        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(productListUrl);
         actions.forEach(action -> {
             String productId = action.getId();
             if (availableProducts.containsKey(productId)) {

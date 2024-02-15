@@ -49,11 +49,11 @@ public class OntologyDownloadService extends AbstractOntologyService {
         super(fileSysService, ontologyFileService);
     }
 
-    public synchronized void performDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    public synchronized void performDownload(String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         // get actions that are marked for download
         actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
 
-        List<ProductItem> productsToDownload = getValidProductsToDownload(actions, summaries);
+        List<ProductItem> productsToDownload = getValidProductsToDownload(productListUrl, actions, summaries);
         productsToDownload = downloadFiles(productsToDownload, summaries);
         verifyFileIntegrity(productsToDownload, summaries);
     }
@@ -150,10 +150,10 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param summaries a list to store download summaries
      * @return a list of products to download
      */
-    private List<ProductItem> getValidProductsToDownload(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    private List<ProductItem> getValidProductsToDownload(String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         List<ProductItem> validProductItems = new LinkedList<>();
 
-        Map<String, ProductItem> products = ontologyFileService.getProductItems();
+        Map<String, ProductItem> products = ontologyFileService.getProductItems(productListUrl);
         actions.forEach(action -> {
             String productFolder = action.getId();
             if (products.containsKey(productFolder)) {

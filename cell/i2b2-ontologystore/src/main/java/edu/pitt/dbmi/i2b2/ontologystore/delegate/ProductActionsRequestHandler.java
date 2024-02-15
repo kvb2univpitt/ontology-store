@@ -77,6 +77,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
             return createNotAdminResponse(messageHeader);
         }
 
+        // get properties
+        String productListUrl = getProductListUrl();
+
         List<ProductActionType> actions = new LinkedList<>();
         try {
             ProductActionsType productsType = productActionDataMsg.getProductActionsType();
@@ -89,9 +92,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
         try {
-            ontologyDownloadService.performDownload(actions, summaries);
-            ontologyInstallService.performInstallation(messageHeader.getProjectId(), actions, summaries);
-            ontologyDisableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
+            ontologyDownloadService.performDownload(productListUrl, actions, summaries);
+            ontologyInstallService.performInstallation(messageHeader.getProjectId(), productListUrl, actions, summaries);
+            ontologyDisableService.performDisableEnable(messageHeader.getProjectId(), productListUrl, actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }

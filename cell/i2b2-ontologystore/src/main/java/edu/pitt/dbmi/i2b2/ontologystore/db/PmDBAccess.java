@@ -59,6 +59,7 @@ public class PmDBAccess {
     private static final Logger API_LOGGER = ESAPI.getLogger(PmDBAccess.class);
 
     public static final String PM_ENDPOINT_REFERENCE = "ontology.ws.pm.url";
+    public static final String ONTSTORE_PRODUCT_LIST_URL = "ontstore.product.list.url";
 
     private final JdbcTemplate hiveJdbcTemplate;
 
@@ -133,10 +134,10 @@ public class PmDBAccess {
         }
     }
 
-    private List<ParamType> getParamTypes() throws I2B2Exception {
+    private List<ParamType> getParamTypes(String cellId) throws I2B2Exception {
         try {
             String schema = getSchema(hiveJdbcTemplate.getDataSource());
-            String sql = "SELECT * FROM " + schema + ".hive_cell_params WHERE status_cd <> 'D' AND cell_id = 'ONT'";
+            String sql = "SELECT * FROM " + schema + ".hive_cell_params WHERE status_cd <> 'D' AND cell_id = '" + cellId + "'";
 
             return hiveJdbcTemplate.query(sql, new HiveCellParam());
         } catch (DataAccessException | SQLException exception) {
@@ -144,9 +145,9 @@ public class PmDBAccess {
         }
     }
 
-    private String getPropertyValue(String propertyName) throws I2B2Exception {
+    private String getPropertyValue(String propertyName, String cellId) throws I2B2Exception {
         String propertyValue = null;
-        for (ParamType paramType : getParamTypes()) {
+        for (ParamType paramType : getParamTypes(cellId)) {
             String name = paramType.getName();
             if (name != null && name.equalsIgnoreCase(propertyName)) {
                 String dataType = paramType.getDatatype();
@@ -180,7 +181,11 @@ public class PmDBAccess {
      * @throws I2B2Exception
      */
     private String getPmEndpointReference() throws I2B2Exception {
-        return getPropertyValue(PM_ENDPOINT_REFERENCE).trim();
+        return getPropertyValue(PM_ENDPOINT_REFERENCE, "ONT").trim();
+    }
+
+    public String getOntStoreProductListUrl() throws I2B2Exception {
+        return getPropertyValue(ONTSTORE_PRODUCT_LIST_URL, "ONTSTORE").trim();
     }
 
     private String getSchema(DataSource dataSource) throws SQLException {

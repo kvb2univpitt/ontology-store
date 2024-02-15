@@ -55,8 +55,11 @@ public class GetProductsRequestHandler extends RequestHandler {
             return createInvalidUserResponse(messageHeader);
         }
 
+        // get properties
+        String productListUrl = getProductListUrl();
+
         ProductsType productsType = new ProductsType();
-        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts());
+        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(productListUrl));
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetProductsResponse(messageHeader, productsType);
