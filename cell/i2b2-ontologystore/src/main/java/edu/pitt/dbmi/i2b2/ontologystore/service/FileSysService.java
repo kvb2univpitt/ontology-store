@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -58,14 +57,10 @@ public class FileSysService {
 
     public static final Pattern TAB_DELIM = Pattern.compile("\t");
 
-    private final String downloadDirectory;
     private final ResourcePatternResolver resourcePatternResolver;
 
     @Autowired
-    public FileSysService(
-            @Value("${ontology.dir.download}") String downloadDirectory,
-            ResourcePatternResolver resourcePatternResolver) {
-        this.downloadDirectory = downloadDirectory;
+    public FileSysService(ResourcePatternResolver resourcePatternResolver) {
         this.resourcePatternResolver = resourcePatternResolver;
     }
 
@@ -101,111 +96,111 @@ public class FileSysService {
         return list;
     }
 
-    public boolean hasDirectory(String productFolder) {
+    public boolean hasDirectory(String downloadDirectory, String productFolder) {
         return Files.exists(Paths.get(downloadDirectory, productFolder));
     }
 
-    public boolean hasStartedDownload(String productFolder) {
-        return Files.exists(getDownloadStartedIndicatorFile(productFolder));
+    public boolean hasStartedDownload(String downloadDirectory, String productFolder) {
+        return Files.exists(getDownloadStartedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasFailedDownload(String productFolder) {
-        return Files.exists(getDownloadFailedIndicatorFile(productFolder));
+    public boolean hasFailedDownload(String downloadDirectory, String productFolder) {
+        return Files.exists(getDownloadFailedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasFinshedDownload(String productFolder) {
-        return Files.exists(getDownloadFinishedIndicatorFile(productFolder));
+    public boolean hasFinshedDownload(String downloadDirectory, String productFolder) {
+        return Files.exists(getDownloadFinishedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasStartedInstall(String productFolder) {
-        return Files.exists(getInstallStartedIndicatorFile(productFolder));
+    public boolean hasStartedInstall(String downloadDirectory, String productFolder) {
+        return Files.exists(getInstallStartedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasFailedInstall(String productFolder) {
-        return Files.exists(getInstallFailedIndicatorFile(productFolder));
+    public boolean hasFailedInstall(String downloadDirectory, String productFolder) {
+        return Files.exists(getInstallFailedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasFinshedInstall(String productFolder) {
-        return Files.exists(getInstallFinishedIndicatorFile(productFolder));
+    public boolean hasFinshedInstall(String downloadDirectory, String productFolder) {
+        return Files.exists(getInstallFinishedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean hasNetworkFiles(String productFolder) {
-        Path networkDir = getNetworkDirectory(productFolder);
+    public boolean hasNetworkFiles(String downloadDirectory, String productFolder) {
+        Path networkDir = getNetworkDirectory(downloadDirectory, productFolder);
 
         return Files.exists(networkDir) && !listFiles(networkDir).isEmpty();
     }
 
-    public boolean hasOntologyDisabled(String productFolder) {
-        return Files.exists(getOntologyDisabledIndicatorFile(productFolder));
+    public boolean hasOntologyDisabled(String downloadDirectory, String productFolder) {
+        return Files.exists(getOntologyDisabledIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public Path getProductDirectory(String productFolder) {
+    public Path getProductDirectory(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder);
     }
 
-    public Path getMetadataDirectory(String productFolder) {
+    public Path getMetadataDirectory(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "metadata");
     }
 
-    public Path getCRCDirectory(String productFolder) {
+    public Path getCRCDirectory(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "crc");
     }
 
-    public Path getNetworkDirectory(String productFolder) {
+    public Path getNetworkDirectory(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "network_files");
     }
 
-    public Path getTableAccessDirectory(String productFolder) {
+    public Path getTableAccessDirectory(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "table_access");
     }
 
-    public Path getDownloadStartedIndicatorFile(String productFolder) {
+    public Path getDownloadStartedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "download.started");
     }
 
-    public Path getDownloadFailedIndicatorFile(String productFolder) {
+    public Path getDownloadFailedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "download.failed");
     }
 
-    public Path getDownloadFinishedIndicatorFile(String productFolder) {
+    public Path getDownloadFinishedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "download.finished");
     }
 
-    public Path getInstallStartedIndicatorFile(String productFolder) {
+    public Path getInstallStartedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "install.started");
     }
 
-    public Path getInstallFailedIndicatorFile(String productFolder) {
+    public Path getInstallFailedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "install.failed");
     }
 
-    public Path getInstallFinishedIndicatorFile(String productFolder) {
+    public Path getInstallFinishedIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "install.finished");
     }
 
-    public Path getOntologyDisabledIndicatorFile(String productFolder) {
+    public Path getOntologyDisabledIndicatorFile(String downloadDirectory, String productFolder) {
         return Paths.get(downloadDirectory, productFolder, "ontology.disabled");
     }
 
-    public boolean createDownloadStartedIndicatorFile(String productFolder) {
-        deleteFile(getDownloadFailedIndicatorFile(productFolder));
-        deleteFile(getDownloadFinishedIndicatorFile(productFolder));
+    public boolean createDownloadStartedIndicatorFile(String downloadDirectory, String productFolder) {
+        deleteFile(getDownloadFailedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getDownloadFinishedIndicatorFile(downloadDirectory, productFolder));
 
-        return createFile(getDownloadStartedIndicatorFile(productFolder));
+        return createFile(getDownloadStartedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean createDownloadFinishedIndicatorFile(String productFolder) {
-        deleteFile(getDownloadFailedIndicatorFile(productFolder));
-        deleteFile(getDownloadStartedIndicatorFile(productFolder));
+    public boolean createDownloadFinishedIndicatorFile(String downloadDirectory, String productFolder) {
+        deleteFile(getDownloadFailedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getDownloadStartedIndicatorFile(downloadDirectory, productFolder));
 
-        return createFile(getDownloadFinishedIndicatorFile(productFolder));
+        return createFile(getDownloadFinishedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean createDownloadFailedIndicatorFile(String productFolder, String reason) {
-        deleteFile(getDownloadFinishedIndicatorFile(productFolder));
-        deleteFile(getDownloadStartedIndicatorFile(productFolder));
+    public boolean createDownloadFailedIndicatorFile(String downloadDirectory, String productFolder, String reason) {
+        deleteFile(getDownloadFinishedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getDownloadStartedIndicatorFile(downloadDirectory, productFolder));
 
-        Path file = getDownloadFailedIndicatorFile(productFolder);
+        Path file = getDownloadFailedIndicatorFile(downloadDirectory, productFolder);
         if (reason == null || reason.trim().isEmpty()) {
             return createFile(file);
         } else {
@@ -213,25 +208,25 @@ public class FileSysService {
         }
     }
 
-    public boolean createInstallStartedIndicatorFile(String productFolder) {
-        deleteFile(getInstallFailedIndicatorFile(productFolder));
-        deleteFile(getInstallFinishedIndicatorFile(productFolder));
+    public boolean createInstallStartedIndicatorFile(String downloadDirectory, String productFolder) {
+        deleteFile(getInstallFailedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getInstallFinishedIndicatorFile(downloadDirectory, productFolder));
 
-        return createFile(getInstallStartedIndicatorFile(productFolder));
+        return createFile(getInstallStartedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean createInstallFinishedIndicatorFile(String productFolder) {
-        deleteFile(getInstallFailedIndicatorFile(productFolder));
-        deleteFile(getInstallStartedIndicatorFile(productFolder));
+    public boolean createInstallFinishedIndicatorFile(String downloadDirectory, String productFolder) {
+        deleteFile(getInstallFailedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getInstallStartedIndicatorFile(downloadDirectory, productFolder));
 
-        return createFile(getInstallFinishedIndicatorFile(productFolder));
+        return createFile(getInstallFinishedIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean createInstallFailedIndicatorFile(String productFolder, String reason) {
-        deleteFile(getInstallFinishedIndicatorFile(productFolder));
-        deleteFile(getInstallStartedIndicatorFile(productFolder));
+    public boolean createInstallFailedIndicatorFile(String downloadDirectory, String productFolder, String reason) {
+        deleteFile(getInstallFinishedIndicatorFile(downloadDirectory, productFolder));
+        deleteFile(getInstallStartedIndicatorFile(downloadDirectory, productFolder));
 
-        Path file = getInstallFailedIndicatorFile(productFolder);
+        Path file = getInstallFailedIndicatorFile(downloadDirectory, productFolder);
         if (reason == null || reason.trim().isEmpty()) {
             return createFile(file);
         } else {
@@ -239,20 +234,20 @@ public class FileSysService {
         }
     }
 
-    public boolean createOntologyDisabledIndicatorFile(String productFolder) {
-        return createFile(getOntologyDisabledIndicatorFile(productFolder));
+    public boolean createOntologyDisabledIndicatorFile(String downloadDirectory, String productFolder) {
+        return createFile(getOntologyDisabledIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public boolean removeOntologyDisabledIndicatorFile(String productFolder) {
-        return deleteFile(getOntologyDisabledIndicatorFile(productFolder));
+    public boolean removeOntologyDisabledIndicatorFile(String downloadDirectory, String productFolder) {
+        return deleteFile(getOntologyDisabledIndicatorFile(downloadDirectory, productFolder));
     }
 
-    public String getFailedDownloadMessage(String productFolder) {
-        return readFromFile(getDownloadFailedIndicatorFile(productFolder), "Download previously failed.");
+    public String getFailedDownloadMessage(String downloadDirectory, String productFolder) {
+        return readFromFile(getDownloadFailedIndicatorFile(downloadDirectory, productFolder), "Download previously failed.");
     }
 
-    public String getFailedInstallMessage(String productFolder) {
-        return readFromFile(getInstallFailedIndicatorFile(productFolder), "Install previously failed.");
+    public String getFailedInstallMessage(String downloadDirectory, String productFolder) {
+        return readFromFile(getInstallFailedIndicatorFile(downloadDirectory, productFolder), "Install previously failed.");
     }
 
     public List<Path> listFiles(Path dir) {
@@ -376,16 +371,16 @@ public class FileSysService {
         return hexValue.toString();
     }
 
-    public boolean isProductFileExists(ProductItem productItem) {
-        return Files.exists(getProductFile(productItem));
+    public boolean isProductFileExists(String downloadDirectory, ProductItem productItem) {
+        return Files.exists(getProductFile(downloadDirectory, productItem));
     }
 
-    public Path getProductFile(ProductItem productItem) {
+    public Path getProductFile(String downloadDirectory, ProductItem productItem) {
         String productFolder = productItem.getId();
         String fileURI = productItem.getFile();
         String fileName = fileURI.substring(fileURI.lastIndexOf("/") + 1, fileURI.length());
 
-        Path productDir = getProductDirectory(productFolder);
+        Path productDir = getProductDirectory(downloadDirectory, productFolder);
 
         return Paths.get(productDir.toString(), fileName);
     }

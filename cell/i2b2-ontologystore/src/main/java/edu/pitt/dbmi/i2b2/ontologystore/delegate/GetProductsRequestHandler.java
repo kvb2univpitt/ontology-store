@@ -62,9 +62,10 @@ public class GetProductsRequestHandler extends RequestHandler {
 
         // get properties
         String productListUrl = getProductListUrl();
+        String downloadDirectory = getDownloadDirectory(configureType);
 
         ProductsType productsType = new ProductsType();
-        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(productListUrl));
+        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(downloadDirectory, productListUrl));
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetProductsResponse(messageHeader, productsType);

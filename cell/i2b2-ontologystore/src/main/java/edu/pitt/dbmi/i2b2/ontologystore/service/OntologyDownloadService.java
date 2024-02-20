@@ -49,13 +49,13 @@ public class OntologyDownloadService extends AbstractOntologyService {
         super(fileSysService, ontologyFileService);
     }
 
-    public synchronized void performDownload(String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    public synchronized void performDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         // get actions that are marked for download
         actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
 
-        List<ProductItem> productsToDownload = getValidProductsToDownload(productListUrl, actions, summaries);
-        productsToDownload = downloadFiles(productsToDownload, summaries);
-        verifyFileIntegrity(productsToDownload, summaries);
+        List<ProductItem> productsToDownload = getValidProductsToDownload(downloadDirectory, productListUrl, actions, summaries);
+        productsToDownload = downloadFiles(downloadDirectory, productsToDownload, summaries);
+        verifyFileIntegrity(downloadDirectory, productsToDownload, summaries);
     }
 
     /**
@@ -65,19 +65,19 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param productsToDownload
      * @param summaries
      */
-    private void verifyFileIntegrity(List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
+    private void verifyFileIntegrity(String downloadDirectory, List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
         productsToDownload.forEach(productItem -> {
             String productFolder = productItem.getId();
 
             String fileURI = productItem.getFile();
-            Path productDir = fileSysService.getProductDirectory(productFolder);
+            Path productDir = fileSysService.getProductDirectory(downloadDirectory, productFolder);
             String generatedSha256Checksum = fileSysService.getSha256Checksum(fileURI, productDir);
             if (generatedSha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
-                fileSysService.createDownloadFinishedIndicatorFile(productFolder);
+                fileSysService.createDownloadFinishedIndicatorFile(downloadDirectory, productFolder);
                 summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Downloaded successfully."));
             } else {
                 String errorMsg = "File verification failed.  SHA-256 checksum does not match.";
-                fileSysService.createDownloadFailedIndicatorFile(productFolder, errorMsg);
+                fileSysService.createDownloadFailedIndicatorFile(downloadDirectory, productFolder, errorMsg);
                 summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
             }
         });
@@ -90,13 +90,13 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param summaries a list to store download summaries
      * @return a list products that are successfully downloaded
      */
-    private List<ProductItem> downloadFiles(List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
+    private List<ProductItem> downloadFiles(String downloadDirectory, List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
         List<ProductItem> downloadedProducts = new LinkedList<>();
 
         productsToDownload.forEach(productItem -> {
             String productFolder = productItem.getId();
-            Path productDir = fileSysService.getProductDirectory(productFolder);
-            if (fileSysService.createDirectory(productDir) && fileSysService.createDownloadStartedIndicatorFile(productFolder)) {
+            Path productDir = fileSysService.getProductDirectory(downloadDirectory, productFolder);
+            if (fileSysService.createDirectory(productDir) && fileSysService.createDownloadStartedIndicatorFile(downloadDirectory, productFolder)) {
                 try {
                     // download product file
                     fileSysService.downloadFile(productItem.getFile(), productDir);
@@ -121,7 +121,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
                     String errorMsg = "Unable to download from the given URL.";
-                    fileSysService.createDownloadFailedIndicatorFile(productFolder, errorMsg);
+                    fileSysService.createDownloadFailedIndicatorFile(downloadDirectory, productFolder, errorMsg);
                     summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
                 }
             } else {
@@ -150,7 +150,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param summaries a list to store download summaries
      * @return a list of products to download
      */
-    private List<ProductItem> getValidProductsToDownload(String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    private List<ProductItem> getValidProductsToDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         List<ProductItem> validProductItems = new LinkedList<>();
 
         Map<String, ProductItem> products = ontologyFileService.getProductItems(productListUrl);
@@ -158,14 +158,14 @@ public class OntologyDownloadService extends AbstractOntologyService {
             String productFolder = action.getId();
             if (products.containsKey(productFolder)) {
                 ProductItem productItem = products.get(productFolder);
-                if (fileSysService.hasDirectory(productFolder)) {
-                    if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.isProductFileExists(productItem)) {
+                if (fileSysService.hasDirectory(downloadDirectory, productFolder)) {
+                    if (fileSysService.hasFinshedDownload(downloadDirectory, productFolder) && fileSysService.isProductFileExists(downloadDirectory, productItem)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
                         return;
-                    } else if (fileSysService.hasFailedDownload(productFolder)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(productFolder)));
+                    } else if (fileSysService.hasFailedDownload(downloadDirectory, productFolder)) {
+                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(downloadDirectory, productFolder)));
                         return;
-                    } else if (fileSysService.hasStartedDownload(productFolder)) {
+                    } else if (fileSysService.hasStartedDownload(downloadDirectory, productFolder)) {
                         summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, true, false, "Download already started."));
                         return;
                     }

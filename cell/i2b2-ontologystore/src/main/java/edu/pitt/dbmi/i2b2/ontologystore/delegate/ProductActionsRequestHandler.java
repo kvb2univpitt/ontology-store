@@ -81,6 +81,7 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         // get properties
         String productListUrl = getProductListUrl();
+        String downloadDirectory = getDownloadDirectory(configureType);
 
         List<ProductActionType> actions = new LinkedList<>();
         try {
@@ -94,9 +95,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
         try {
-            ontologyDownloadService.performDownload(productListUrl, actions, summaries);
-            ontologyInstallService.performInstallation(messageHeader.getProjectId(), productListUrl, actions, summaries);
-            ontologyDisableService.performDisableEnable(messageHeader.getProjectId(), productListUrl, actions, summaries);
+            ontologyDownloadService.performDownload(downloadDirectory, productListUrl, actions, summaries);
+            ontologyInstallService.performInstallation(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
+            ontologyDisableService.performDisableEnable(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }

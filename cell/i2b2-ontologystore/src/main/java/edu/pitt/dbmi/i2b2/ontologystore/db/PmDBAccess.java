@@ -23,6 +23,7 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.harvard.i2b2.common.util.axis2.ServiceClient;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.CellDataType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.GetUserConfigurationType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ParamType;
@@ -31,7 +32,9 @@ import edu.pitt.dbmi.i2b2.ontologystore.pm.GetUserConfigurationRequestMessage;
 import edu.pitt.dbmi.i2b2.ontologystore.pm.PMResponseMessage;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -60,6 +63,7 @@ public class PmDBAccess {
 
     public static final String PM_ENDPOINT_REFERENCE = "ontology.ws.pm.url";
     public static final String ONTSTORE_PRODUCT_LIST_URL = "ontstore.product.list.url";
+    public static final String DOWNLOAD_DIR_CELL_PARAM = "ontstore.dir.download";
 
     private final JdbcTemplate hiveJdbcTemplate;
 
@@ -87,6 +91,33 @@ public class PmDBAccess {
         }
 
         return false;
+    }
+
+    public String getDownloadDirectory(ConfigureType configureType) throws I2B2Exception {
+        if (configureType == null) {
+            throw new I2B2Exception("Cell parameters has not been set.");
+        }
+
+        Map<String, String> cellParams = getCellParameters(configureType);
+        if (!cellParams.containsKey(DOWNLOAD_DIR_CELL_PARAM)) {
+            throw new I2B2Exception("Parameter '" + DOWNLOAD_DIR_CELL_PARAM + "' has not been set.");
+        }
+
+        return cellParams.get(DOWNLOAD_DIR_CELL_PARAM);
+    }
+
+    private Map<String, String> getCellParameters(ConfigureType configureType) {
+        Map<String, String> cellParams = new HashMap<>();
+
+        if (configureType != null) {
+            for (CellDataType data : configureType.getCellDatas().getCellData()) {
+                for (ParamType paramType : data.getParam()) {
+                    cellParams.put(paramType.getName(), paramType.getValue());
+                }
+            }
+        }
+
+        return cellParams;
     }
 
     public ConfigureType getConfigureType(MessageHeaderType header) {

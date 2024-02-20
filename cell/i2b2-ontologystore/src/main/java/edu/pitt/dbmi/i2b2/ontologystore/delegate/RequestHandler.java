@@ -53,6 +53,10 @@ public abstract class RequestHandler {
         return pmDBAccess.getOntStoreProductListUrl();
     }
 
+    public String getDownloadDirectory(ConfigureType configureType) throws I2B2Exception {
+        return pmDBAccess.getDownloadDirectory(configureType);
+    }
+
     public ConfigureType getConfigureType(MessageHeaderType header) {
         return pmDBAccess.getConfigureType(header);
     }
