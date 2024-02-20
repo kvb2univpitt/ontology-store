@@ -68,23 +68,38 @@ public class PmDBAccess {
         this.hiveJdbcTemplate = new JdbcTemplate(hiveDataSource);
     }
 
-    public ProjectType getRoleInfo(MessageHeaderType header) {
+    public ProjectType getRoleInfo(ConfigureType configureType, MessageHeaderType header) {
+        if (configureType != null) {
+            for (ProjectType projectType : configureType.getUser().getProject()) {
+                LOGGER.debug("Matching PM response's project  [" + projectType.getId() + "] with the request  project [" + header.getProjectId() + "]");
+                if (projectType.getId().equals(header.getProjectId())) {
+                    return projectType;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public boolean isAdmin(ConfigureType configureType) {
+        if (configureType != null) {
+            return configureType.getUser().isIsAdmin();
+        }
+
+        return false;
+    }
+
+    public ConfigureType getConfigureType(MessageHeaderType header) {
         try {
             PMResponseMessage msg = new PMResponseMessage();
-            String response = getRoles(new GetUserConfigurationType(), header);
+            String response = getUserConfigurationResponsetMessage(new GetUserConfigurationType(), header);
             API_LOGGER.debug(null, response);
             StatusType procStatus = msg.processResult(response);
             if (procStatus.getType().equals("ERROR")) {
                 return null;
             }
 
-            ConfigureType pmConfigure = msg.readUserInfo();
-            for (ProjectType projectType : pmConfigure.getUser().getProject()) {
-                LOGGER.debug("Matching PM response's project  [" + projectType.getId() + "] with the request  project [" + header.getProjectId() + "]");
-                if (projectType.getId().equals(header.getProjectId())) {
-                    return projectType;
-                }
-            }
+            return msg.readUserInfo();
         } catch (AxisFault e) {
             LOGGER.error("Cant connect to PM service");
         } catch (I2B2Exception e) {
@@ -96,31 +111,7 @@ public class PmDBAccess {
         return null;
     }
 
-    public boolean isAdmin(MessageHeaderType header) throws I2B2Exception {
-        try {
-            String response = getRoles(new GetUserConfigurationType(), header);
-
-            PMResponseMessage msg = new PMResponseMessage();
-            StatusType procStatus = msg.processResult(response);
-            if (procStatus.getType().equals("ERROR")) {
-                return false;
-            }
-            ConfigureType pmConfigure = msg.readUserInfo();
-            if (pmConfigure.getUser().isIsAdmin()) {
-                return true;
-            }
-        } catch (AxisFault e) {
-            LOGGER.error("Can't connect to PM service");
-        } catch (I2B2Exception e) {
-            LOGGER.error("Problem processing PM service address");
-        } catch (Exception e) {
-            LOGGER.error("General PM processing problem: " + e.getMessage());
-        }
-
-        return false;
-    }
-
-    private String getRoles(GetUserConfigurationType userConfig, MessageHeaderType header) throws Exception {
+    private String getUserConfigurationResponsetMessage(GetUserConfigurationType userConfig, MessageHeaderType header) throws Exception {
         GetUserConfigurationRequestMessage reqMsg = new GetUserConfigurationRequestMessage();
         String getRolesRequestString = reqMsg.doBuildXML(userConfig, header);
         try {

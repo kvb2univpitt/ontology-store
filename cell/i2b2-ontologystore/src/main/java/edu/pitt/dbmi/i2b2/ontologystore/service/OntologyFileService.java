@@ -128,9 +128,17 @@ public class OntologyFileService {
     }
 
     private List<ProductItem> getProducts(String productListUrl) throws IOException {
-        ProductList productList = objMapper.readValue(new URL(productListUrl), ProductList.class);
+        List<ProductItem> productItems = new LinkedList<>();
+        try {
+            ProductList productList = objMapper.readValue(new URL(productListUrl), ProductList.class);
+            if (productList != null) {
+                productItems.addAll(productList.getProducts());
+            }
+        } catch (IOException exception) {
+            LOGGER.error("", exception);
+        }
 
-        return (productList == null) ? Collections.EMPTY_LIST : productList.getProducts();
+        return productItems;
     }
 
 }

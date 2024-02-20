@@ -23,6 +23,7 @@ import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
 import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
@@ -68,12 +69,13 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
     @Override
     public String execute() throws I2B2Exception {
-        MessageHeaderType messageHeader = MessageFactory
-                .createResponseMessageHeader(productActionDataMsg.getMessageHeaderType());
-        if (isInvalidUser(messageHeader)) {
+        // authorization check
+        MessageHeaderType messageHeader = MessageFactory.createResponseMessageHeader(productActionDataMsg.getMessageHeaderType());
+        ConfigureType configureType = getConfigureType(messageHeader);
+        if (isInvalidUser(configureType, messageHeader)) {
             return createInvalidUserResponse(messageHeader);
         }
-        if (isNotAdmin(messageHeader)) {
+        if (isNotAdmin(configureType)) {
             return createNotAdminResponse(messageHeader);
         }
 
