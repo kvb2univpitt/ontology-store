@@ -1,130 +1,166 @@
-# OntologyStore Quick Installation Guide
+# Quick Installation Guide for the OntologyStore v0.5.0
 
 A guide for installing the OntologyStore software.
 
-## Prerequisites
-
-### i2b2 System Requirements
-
-- i2b2 Core Server 1.7.13 Release.
-- i2b2 Webclient 1.7.13 Release.
-
-### Required Permissions
-
-- System administrator privileges is needed to install the OntologyStore plugin and to install the OntologyStore cell.
-- i2b2 administrator privileges is needed to log into the i2b2 Administration Module to add new cell.
-
-## Installing the OntologyStore Cell
+## Installing the Cell
 
 The following instructions assume that the Wildfly directory on the server is ```/opt/wildfly```.
 
-### 1. Stop the Current Running Services
+### Prerequisites
 
-- Stop the Wildfly server running the i2b2 core server.
+- i2b2 Core Server *1.7.13 Release* or *1.8.0 Release*.
+- System administrator privileges for adding AAR file, JAR file, and datasource file (*-ds.xml) to Wildfly.
 
-### 2. Download the OntologyStore Cell
+#### 1. Stop Wildfly Server
 
-- Click on the link to download [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ontologystore_cell.zip).
-- Extract ***ontologystore_cell.zip*** file.  Once the file has been unzipped, there should be two files (***OntologyStore.aar*** and ***OntologyStore.jar***) in the folder **ontologystore_cell**.
+- Stop the current Wildfly server where the i2b2 cells are deployed.
 
-### 3. Add the Files to the i2b2 Cell on the Server
+#### 2. Download the Cell
 
-- Copy the aar file ***OntologyStore.aar*** from the **ontologystore_cell** folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
+- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ontologystore_cell.zip) to download the file.
 
-- Copy the jar file ***OntologyStore.jar*** **ontologystore_cell** folder to the Wildfly directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib```.
+- Extract ***ontologystore_cell.zip*** file.  Once extracted, there should be a folder called **ontologystore_cell** containing the followin files:
+    - OntologyStore.aar
+    - OntologyStore.jar
+
+#### 3. Deploy the Cell in Wildfly
+
+- Copy the **OntologyStore.aar** file from the ***ontologystore_cell*** folder to the i2b2 ***WEB-INF/services*** directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
+
+- Copy the **OntologyStore.jar** file from the ***ontologystore_cell*** folder to the i2b2 ***WEB-INF/lib*** directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib```.
 
 > Note that the ***i2b2.war*** in the Wildfly directory ```/opt/wildfly/standalone/deployments``` may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the ```WEB-INF/services``` folder and the ***OntologyStore.jar*** file to the ```WEB-INF/lib``` folder.
 
-### 4. Configure the i2b2 OntologyStore Cell
+#### 4. Add the Datasource Configuration File
 
-- Create a file called ***ontologystore.properties*** in the Wildfly configuration directory ```/opt/wildfly/standalone/configuration``` with the following content:
+- Download the datasource file **ontstore-ds.xml** based on your database vendor:
 
-```properties
-ontology.dir.download=ontology_download_storage_directory
+    | Database Vendor | Datasource File                                                                                          |
+    |-----------------|----------------------------------------------------------------------------------------------------------|
+    | Oracle          | [ontstore-ds.xml](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ds/oracle/ontstore-ds.xml)     |
+    | SQL Server      | [ontstore-ds.xml](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ds/sqlserver/ontstore-ds.xml)  |
+    | PostgreSQL      | [ontstore-ds.xml](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ds/postgresql/ontstore-ds.xml) |
 
-aws.s3.json.product.list=https://ontology-store.s3.amazonaws.com/product-list.json
+- Replace the value for the ***user-name*** and ***password*** with your database username and password in the file **ontstore-ds.xml**.
+- Place the file **ontstore-ds.xml** in the directory ```/opt/wildfly/standalone/deployments```.
 
-# datasources
-spring.hive.datasource.jndi-name=java:/OntologyBootStrapDS
-spring.pm.datasource.jndi-name=java:/PMBootStrapDS
-```
+> See the i2b2 documentation on [Data Source Configuration](https://community.i2b2.org/wiki/display/getstarted/2.+Data+Source+Configuration) for more detail.
 
-- Replace the ***ontology_download_storage_directory*** with the path to the directory where the ontologies should be downloaded to.  Note that ***Wildfly*** must have a read/write permission to that directory.
+#### 5. Restart Wildfly Server
 
-### 5. Restart the Services
+## Managing the Cell
 
-- Restart the Wildfly server running the i2b2 core server.
+### Prerequisites
 
-## Installing the OntologyStore Plugin
+- i2b2 database administrator privileges for adding entries into the i2b2 database tables.
+
+#### 1. Add New Cell
+
+Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***
+
+- Insert the following data to the i2b2 database table **pm_cell_data** to add the OntologyStore cell.
+
+    | Column       | Value                                                     |
+    |--------------|-----------------------------------------------------------|
+    | Cell ID      | ONTSTORE                                                  |
+    | Cell Name    | OntologyStore Cell                                        |
+    | Cell URL     | http://localhost:9090/i2b2/services/OntologyStoreService/ |
+    | Project Path | /                                                         |
+    | Method       | REST                                                      |
+
+    > See the i2b2 documentation on [Add a New Cell](https://community.i2b2.org/wiki/display/getstarted/6.4.1.1+Add+a+New+Cell) for more detail.
+
+#### 2. Configure Cell Properties
+
+The configuration below tells the OntologyStore cell where to fetch the list of ontologies to download and install.
+
+- Insert the following data to the i2b2 database table **pm_cell_data** to set the cell properties:
+
+    | Column        | Value                                                        |
+    |---------------|--------------------------------------------------------------|
+    | datatype_cd   | T                                                            |
+    | cell_id       | ONTSTORE                                                     |
+    | param_name_cd | ontstore.product.list.url                                    |
+    | value         | https://ontology-store-v2.s3.amazonaws.com/product-list.json |
+    | status_cd     | A                                                            |
+
+    > See the i2b2 documentation on [Configure cell properties](https://community.i2b2.org/wiki/pages/viewpage.action?pageId=28639260) for more detail.
+
+#### 3. Configure Additional Cell Properties
+
+The configuration below tells the OntologyStore cell where to download the ontologies.  Assume that the directory where the ontologies are downloaded to is ```/home/wildfly/ontology```
+
+- Insert the following data to the i2b2 database table **pm_cell_params** to set the additional cell properties:
+
+    | Column        | Value                  |
+    |---------------|------------------------|
+    | datatype_cd   | T                      |
+    | cell_id       | ONTSTORE               |
+    | project_path  | /                      |
+    | param_name_cd | ontstore.dir.download  |
+    | value         | /home/wildfly/ontology |
+    | status_cd     | A                      |
+
+## Installing the Plugin
 
 The following instructions assume that the i2b2 webclient directory is ```/var/www/html/webclient```.
 
-### 1. Stop the Current Running Services
+### Prerequisites
+
+- i2b2 Web Client *1.7.13 Release* or *1.8.0 Release*.
+- System administrator privileges for updating the Web Client.
+
+#### 1. Stop the Apache HTTP Server
 
 - Stop the web server running the i2b2 webclient.
 
-### 2. Add the OntologyStore Cell
+#### 2. Add the OntologyStore Plugin Communicator
 
--  Click on the link to download [ONTSTORE.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ONTSTORE.zip).
+The plugin communicator is the communication channel between the OntologyStore plugin and the OntologyStore cell.
 
-- Extract ***ONTSTORE.zip*** file to the i2b2 webclient directory ```/var/www/html/webclient/js-i2b2/cells```.
+-  Click on [ONTSTORE.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ONTSTORE.zip) to download the file.
 
+- Extract the ***ONTSTORE.zip*** file to the following i2b2 webclient directory:
 
-### 3. Add the Plugin to the i2b2 Webclient
+    | Web Client Version | Directory                                                                      |
+    |--------------------|--------------------------------------------------------------------------------|
+    | 1.7.13 Release     | /var/www/html/webclient/js-i2b2/cells                                          |
+    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells |
 
-- Click on the link to download [ontologystore_plugin.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/ontologystore_plugin.zip).
+#### 3. Add the Plugin to the i2b2 Webclient
 
-- Extract ***ontologystore_plugin.zip*** file.  Once the file has been unzip, there should be a folder called **OntologyStore**.
+- Click on [OntologyStore.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/OntologyStore.zip) to download the file.
 
-- Copy the folder **OntologyStore**, extracted from the ***ontologystore_plugin.zip*** file, into the i2b2 webclient plugin directory ```/var/www/html/webclient/js-i2b2/cells/plugins/community```.
+- Extract file ***OntologyStore.zip*** to the following i2b2 webclient plugin directory:
 
-### 4. Configure the i2b2 Webclient
+    | Web Client Version | Directory                                                                                        |
+    |--------------------|--------------------------------------------------------------------------------------------------|
+    | 1.7.13 Release     | /var/www/html/webclient/js-i2b2/cells/plugins/community                                          |
+    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells/plugins/community |
 
-- Add the following code to the array i2b2.hive.tempCellsList in the module loader configuration file ***i2b2_loader.js*** located in the directory ```/var/www/html/webclient/js-i2b2```.
+#### 4. Configure the i2b2 Webclient
 
-```js
-{code: "ONTSTORE"},
-{code: "OntologyStore",
-    forceLoading: true,
-    forceConfigMsg: {params: []},
-    roles: [ "MANAGER" ],
-    forceDir: "cells/plugins/community"
-}
-```
+- Add the following code to the Javascript array *i2b2.hive.tempCellsList* in the module loader configuration file **i2b2_loader.js**:
 
-> Remember to make a backup copy of the file before modifying it.
+    ```js
+    {code: "ONTSTORE"},
+    {code: "OntologyStore",
+        forceLoading: true,
+        forceConfigMsg: {params: []},
+        roles: [ "MANAGER" ],
+        forceDir: "cells/plugins/community"
+    }
+    ```
 
-### 5. Restart the Services
+    The **i2b2_loader.js** file is located in the following directory:
+
+    | Web Client Version | Directory                                                                |
+    |--------------------|--------------------------------------------------------------------------|
+    | 1.7.13 Release     | /var/www/html/webclient/js-i2b2                                          |
+    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2 |
+
+    > Remember to make a backup copy of the file before modifying it.
+
+#### 5. Restart the Apache HTTP Server
 
 - Restart the web server running the i2b2 webcleint.
-
-## Adding the OntologyStore Cell
-
-The following instructions assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***.
-
-### 1. Log into the i2b2 Administration Module.
-
-### 2. In the Navigation panel, click on ***Manage Cells***.
-
-![Manged Cell](../cell/img/managed_cell.png)
-
-### 3. In the Manage Cells page click on Add New Cell.
-
-![Add Cell](../cell/img/add_cell.png)
-
-### 4. Enter the following cell information and click on the "Save" button:
-
-| Field        | Value                                                     |
-|--------------|-----------------------------------------------------------|
-| Cell ID      | ONTSTORE                                                  |
-| Cell Name    | OntologyStore Cell                                        |
-| Cell URL     | http://localhost:9090/i2b2/services/OntologyStoreService/ |
-| Project Path | /                                                         |
-| Method       | REST                                                      |
-
-![Save Cell](../cell/img/save_cell.png)
-> Note that the URL must end with a foward slash (**/**).
-
-### 5. The cell will be added to the list of cells on the Manage Cells page.  In the Navigation panel click on Manage Cells to refresh the hierarchical tree and display the new cell:
-
-![Refresh Cell List](../cell/img/refresh_managed_cell.png)
