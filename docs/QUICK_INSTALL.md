@@ -41,7 +41,7 @@ The following instructions assume that the Wildfly directory on the server is ``
     | SQL Server      | [ontstore-ds.xml](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ds/sqlserver/ontstore-ds.xml)  |
     | PostgreSQL      | [ontstore-ds.xml](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ds/postgresql/ontstore-ds.xml) |
 
-- Replace the value for the ***user-name*** and ***password*** with your database username and password in the file **ontstore-ds.xml**.
+- Replace the value for the ***connection-url***, ***user-name***, and ***password*** in the file **ontstore-ds.xml** with your database *connection url*, *username*, and *password*, respectively.
 - Place the file **ontstore-ds.xml** in the directory ```/opt/wildfly/standalone/deployments```.
 
 > See the i2b2 documentation on [Data Source Configuration](https://community.i2b2.org/wiki/display/getstarted/2.+Data+Source+Configuration) for more detail.
@@ -74,7 +74,7 @@ Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hos
 
 The configuration below tells the OntologyStore cell where to fetch the list of ontologies to download and install.
 
-- Insert the following data to the i2b2 database table **pm_cell_data** to set the cell properties:
+- Insert the following data to the i2b2 database table **hive_cell_params** to set the cell properties:
 
     | Column        | Value                                                        |
     |---------------|--------------------------------------------------------------|
@@ -100,6 +100,8 @@ The configuration below tells the OntologyStore cell where to download the ontol
     | param_name_cd | ontstore.dir.download  |
     | value         | /home/wildfly/ontology |
     | status_cd     | A                      |
+
+    > See the i2b2 documentation on [Add Cell Parameters](https://community.i2b2.org/wiki/display/getstarted/6.4.2.1+Add+Cell+Parameters) for more detail.
 
 ## Installing the Plugin
 
