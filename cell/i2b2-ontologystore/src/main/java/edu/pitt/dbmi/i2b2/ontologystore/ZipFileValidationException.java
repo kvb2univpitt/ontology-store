@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2023 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,29 +16,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package edu.pitt.dbmi.i2b2.ontologystore.model;
-
-import java.util.List;
+package edu.pitt.dbmi.i2b2.ontologystore;
 
 /**
  *
- * Oct 18, 2022 6:10:50 AM
+ * Dec 14, 2023 9:30:50 PM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public class ProductList {
+public class ZipFileValidationException extends Exception {
 
-    private List<ProductItem> products;
-
-    public ProductList() {
+    public ZipFileValidationException() {
     }
 
-    public List<ProductItem> getProducts() {
-        return products;
+    public ZipFileValidationException(String message) {
+        super(message);
     }
 
-    public void setProducts(List<ProductItem> products) {
-        this.products = products;
+    public ZipFileValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ZipFileValidationException(Throwable cause) {
+        super(cause);
+    }
+
+    public ZipFileValidationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2024 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,14 @@ import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 public abstract class AbstractOntologyService {
 
     private static final Log LOGGER = LogFactory.getLog(AbstractOntologyService.class);
+
+    protected final FileSysService fileSysService;
+    protected final OntologyFileService ontologyFileService;
+
+    public AbstractOntologyService(FileSysService fileSysService, OntologyFileService ontologyFileService) {
+        this.fileSysService = fileSysService;
+        this.ontologyFileService = ontologyFileService;
+    }
 
     protected ActionSummaryType createActionSummary(String title, String actionType, boolean inProgress, boolean success, String detail) {
         ActionSummaryType summary = new ActionSummaryType();

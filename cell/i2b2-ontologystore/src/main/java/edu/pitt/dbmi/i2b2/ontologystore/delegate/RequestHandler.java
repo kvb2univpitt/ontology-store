@@ -21,12 +21,9 @@ package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.owasp.esapi.ESAPI;
-import org.owasp.esapi.Logger;
 
 /**
  *
@@ -36,9 +33,6 @@ import org.owasp.esapi.Logger;
  */
 public abstract class RequestHandler {
 
-    private static final Log LOGGER = LogFactory.getLog(RequestHandler.class);
-    protected final Logger LOGGER_API = ESAPI.getLogger(RequestHandler.class);
-
     protected final PmDBAccess pmDBAccess;
 
     public RequestHandler(PmDBAccess pmDBAccess) {
@@ -47,12 +41,24 @@ public abstract class RequestHandler {
 
     public abstract String execute() throws I2B2Exception;
 
-    protected boolean isInvalidUser(MessageHeaderType messageHeader) {
-        return pmDBAccess.getRoleInfo(messageHeader) == null;
+    protected boolean isInvalidUser(ConfigureType configureType, MessageHeaderType header) {
+        return pmDBAccess.getRoleInfo(configureType, header) == null;
     }
 
-    protected boolean isNotAdmin(MessageHeaderType messageHeader) throws I2B2Exception {
-        return !pmDBAccess.isAdmin(messageHeader);
+    protected boolean isNotAdmin(ConfigureType configureType) {
+        return !pmDBAccess.isAdmin(configureType);
+    }
+
+    public String getProductListUrl() throws I2B2Exception {
+        return pmDBAccess.getOntStoreProductListUrl();
+    }
+
+    public String getDownloadDirectory(ConfigureType configureType) throws I2B2Exception {
+        return pmDBAccess.getDownloadDirectory(configureType);
+    }
+
+    public ConfigureType getConfigureType(MessageHeaderType header) {
+        return pmDBAccess.getConfigureType(header);
     }
 
     protected String createInvalidUserResponse(MessageHeaderType messageHeader) throws I2B2Exception {

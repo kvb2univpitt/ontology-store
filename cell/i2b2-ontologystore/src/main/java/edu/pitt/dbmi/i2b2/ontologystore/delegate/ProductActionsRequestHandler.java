@@ -23,6 +23,7 @@ import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
 import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
@@ -49,33 +50,38 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private static final Log LOGGER = LogFactory.getLog(ProductActionsRequestHandler.class);
 
     private final ProductActionDataMessage productActionDataMsg;
-    private final OntologyDownloadService downloadService;
-    private final OntologyInstallService installService;
-    private final OntologyDisableService disableService;
+    private final OntologyDownloadService ontologyDownloadService;
+    private final OntologyInstallService ontologyInstallService;
+    private final OntologyDisableService ontologyDisableService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
-            OntologyDownloadService downloadService,
-            OntologyInstallService installService,
-            OntologyDisableService disableService,
+            OntologyDownloadService ontologyDownloadService,
+            OntologyInstallService ontologyInstallService,
+            OntologyDisableService ontologyDisableService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
-        this.downloadService = downloadService;
-        this.installService = installService;
-        this.disableService = disableService;
+        this.ontologyDownloadService = ontologyDownloadService;
+        this.ontologyInstallService = ontologyInstallService;
+        this.ontologyDisableService = ontologyDisableService;
     }
 
     @Override
     public String execute() throws I2B2Exception {
-        MessageHeaderType messageHeader = MessageFactory
-                .createResponseMessageHeader(productActionDataMsg.getMessageHeaderType());
-        if (isInvalidUser(messageHeader)) {
+        // authorization check
+        MessageHeaderType messageHeader = MessageFactory.createResponseMessageHeader(productActionDataMsg.getMessageHeaderType());
+        ConfigureType configureType = getConfigureType(messageHeader);
+        if (isInvalidUser(configureType, messageHeader)) {
             return createInvalidUserResponse(messageHeader);
         }
-        if (isNotAdmin(messageHeader)) {
+        if (isNotAdmin(configureType)) {
             return createNotAdminResponse(messageHeader);
         }
+
+        // get properties
+        String productListUrl = getProductListUrl();
+        String downloadDirectory = getDownloadDirectory(configureType);
 
         List<ProductActionType> actions = new LinkedList<>();
         try {
@@ -89,10 +95,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
         ActionSummariesType actionSummariesType = new ActionSummariesType();
         List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
         try {
-            downloadService.performDownload(actions, summaries);
-            installService.performInstallation(messageHeader.getProjectId(), actions, summaries);
-
-            disableService.performDisableEnable(messageHeader.getProjectId(), actions, summaries);
+            ontologyDownloadService.performDownload(downloadDirectory, productListUrl, actions, summaries);
+            ontologyInstallService.performInstallation(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
+            ontologyDisableService.performDisableEnable(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }

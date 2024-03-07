@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2024 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,8 @@ package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.Date;
@@ -36,12 +36,16 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,13 +53,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  *
- * Oct 22, 2022 4:36:06 AM
+ * Jan 19, 2024 9:36:38 AM
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
-public abstract class AbstractInstallerService {
+public abstract class AbstractInstallService {
 
-    private static final Log LOGGER = LogFactory.getLog(OntInstallerService.class);
+    private static final Log LOGGER = LogFactory.getLog(AbstractInstallService.class);
 
     protected static final String ACTION_TYPE = "Install";
 
@@ -66,8 +70,161 @@ public abstract class AbstractInstallerService {
 
     protected final FileSysService fileSysService;
 
-    public AbstractInstallerService(FileSysService fileSysService) {
+    public AbstractInstallService(FileSysService fileSysService) {
         this.fileSysService = fileSysService;
+    }
+
+    protected void deleteFromTableAccess(JdbcTemplate jdbcTemplate, String table, String columnName, List<String> tableNames) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            tableNames.forEach(tableName -> {
+                try {
+                    String sql = createDeleteStatement(conn.getSchema(), table.toLowerCase(), columnName);
+                    PreparedStatement stmt = conn.prepareStatement(sql);
+
+                    stmt.setString(1, tableName);
+                    stmt.execute();
+                } catch (Exception exception) {
+                    LOGGER.error("", exception);
+                }
+            });
+        }
+    }
+
+    protected void batchInsert(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
+            // create prepared statement
+            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
+            PreparedStatement stmt = conn.prepareStatement(sql);
+
+            // get columnTypes
+            int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+
+            int count = 0;
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                // skip lines that are commented out
+                String cleanedLine = line.trim();
+                if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                    continue;
+                }
+
+                try {
+                    String[] values = TAB_DELIM.split(line);
+
+                    setColumns(stmt, columnTypes, values);
+
+                    // add null columns not provided
+                    if (values.length < columnTypes.length) {
+                        for (int i = values.length; i < columnTypes.length; i++) {
+                            stmt.setNull(i + 1, Types.NULL);
+                        }
+                    }
+                } catch (Exception exception) {
+                    LOGGER.error("", exception);
+                }
+
+                stmt.addBatch();
+                count++;
+                if (count == batchSize) {
+                    stmt.executeBatch();
+                    stmt.clearBatch();
+                    count = 0;
+                }
+            }
+
+            if (count > 0) {
+                stmt.executeBatch();
+                stmt.clearBatch();
+                count = 0;
+            }
+        }
+    }
+
+    protected void insertUnique(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
+            Set<String> pkeys = getColumnData(jdbcTemplate, table, pkColumn);
+            List<String> columnNames = getHeaders(reader.readLine());
+            final int pkIndex = columnNames.indexOf(pkColumn);
+
+            // create prepared statement
+            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
+            PreparedStatement stmt = conn.prepareStatement(sql);
+
+            // get columnTypes
+            int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+
+            int count = 0;
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                // skip lines that are commented out
+                String cleanedLine = line.trim();
+                if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                    continue;
+                }
+
+                String[] values = TAB_DELIM.split(line);
+                if (!pkeys.contains(values[pkIndex].toLowerCase())) {
+                    try {
+                        setColumns(stmt, columnTypes, values);
+
+                        // add null columns not provided
+                        if (values.length < columnTypes.length) {
+                            for (int i = values.length; i < columnTypes.length; i++) {
+                                stmt.setNull(i + 1, Types.NULL);
+                            }
+                        }
+                    } catch (Exception exception) {
+                        LOGGER.error("", exception);
+                    }
+
+                    stmt.addBatch();
+                    count++;
+                    if (count == DEFAULT_BATCH_SIZE) {
+                        stmt.executeBatch();
+                        stmt.clearBatch();
+                        count = 0;
+                    }
+                }
+            }
+
+            if (count > 0) {
+                stmt.executeBatch();
+                stmt.clearBatch();
+                count = 0;
+            }
+        }
+    }
+
+    /**
+     * Get the file header (the first line of the file).
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    protected List<String> getHeaders(String header) throws IOException {
+        return (header == null || header.trim().isEmpty())
+                ? Collections.EMPTY_LIST
+                : Arrays.stream(TAB_DELIM.split(header))
+                        .map(String::trim)
+                        .filter(e -> !e.isEmpty())
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toList());
     }
 
     protected boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
@@ -139,162 +296,6 @@ public abstract class AbstractInstallerService {
                     .replaceAll("I2B2", tableName)
                     .trim();
             jdbcTemplate.execute(query);
-        }
-    }
-
-    protected void insert(JdbcTemplate jdbcTemplate, String table, Path file) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                // create prepared statement
-                String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), fileSysService.getHeaders(file));
-                PreparedStatement stmt = conn.prepareStatement(sql);
-
-                // get columnTypes
-                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-                Files.lines(file)
-                        .skip(1)
-                        .filter(line -> !(line.trim().isEmpty() || line.startsWith("--")))
-                        .map(TAB_DELIM::split)
-                        .forEach(values -> {
-                            try {
-                                setColumns(stmt, columnTypes, values);
-
-                                // add null columns not provided
-                                if (values.length < columnTypes.length) {
-                                    for (int i = values.length; i < columnTypes.length; i++) {
-                                        stmt.setNull(i + 1, Types.NULL);
-                                    }
-                                }
-
-                                stmt.execute();
-                            } catch (Exception exception) {
-                                LOGGER.error("", exception);
-                            }
-                        });
-            }
-        }
-    }
-
-    protected void batchInsert(JdbcTemplate jdbcTemplate, String table, Path file, int batchSize) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                // create prepared statement
-                String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), fileSysService.getHeaders(file));
-                PreparedStatement stmt = conn.prepareStatement(sql);
-
-                // get columnTypes
-                int count = 0;
-                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-                try (BufferedReader reader = Files.newBufferedReader(file)) {
-                    // skip header
-                    reader.readLine();
-
-                    for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                        // skip lines that are commented out
-                        if (line.trim().startsWith("--")) {
-                            continue;
-                        }
-
-                        try {
-                            String[] values = TAB_DELIM.split(line);
-
-                            setColumns(stmt, columnTypes, values);
-
-                            // add null columns not provided
-                            if (values.length < columnTypes.length) {
-                                for (int i = values.length; i < columnTypes.length; i++) {
-                                    stmt.setNull(i + 1, Types.NULL);
-                                }
-                            }
-                        } catch (Exception exception) {
-                            LOGGER.error("", exception);
-                        }
-
-                        stmt.addBatch();
-                        count++;
-                        if (count == batchSize) {
-                            stmt.executeBatch();
-                            stmt.clearBatch();
-                            count = 0;
-                        }
-                    }
-                }
-                if (count > 0) {
-                    stmt.executeBatch();
-                    stmt.clearBatch();
-                    count = 0;
-                }
-            }
-        }
-    }
-
-    protected void deleteFromTableAccessByTableName(JdbcTemplate jdbcTemplate, String table, String columnName, String columnValue) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                int[] columnTypes = {Types.VARCHAR};
-                String[] values = {columnValue};
-
-                String sql = createDeleteStatement(conn.getSchema(), table.toLowerCase(), columnName);
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                try {
-                    setColumns(stmt, columnTypes, values);
-                    stmt.execute();
-                } catch (Exception exception) {
-                    LOGGER.error("", exception);
-                    throw new SQLException(exception);
-                }
-            }
-        }
-    }
-
-    protected void insertUnique(JdbcTemplate jdbcTemplate, String table, Path file, String pkColumn) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            Set<String> pkeys = getColumnData(jdbcTemplate, table, pkColumn);
-            List<String> columnNames = fileSysService.getHeaders(file);
-            final int pkIndex = columnNames.indexOf(pkColumn);
-
-            try (Connection conn = dataSource.getConnection()) {
-                // create prepared statement
-                String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
-                PreparedStatement stmt = conn.prepareStatement(sql);
-
-                // get columnTypes
-                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-                Files.lines(file)
-                        .skip(1)
-                        .filter(line -> !line.trim().isEmpty())
-                        .map(TAB_DELIM::split)
-                        .forEach(values -> {
-                            if (!pkeys.contains(values[pkIndex].toLowerCase())) {
-                                try {
-                                    for (int i = 0; i < values.length; i++) {
-                                        int colIndex = i + 1;
-                                        String value = values[i].trim();
-                                        if (value.isEmpty()) {
-                                            stmt.setNull(colIndex, Types.NULL);
-                                        } else {
-                                            setColumns(stmt, columnTypes, values);
-                                        }
-                                    }
-
-                                    // add null columns not provided
-                                    if (values.length < columnTypes.length) {
-                                        for (int i = values.length; i < columnTypes.length; i++) {
-                                            stmt.setNull(i + 1, Types.NULL);
-                                        }
-                                    }
-
-                                    stmt.execute();
-                                } catch (Exception exception) {
-                                    LOGGER.error("", exception);
-                                }
-                            }
-                        });
-            }
         }
     }
 

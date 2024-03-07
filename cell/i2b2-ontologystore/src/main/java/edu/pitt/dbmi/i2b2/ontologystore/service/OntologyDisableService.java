@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 University of Pittsburgh.
+ * Copyright (C) 2024 University of Pittsburgh.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,13 +22,18 @@ import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
+import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileUtils;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,22 +53,22 @@ public class OntologyDisableService extends AbstractOntologyService {
     private static final String DISABLE_ACTION_TYPE = "Disable";
     private static final String ENABLE_ACTION_TYPE = "Enable";
 
-    private final FileSysService fileSysService;
     private final HiveDBAccess hiveDBAccess;
-    private final OntInstallerService ontInstallerService;
+    private final MetadataInstallService metadataInstallService;
 
     @Autowired
-    public OntologyDisableService(FileSysService fileSysService, HiveDBAccess hiveDBAccess, OntInstallerService ontInstallerService) {
-        this.fileSysService = fileSysService;
+    public OntologyDisableService(HiveDBAccess hiveDBAccess, MetadataInstallService metadataInstallService, FileSysService fileSysService, OntologyFileService ontologyFileService) {
+        super(fileSysService, ontologyFileService);
         this.hiveDBAccess = hiveDBAccess;
-        this.ontInstallerService = ontInstallerService;
+        this.metadataInstallService = metadataInstallService;
     }
 
-    public synchronized void performDisableEnable(String project, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
-        actions = actions.stream().filter(e -> e.isDisableEnable()).collect(Collectors.toList());
-        actions = validate(actions, summaries);
+    public synchronized void performDisableEnable(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
+        // get actions that are marked for disable/enable
+        actions = actions.stream().filter(ProductActionType::isDisableEnable).collect(Collectors.toList());
 
-        if (!actions.isEmpty()) {
+        List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(downloadDirectory, actions, summaries, productListUrl);
+        if (!productsToDisableEnable.isEmpty()) {
             String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
             if (ontJNDIName == null) {
                 throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
@@ -75,58 +80,76 @@ public class OntologyDisableService extends AbstractOntologyService {
             }
 
             JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
-            actions.forEach(action -> disableEnable(action, ontJdbcTemplate, summaries));
+
+            productsToDisableEnable.forEach(productItem -> {
+                disableEnable(downloadDirectory, productItem, ontJdbcTemplate, summaries);
+            });
         }
     }
 
-    private List<ProductActionType> validate(List<ProductActionType> actions, List<ActionSummaryType> summaries) {
-        List<ProductActionType> disableEnableActions = new LinkedList<>();
+    private void disableEnable(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
+        String productFolder = productItem.getId();
+        boolean enable = fileSysService.hasOntologyDisabled(downloadDirectory, productFolder);
 
-        actions.forEach(action -> {
-            String productFolder = action.getKey().replaceAll(".json", "");
-            if (fileSysService.hasFinshedDownload(productFolder) && fileSysService.hasFinshedInstall(productFolder)) {
-                disableEnableActions.add(action);
+        File productFile = fileSysService.getProductFile(downloadDirectory, productItem).toFile();
+        try (ZipFile zipFile = new ZipFile(productFile)) {
+            Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
+
+            ZipEntry packageJsonZipEntry = zipEntries.get("package.json");
+            PackageFile packageFile = ZipFileUtils.getPackageFile(packageJsonZipEntry, zipFile);
+
+            if (enable) {
+                String rootFolder = new File(packageJsonZipEntry.getName()).getParent();
+
+                try {
+                    metadataInstallService.insertIntoTableAccessTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                    fileSysService.removeOntologyDisabledIndicatorFile(downloadDirectory, productFolder);
+                    summaries.add(createActionSummary(productItem.getTitle(), ENABLE_ACTION_TYPE, false, true, "Enabled."));
+                } catch (Exception exception) {
+                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Enable Ontology Failed."));
+                }
             } else {
-                summaries.add(createActionSummary(action.getTitle(), DISABLE_ACTION_TYPE, false, false, "Ontology not installed."));
+                try {
+                    metadataInstallService.deleteFromTableAccessTable(packageFile, ontJdbcTemplate);
+                    fileSysService.createOntologyDisabledIndicatorFile(downloadDirectory, productFolder);
+                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, true, "Disabled."));
+                } catch (Exception exception) {
+                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Disable Ontology Failed."));
+                }
+            }
+        } catch (IOException exception) {
+            // this error occurs when the product file is not a zip file.
+            LOGGER.error("", exception);
+        }
+    }
+
+    private List<ProductItem> getValidProductsToDisableEnable(
+            String downloadDirectory,
+            List<ProductActionType> actions,
+            List<ActionSummaryType> summaries,
+            String productListUrl) {
+        List<ProductItem> validProductItems = new LinkedList<>();
+
+        // get products from the disable list that are in the product list
+        Map<String, ProductItem> productsToDisableEnable = new HashMap<>();
+        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(productListUrl);
+        actions.forEach(action -> {
+            String productId = action.getId();
+            if (availableProducts.containsKey(productId)) {
+                productsToDisableEnable.put(productId, availableProducts.get(productId));
             }
         });
 
-        return disableEnableActions;
-    }
-
-    private void disableEnable(ProductActionType action, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
-        String productFolder = action.getKey().replaceAll(".json", "");
-        boolean enable = fileSysService.hasOntologyDisabled(productFolder);
-        Map<String, Path> metadataTableFiles = fileSysService.getMetadata(productFolder).stream()
-                .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll(".tsv", ""), e -> e));
-        Map<String, Path> tableAccessTableFiles = fileSysService.getTableAccess(productFolder).stream()
-                .collect(Collectors.toMap(e -> e.getFileName().toString().replaceAll("_TA.tsv", ""), e -> e));
-        try {
-            // remove/add from database
-            for (String tableName : metadataTableFiles.keySet()) {
-                if (enable) {
-                    ontInstallerService.insertIntoTableAccessTable(ontJdbcTemplate, tableAccessTableFiles.get(tableName));
-                } else {
-                    ontInstallerService.deleteFromTableAccessTable(ontJdbcTemplate, tableName);
-                }
-            }
-
-            // remove/addd indicator file
-            if (enable) {
-                fileSysService.removeOntologyDisabledIndicatorFile(productFolder);
-                summaries.add(createActionSummary(action.getTitle(), ENABLE_ACTION_TYPE, false, true, "Enabled."));
+        productsToDisableEnable.values().forEach(productItem -> {
+            String productFolder = productItem.getId();
+            if (fileSysService.hasFinshedDownload(downloadDirectory, productFolder) && fileSysService.hasFinshedInstall(downloadDirectory, productFolder)) {
+                validProductItems.add(productItem);
             } else {
-                fileSysService.createOntologyDisabledIndicatorFile(productFolder);
-                summaries.add(createActionSummary(action.getTitle(), DISABLE_ACTION_TYPE, false, true, "Disabled."));
+                summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Ontology not installed."));
             }
-        } catch (SQLException | IOException exception) {
-            LOGGER.error("", exception);
-            if (enable) {
-                summaries.add(createActionSummary(action.getTitle(), ENABLE_ACTION_TYPE, false, false, "Enable Ontology Failed."));
-            } else {
-                summaries.add(createActionSummary(action.getTitle(), DISABLE_ACTION_TYPE, false, false, "Disable Ontology Failed."));
-            }
-        }
+        });
+
+        return validProductItems;
     }
 
 }

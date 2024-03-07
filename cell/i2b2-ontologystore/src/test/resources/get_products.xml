@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/" xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>I2B2_URI</redirect_url>
+        </proxy>
+        <sending_application>
+            <application_name>i2b2 OntologyStore Service</application_name>
+            <application_version>1.7</application_version>
+        </sending_application>
+        <sending_facility>
+            <facility_name>i2b2 Hive</facility_name>
+        </sending_facility>
+        <security>
+            <domain>i2b2demo</domain>
+            <username>i2b2</username>
+            <password>demouser</password>
+        </security>
+        <project_id>Demo</project_id>
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:getProducts></ns4:getProducts>
+    </message_body>
+</ns3:request>

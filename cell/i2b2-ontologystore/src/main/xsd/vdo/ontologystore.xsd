@@ -19,7 +19,7 @@
 
     <xs:complexType name="productType">
         <xs:sequence>
-            <xs:element name="file_name" type="xs:string" />
+            <xs:element name="id" type="xs:string" />
             <xs:element name="title" type="xs:string" />
             <xs:element name="version" type="xs:string" />
             <xs:element name="owner" type="xs:string" />
@@ -31,13 +31,13 @@
             <xs:element name="started" type="xs:boolean" default="false"/>
             <xs:element name="failed" type="xs:boolean" default="false"/>
             <xs:element name="disabled" type="xs:boolean" default="false"/>
+            <xs:element name="status_detail" type="xs:string" />
         </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="productActionType">
         <xs:sequence>
-            <xs:element name="title" type="xs:string" />
-            <xs:element name="key" type="xs:string" />
+            <xs:element name="id" type="xs:string" />
             <xs:element name="include_network_package" type="xs:boolean" default="false"/>
             <xs:element name="download" type="xs:boolean" default="false"/>
             <xs:element name="install" type="xs:boolean" default="false"/>

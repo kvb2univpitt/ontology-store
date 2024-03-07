@@ -12,23 +12,24 @@ i2b2.ONTSTORE.cfg.parsers.ExtractProductResults = function () {
             var product = products[i];
 
             var obj = new Object;
-            obj.fileName = i2b2.h.getXNodeVal(product, 'file_name');
+            obj.id = i2b2.h.getXNodeVal(product, 'id');
             obj.title = i2b2.h.getXNodeVal(product, 'title');
             obj.version = i2b2.h.getXNodeVal(product, 'version');
             obj.owner = i2b2.h.getXNodeVal(product, 'owner');
             obj.type = i2b2.h.getXNodeVal(product, 'type');
+            obj.terminologies = [];
             obj.includeNetworkPackage = 'true' === i2b2.h.getXNodeVal(product, 'include_network_package');
             obj.downloaded = 'true' === i2b2.h.getXNodeVal(product, 'downloaded');
             obj.installed = 'true' === i2b2.h.getXNodeVal(product, 'installed');
             obj.started = 'true' === i2b2.h.getXNodeVal(product, 'started');
             obj.failed = 'true' === i2b2.h.getXNodeVal(product, 'failed');
             obj.disabled = 'true' === i2b2.h.getXNodeVal(product, 'disabled');
-            obj.terminologies = [];
+            obj.statusDetail = i2b2.h.getXNodeVal(product, 'status_detail');
 
+            // populate terminologies
             var terminologies = i2b2.h.XPath(product, "descendant-or-self::terminology/node()");
             for (var j = 0; j < terminologies.length; j++) {
-                var terminology = terminologies[j];
-                obj.terminologies.push(terminology.nodeValue);
+                obj.terminologies.push(terminologies[j].nodeValue);
             }
 
             this.model.push(obj);
