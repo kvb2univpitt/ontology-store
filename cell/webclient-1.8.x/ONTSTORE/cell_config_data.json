@@ -1,0 +1,16 @@
+{
+    "files": [
+        "i2b2_msgs.js"
+    ],
+    "preload": [],
+    "css": [],
+    "config": {
+        "name": "OntologyStore",
+        "description": "The OntologyStore cell preforms downloading and installing ontologies within i2b2 Hive.",
+        "icons": {
+            "size32x32": "OntologyStore_icon_32x32.png"
+        },
+        "category": ["core", "cell"],
+        "paramTranslation": []
+    }
+}

@@ -1,0 +1,32 @@
+body, td, p {
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 16px;
+}
+
+/*** OntologyStore main page ***/
+
+table#OntologyStore-ProductTable th {
+    border: 1px solid dimgray;
+    text-align: inherit;
+    text-align: -webkit-match-parent;
+    background-color: #2782a3 !important;
+    color: #ffffff;
+}
+table#OntologyStore-ProductTable td {
+    vertical-align: middle;
+}
+
+.ontstore-border {
+    border: 1px solid #2782a3;
+}
+.ontstore-panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #314455;
+}
+
+#OntologyStore-ProductTable_wrapper div:first-child {
+    padding-bottom: 4px;
+}

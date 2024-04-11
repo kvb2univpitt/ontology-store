@@ -1,0 +1,23 @@
+{
+    "title": "Ontology-Store Plugin",
+    "description": "This plugin allows i2b2 webclient administrator to download and install ontologies hosted on the cloud.",
+    "category": ["plugin", "standard", "ontology"],
+    "icons": {
+        "size32x32": "OntologyStore_icon_32x32.png"
+    },
+    "roles": ["MANAGER"],
+    "assetDir": "assets",
+    "plugin_version": "1.0",
+    "i2b2_version": "1.8.0",
+    "base": "index.html",
+    "sandbox": true,
+    "authorizedTunnel": {
+        "variables": {
+            "i2b2.PM.model.isAdmin": "R",
+            "i2b2.ONTSTORE.cfg": "RO"
+        },
+        "functions": [
+            "i2b2.ONT.view.nav.doRefreshAll"
+        ]
+    }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Ontology-Store Plugin</title>
+        <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.min.css" />
+        <link rel="stylesheet" href="assets/datatables/datatables.min.css" />
+        <link rel="stylesheet" href="css/ontology-store-main.css">
+        <script src="js/i2b2-loader.js"></script>
+    </head>
+    <body>
+        <div class="p-4">
+            <main>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center ontstore-border">
+                        <h6 class="ontstore-panel-title m-0">Ontologies</h6>
+                        <button id="OntologyStore-SyncFromCloud" class="btn btn-sm btn-primary">
+                            <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
+                        </button>
+                    </div>
+                    <div class="card-body ontstore-border">
+                        <div class="table-responsive pb-4">
+                            <table id="OntologyStore-ProductTable" class="table table-sm table-bordered table-hover w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Version</th>
+                                        <th>Owner/Author</th>
+                                        <th>Product Type</th>
+                                        <th>Include Network Ontology Artifacts</th>
+                                        <th>Included Terminologies</th>
+                                        <th>Download</th>
+                                        <th>Install</th>
+                                        <th>Status</th>
+                                        <th>Disable</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer ontstore-border">
+                        <button type="button" id="OntologyStore-ExecuteBtn" class="btn btn-success float-end" disabled="disabled">
+                            <i class="bi bi-play-fill"></i> Execute
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <div class="modal fade" id="OntologyStore-ProgressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="OntologyStore-ProgressModalTitle" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="OntologyStore-ProgressModalTitle">Progress</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="OntologyStore-MessageModal" tabindex="-1" aria-labelledby="OntologyStore-MessageModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="OntologyStore-MessageModalLabel">Message Title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="OntologyStore-MessageModalMessage">Message</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="OntologyStore-SummaryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="summaryModalLabel">Download/Install Summary</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-bordered border-primary table-sm table-hover shadow" id="OntologyStore-SummaryTable">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th scope="col">Ontology</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="assets/jquery/jquery-3.7.1.min.js"></script>
+        <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="assets/datatables/datatables.min.js"></script>
+        <script src="js/ontology-store-main.js"></script>
+    </body>
+</html>
