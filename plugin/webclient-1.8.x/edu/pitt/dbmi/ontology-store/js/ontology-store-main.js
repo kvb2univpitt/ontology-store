@@ -75,41 +75,45 @@ i2b2.OntologyStore.syncFromCloud = {};
 i2b2.OntologyStore.syncFromCloud.action = (successHandler, errorHandler) => {
     i2b2.ajax.ONTSTORE.GetProducts().then(successHandler).catch(errorHandler);
 };
-i2b2.OntologyStore.syncFromCloud.successHandler = (xmlStr) => {
-    setTimeout(() => {
-        let models = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xmlStr, 'text/xml');
-        let products = doc.getElementsByTagName('product');
-        for (let i = 0; i < products.length; i++) {
-            let product = products[i];
+i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
+    let models = [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(resultXmlStr, 'text/xml');
+    let products = doc.getElementsByTagName('product');
+    for (let i = 0; i < products.length; i++) {
+        let product = products[i];
 
-            let obj = new Object;
-            obj.id = product.getElementsByTagName('id')[0].childNodes[0].nodeValue;
-            obj.title = product.getElementsByTagName('title')[0].childNodes[0].nodeValue;
-            obj.version = product.getElementsByTagName('version')[0].childNodes[0].nodeValue;
-            obj.owner = product.getElementsByTagName('owner')[0].childNodes[0].nodeValue;
-            obj.type = product.getElementsByTagName('type')[0].childNodes[0].nodeValue;
-            obj.terminologies = [];
-            obj.includeNetworkPackage = 'true' === product.getElementsByTagName('include_network_package')[0].childNodes[0].nodeValue;
-            obj.downloaded = 'true' === product.getElementsByTagName('downloaded')[0].childNodes[0].nodeValue;
-            obj.installed = 'true' === product.getElementsByTagName('installed')[0].childNodes[0].nodeValue;
-            obj.started = 'true' === product.getElementsByTagName('started')[0].childNodes[0].nodeValue;
-            obj.failed = 'true' === product.getElementsByTagName('failed')[0].childNodes[0].nodeValue;
-            obj.disabled = 'true' === product.getElementsByTagName('disabled')[0].childNodes[0].nodeValue;
+        let obj = new Object;
+        obj.id = product.getElementsByTagName('id')[0].childNodes[0].nodeValue;
+        obj.title = product.getElementsByTagName('title')[0].childNodes[0].nodeValue;
+        obj.version = product.getElementsByTagName('version')[0].childNodes[0].nodeValue;
+        obj.owner = product.getElementsByTagName('owner')[0].childNodes[0].nodeValue;
+        obj.type = product.getElementsByTagName('type')[0].childNodes[0].nodeValue;
+        obj.terminologies = [];
+        obj.includeNetworkPackage = 'true' === product.getElementsByTagName('include_network_package')[0].childNodes[0].nodeValue;
+        obj.downloaded = 'true' === product.getElementsByTagName('downloaded')[0].childNodes[0].nodeValue;
+        obj.installed = 'true' === product.getElementsByTagName('installed')[0].childNodes[0].nodeValue;
+        obj.started = 'true' === product.getElementsByTagName('started')[0].childNodes[0].nodeValue;
+        obj.failed = 'true' === product.getElementsByTagName('failed')[0].childNodes[0].nodeValue;
+        obj.disabled = 'true' === product.getElementsByTagName('disabled')[0].childNodes[0].nodeValue;
 
-            const statusDetail = product.getElementsByTagName('status_detail');
-            obj.statusDetail = (statusDetail.length > 0) ? statusDetail[0].childNodes[0].nodeValue : '';
+        const statusDetail = product.getElementsByTagName('status_detail');
+        obj.statusDetail = (statusDetail.length > 0) ? statusDetail[0].childNodes[0].nodeValue : '';
 
-            // populate terminologies
-            const terminologies = product.getElementsByTagName('terminology');
-            for (let j = 0; j < terminologies.length; j++) {
-                obj.terminologies.push(terminologies[j].textContent);
-            }
-
-            models.push(obj);
+        // populate terminologies
+        const terminologies = product.getElementsByTagName('terminology');
+        for (let j = 0; j < terminologies.length; j++) {
+            obj.terminologies.push(terminologies[j].textContent);
         }
-        i2b2.OntologyStore.products = models;
+
+        models.push(obj);
+    }
+
+    return models;
+};
+i2b2.OntologyStore.syncFromCloud.successHandler = (resultXmlStr) => {
+    setTimeout(() => {
+        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
 
         i2b2.OntologyStore.table.refresh();
         $('#OntologyStore-ExecuteBtn').removeAttr('disabled');
@@ -129,26 +133,175 @@ i2b2.OntologyStore.syncFromCloud.clickAction = () => {
 };
 
 i2b2.OntologyStore.execute = {};
-i2b2.OntologyStore.execute.action = (successHandler, errorHandler) => {
+i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHandler) => {
+    let options = {
+        products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
+    };
+    i2b2.ajax.ONTSTORE.PerformProductActions(options)
+            .then(successHandler)
+            .catch(errorHandler);
 };
-i2b2.OntologyStore.execute.successHandler = () => {
+i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
+    let models = [];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(resultXmlStr, 'text/xml');
+    let actionSummaries = doc.getElementsByTagName('action_summary');
+    for (let i = 0; i < actionSummaries.length; i++) {
+        let actionSummary = actionSummaries[i];
+
+        let obj = new Object;
+        obj.title = actionSummary.getElementsByTagName('title')[0].childNodes[0].nodeValue;
+        obj.actionType = actionSummary.getElementsByTagName('action_type')[0].childNodes[0].nodeValue;
+        obj.inProgress = actionSummary.getElementsByTagName('in_progress')[0].childNodes[0].nodeValue;
+        obj.success = actionSummary.getElementsByTagName('success')[0].childNodes[0].nodeValue;
+        obj.detail = actionSummary.getElementsByTagName('detail')[0].childNodes[0].nodeValue;
+
+        models.push(obj);
+    }
+
+    return models;
 };
-i2b2.OntologyStore.execute.errorHandler = () => {
+i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
+    i2b2.ajax.ONTSTORE.GetProducts().then((resultXmlStr) => {
+        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
+        i2b2.OntologyStore.table.refresh();
+    });
+
+    setTimeout(() => {
+        let data = i2b2.OntologyStore.execute.parseResults(resultXmlStr);
+        for (let i = 0; i < data.length; i++) {
+            if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
+                i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
+                break;
+            }
+        }
+
+        $('#OntologyStore-ExecuteBtn').prop("disabled", false);
+        i2b2.OntologyStore.modal.progress.hide();
+        i2b2.OntologyStore.modal.summary.show(data);
+    }, 500);
+};
+i2b2.OntologyStore.execute.errorHandler = (resultsXmlStr) => {
+    setTimeout(() => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(resultsXmlStr, 'text/xml');
+
+        let msgTitle = '';
+        let msgBody = '';
+        let status = doc.getElementsByTagName('status');
+        if (status.length === 0) {
+            msgTitle = 'Server Error';
+            msgBody = '<p class="text-danger fw-bold">Internal server error!</p>';
+        }
+
+        $('#OntologyStore-ExecuteBtn').prop("disabled", false);
+        i2b2.OntologyStore.modal.progress.hide();
+        i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
+    }, 500);
 };
 i2b2.OntologyStore.execute.clickAction = () => {
     let products = i2b2.OntologyStore.products;
     if (products && products.length > 0) {
         i2b2.authorizedTunnel.variable["i2b2.PM.model.isAdmin"].then((isAdmin) => {
-            if (!isAdmin) {
+            if (isAdmin) {
+                let selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
+                if (selectedProducts.length > 0) {
+                    $('#OntologyStore-ExecuteBtn').prop("disabled", true);
+                    i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
+                    i2b2.OntologyStore.execute.action(
+                            selectedProducts,
+                            i2b2.OntologyStore.execute.successHandler,
+                            i2b2.OntologyStore.execute.errorHandler);
+                } else {
+                    // at least one ontology must be selected to download/install.
+                    i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
+                }
             } else {
+                // requires administrative privileges
                 i2b2.OntologyStore.modal.message.show('Insufficient Privileges', '<p class="text-danger fw-bold">Administrative privileges required!</p>');
             }
         });
     }
-//    i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
-//    i2b2.OntologyStore.execute.action(
-//            i2b2.OntologyStore.execute.successHandler,
-//            i2b2.OntologyStore.execute.errorHandler);
+};
+
+i2b2.OntologyStore.productToXml = (product) => {
+    let tags = [];
+
+    tags.push('            <product_action>');
+    tags.push('                <id>' + product.id + '</id>');
+    tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
+    tags.push('                <download>' + product.download + '</download>');
+    tags.push('                <install>' + product.install + '</install>');
+    tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');
+    tags.push('            </product_action>');
+
+    return tags.join('\n');
+};
+i2b2.OntologyStore.productsToXml = (products) => {
+    let xml = [];
+    for (let i = 0; i < products.length; i++) {
+        xml.push(i2b2.OntologyStore.productToXml(products[i]));
+    }
+
+    return xml.join('\n');
+};
+i2b2.OntologyStore.getSelectedProductIndexes = (products) => {
+    let index = 0;
+    let indexes = [];
+
+    // download actions
+    let selections = document.querySelectorAll('input[name="download"]:checked:not(:disabled)');
+    for (let i = 0; i < selections.length; i++) {
+        indexes[index++] = selections[i].dataset.id;
+    }
+
+    // install actions
+    selections = document.querySelectorAll('input[name="install"]:checked:not(:disabled)');
+    for (let i = 0; i < selections.length; i++) {
+        indexes[index++] = selections[i].dataset.id;
+    }
+
+    // disable actions
+    selections = document.querySelectorAll('input[name="disable"]:not(:disabled)');
+    for (let i = 0; i < selections.length; i++) {
+        let chkbox = selections[i];
+        let productIndex = chkbox.dataset.id;
+        let product = products[productIndex];
+        if (!(product.disabled === chkbox.checked)) {
+            indexes[index++] = productIndex;
+        }
+    }
+
+    // get unique ids
+    indexes = indexes.filter(function (value, index, self) {
+        return self.indexOf(value) === index;
+    });
+
+    return indexes;
+};
+
+i2b2.OntologyStore.getSelectedProducts = (products) => {
+    let data = [];
+
+    let selectedProductIndexes = i2b2.OntologyStore.getSelectedProductIndexes(products);
+    for (let i = 0; i < selectedProductIndexes.length; i++) {
+        let productIndex = selectedProductIndexes[i];
+        let product = products[productIndex];
+        let includeNetChkbx = document.getElementById(`network-${productIndex}`);
+        let downloadChkbx = document.getElementById(`download-${productIndex}`);
+        let installChkbx = document.getElementById(`install-${productIndex}`);
+        let disableChkbx = document.getElementById(`disable-${productIndex}`);
+
+        data.push({
+            id: product.id,
+            includeNetworkPackage: includeNetChkbx.checked,
+            download: downloadChkbx.disabled ? false : downloadChkbx.checked,
+            install: installChkbx.disabled ? false : installChkbx.checked,
+            disableEnable: !(product.disabled === disableChkbx.checked)
+        });
+    }
+
+    return data;
 };
 
 i2b2.OntologyStore.checkbox = {};
