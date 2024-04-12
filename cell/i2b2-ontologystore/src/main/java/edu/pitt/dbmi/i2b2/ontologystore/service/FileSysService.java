@@ -329,7 +329,10 @@ public class FileSysService {
 
     public String readFromFile(Path file, String defaultMessage) {
         try {
-            return new String(Files.readAllBytes(file));
+            byte[] msg = Files.readAllBytes(file);
+            if (msg.length > 0) {
+                return new String(msg);
+            }
         } catch (IOException exception) {
             LOGGER.error(String.format("Unable to read file: %s.", file.toString()), exception);
         }
