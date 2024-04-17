@@ -225,17 +225,13 @@ i2b2.OntologyStore.execute.clickAction = () => {
 };
 
 i2b2.OntologyStore.productToXml = (product) => {
-    let tags = [];
-
-    tags.push('            <product_action>');
-    tags.push('                <id>' + product.id + '</id>');
-    tags.push('                <include_network_package>' + product.includeNetworkPackage + '</include_network_package>');
-    tags.push('                <download>' + product.download + '</download>');
-    tags.push('                <install>' + product.install + '</install>');
-    tags.push('                <disable_enable>' + product.disableEnable + '</disable_enable>');
-    tags.push('            </product_action>');
-
-    return tags.join('\n');
+    return `            <product_action>
+                <id>${product.id}</id>
+                <include_network_package>${product.includeNetworkPackage}</include_network_package>
+                <download>${product.download}</download>
+                <install>${product.install}</install>
+                <disable_enable>${product.disableEnable}</disable_enable>
+            </product_action>`;
 };
 i2b2.OntologyStore.productsToXml = (products) => {
     let xml = [];
@@ -243,7 +239,7 @@ i2b2.OntologyStore.productsToXml = (products) => {
         xml.push(i2b2.OntologyStore.productToXml(products[i]));
     }
 
-    return xml.join('\n');
+    return xml.join('\n').trim();
 };
 i2b2.OntologyStore.getSelectedProductIndexes = (products) => {
     let index = 0;
@@ -341,9 +337,10 @@ i2b2.OntologyStore.checkbox.installAction = (productIndex) => {
 i2b2.OntologyStore.showFailedDownloadStatusDetails = (index) => {
     let product = i2b2.OntologyStore.products[index];
     if (product) {
-        let msg = '<p class="text-danger fw-bold">' + product.statusDetail + '</p>';
-        msg += '<p>To reinstall, please fix the issue and then delete the file <b>install.failed</b> from the folder <b><i>' + product.id + '</i></b> in the download directory on the server.</p>';
-        msg += '<p>Please search for "OntologyInstallService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
+        let msg = `<p class="text-danger fw-bold">${product.statusDetail}</p>
+<p>To reinstall, please fix the issue and then delete the file <b>install.failed</b> from the folder <b><i>${product.id}</i></b> in the download directory on the server.</p>
+<p>Please search for "OntologyInstallService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>
+`;
         i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
@@ -358,58 +355,58 @@ i2b2.OntologyStore.table.refresh = () => {
         columns[1] = product.version;
         columns[2] = product.owner;
         columns[3] = product.type;
-        columns[4] = '';
-        columns[5] = '';
-        columns[6] = '';
-        columns[7] = '';
-        columns[8] = '';
-        columns[9] = '<input type="checkbox" class="form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" disabled="disabled" />';
+        columns[4] = ``;
+        columns[5] = ``;
+        columns[6] = ``;
+        columns[7] = ``;
+        columns[8] = ``;
+        columns[9] = `<input type="checkbox" class="form-check-input" id="disable-${index}" data-id="${index}" name="disable" disabled="disabled" />`;
 
         if (product.includeNetworkPackage) {
             if (product.downloaded) {
-                columns[4] = '<input type="checkbox" class="form-check-input" id="network-' + index + '" name="network" checked="checked" disabled="disabled" />';
+                columns[4] = `<input type="checkbox" class="form-check-input" id="network-${index}" name="network" checked="checked" disabled="disabled" />`;
             } else {
-                columns[4] = '<input type="checkbox" class="form-check-input" id="network-' + index + '" name="network" checked="checked" />';
+                columns[4] = `<input type="checkbox" class="form-check-input" id="network-${index}" name="network" checked="checked" />`;
             }
         } else {
-            columns[4] = '<input type="checkbox" class="form-check-input" id="network-' + index + '" name="network" disabled="disabled" />';
+            columns[4] = `<input type="checkbox" class="form-check-input" id="network-${index}" name="network" disabled="disabled" />`;
         }
 
-        columns[5] = product.terminologies.join(',');
+        columns[5] = product.terminologies.join(`,`);
 
         if (product.downloaded) {
-            columns[6] = '<input type="checkbox" class="form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" checked="checked" disabled="disabled" />`;
 
             if (product.installed) {
-                columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<span class="text-success fw-bold">Installed</span>';
+                columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" checked="checked" disabled="disabled" />`;
+                columns[8] = `<span class="text-success fw-bold">Installed</span>`;
 
                 if (product.disabled) {
-                    columns[9] = '<input type="checkbox" class="form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" checked="checked" />';
+                    columns[9] = `<input type="checkbox" class="form-check-input" id="disable-${index}" data-id="${index}" name="disable" checked="checked" />`;
                 } else {
-                    columns[9] = '<input type="checkbox" class="form-check-input" id="disable-' + index + '" data-id="' + index + '" name="disable" />';
+                    columns[9] = `<input type="checkbox" class="form-check-input" id="disable-${index}" data-id="${index}" name="disable" />`;
                 }
             } else if (product.failed) {
-                columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<a href="#" class="text-decoration-none" onclick="i2b2.OntologyStore.showFailedInstallStatusDetails(' + index + '); return false;"><span class="text-danger fw-bold">Installation Failed</span></a>';
+                columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" checked="checked" disabled="disabled" />`;
+                columns[8] = `<a href="#" class="text-decoration-none" onclick="i2b2.OntologyStore.showFailedInstallStatusDetails(${index}); return false;"><span class="text-danger fw-bold">Installation Failed</span></a>`;
             } else if (product.started) {
-                columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" checked="checked" disabled="disabled" />';
-                columns[8] = '<span class="text-info fw-bold">Installation In Progress</span>';
+                columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" checked="checked" disabled="disabled" />`;
+                columns[8] = `<span class="text-info fw-bold">Installation In Progress</span>`;
             } else {
-                columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.checkbox.installAction(' + index + ')" />';
-                columns[8] = '<span class="text-warning fw-bold">Ready To Be Installed</span>';
+                columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" onclick="i2b2.OntologyStore.checkbox.installAction(${index})" />`;
+                columns[8] = `<span class="text-warning fw-bold">Ready To Be Installed</span>`;
             }
         } else if (product.failed) {
-            columns[6] = '<input type="checkbox" class="form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
-            columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
-            columns[8] = '<a href="#" class="text-decoration-none" onclick="i2b2.OntologyStore.showFailedDownloadStatusDetails(' + index + '); return false;"><span class="text-danger fw-bold">Download Failed</span></a>';
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" checked="checked" disabled="disabled" />`;
+            columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" disabled="disabled" />`;
+            columns[8] = `<a href="#" class="text-decoration-none" onclick="i2b2.OntologyStore.showFailedDownloadStatusDetails(${index}); return false;"><span class="text-danger fw-bold">Download Failed</span></a>`;
         } else if (product.started) {
-            columns[6] = '<input type="checkbox" class="form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" checked="checked" disabled="disabled" />';
-            columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" disabled="disabled" />';
-            columns[8] = '<span class="text-info fw-bold">Download In Progress</span>';
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" checked="checked" disabled="disabled" />`;
+            columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" disabled="disabled" />`;
+            columns[8] = `<span class="text-info fw-bold">Download In Progress</span>`;
         } else {
-            columns[6] = '<input type="checkbox" class="form-check-input" id="download-' + index + '" data-id="' + index + '" name="download" onclick="i2b2.OntologyStore.checkbox.downloadAction(' + index + ')" />';
-            columns[7] = '<input type="checkbox" class="form-check-input" id="install-' + index + '" data-id="' + index + '" name="install" onclick="i2b2.OntologyStore.checkbox.installAction(' + index + ')" />';
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" onclick="i2b2.OntologyStore.checkbox.downloadAction(${index})" />`;
+            columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" onclick="i2b2.OntologyStore.checkbox.installAction(${index})" />`;
         }
 
         datatables.row.add(columns);
