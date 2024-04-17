@@ -10,10 +10,12 @@ table#OntologyStore-ProductTable th {
     border: 1px solid dimgray;
     text-align: inherit;
     text-align: -webkit-match-parent;
-    padding: 0.5rem;
-    vertical-align: top;
-    background-color: #216288 !important;
-    color: lightgrey;
+    background-color: #2782a3 !important;
+    color: #ffffff;
+}
+
+table#OntologyStore-ProductTable td {
+    vertical-align: middle;
 }
 
 .ontstore-title {
@@ -39,9 +41,11 @@ table#OntologyStore-ProductTable th {
 #OntologyStore-ProductTable_filter {
     padding-bottom: 20px;
 }
+
 #OntologyStore-ProductTable_info {
     padding-top: 20px;
 }
+
 #OntologyStore-ProductTable_paginate {
     padding-top: 15px;
 }
@@ -62,7 +66,7 @@ table#OntologyStore-ActionSummary {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
-    font-size:13px;
+    font-size: 13px;
 }
 
 table#OntologyStore-ActionSummary td, th {
