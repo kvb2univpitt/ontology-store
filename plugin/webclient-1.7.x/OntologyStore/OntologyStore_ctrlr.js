@@ -132,25 +132,36 @@ i2b2.OntologyStore.summary = {
 };
 
 i2b2.OntologyStore.downloadCheckboxAction = function (productIndex) {
-    let installChkbx = document.getElementById('install-' + productIndex);
-    let downloadChkbx = document.getElementById('download-' + productIndex);
+    let installChkbx = document.getElementById(`install-${productIndex}`);
+    let downloadChkbx = document.getElementById(`download-${productIndex}`);
+    let disableChkbx = document.getElementById(`disable-${productIndex}`);
 
     if (!downloadChkbx.checked) {
+        // unselect install when download is not selected
         installChkbx.checked = false;
+
+        // unselect disable when download is not selected
+        disableChkbx.checked = false;
+
+        // prevent selection when download is not selected
+        disableChkbx.disabled = !installChkbx.checked;
     }
 };
 
 i2b2.OntologyStore.installCheckboxAction = function (productIndex) {
-    let installChkbx = document.getElementById('install-' + productIndex);
-    let downloadChkbx = document.getElementById('download-' + productIndex);
-    let disableChkbx = document.getElementById('disable-' + productIndex);
+    let installChkbx = document.getElementById(`install-${productIndex}`);
+    let downloadChkbx = document.getElementById(`download-${productIndex}`);
+    let disableChkbx = document.getElementById(`disable-${productIndex}`);
 
     if (installChkbx.checked) {
+        // automatically select download if install is selected
         downloadChkbx.checked = true;
     } else {
+        // unselect disable when install is not selected
         disableChkbx.checked = false;
     }
 
+    // prevent selection when install is not selected
     disableChkbx.disabled = !installChkbx.checked;
 };
 
@@ -266,7 +277,7 @@ i2b2.OntologyStore.showFailedDownloadStatusDetails = function (index) {
     if (product) {
         let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
         msg += '<p>To redownload, please fix the issue and then delete the folder <b><i>' + product.id + '</i></b> from the download directory on the server.</p>';
-         msg += '<p>Please search for "OntologyDownloadService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
+        msg += '<p>Please search for "OntologyDownloadService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
         i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
