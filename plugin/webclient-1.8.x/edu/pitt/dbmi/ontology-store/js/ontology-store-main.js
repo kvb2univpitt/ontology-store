@@ -143,8 +143,7 @@ i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHand
 };
 i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
     let models = [];
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(resultXmlStr, 'text/xml');
+    const doc = new DOMParser().parseFromString(resultXmlStr, 'text/xml');
     let actionSummaries = doc.getElementsByTagName('action_summary');
     for (let i = 0; i < actionSummaries.length; i++) {
         let actionSummary = actionSummaries[i];
@@ -181,15 +180,18 @@ i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
         i2b2.OntologyStore.modal.summary.show(data);
     }, 500);
 };
-i2b2.OntologyStore.execute.errorHandler = (resultsXmlStr) => {
+i2b2.OntologyStore.execute.errorHandler = (error) => {
     setTimeout(() => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(resultsXmlStr, 'text/xml');
+        let doc = new DOMParser().parseFromString(error.errorData, "text/html");
 
         let msgTitle = '';
         let msgBody = '';
-        let status = doc.getElementsByTagName('status');
-        if (status.length === 0) {
+        let errorMsg = doc.querySelector('body > h1');
+        if (errorMsg && errorMsg.innerText === 'Gateway Timeout') {
+            msgTitle = 'Request Timeout';
+            msgBody = '<p class="fw-bold">The current request takes longer than normal.</p>';
+            msgBody += '<p>If set to installed, the ontologies will appear in the "Terms" panel the next time you log back in after the installation is done.</p>';
+        } else {
             msgTitle = 'Server Error';
             msgBody = '<p class="text-danger fw-bold">Internal server error!</p>';
         }
