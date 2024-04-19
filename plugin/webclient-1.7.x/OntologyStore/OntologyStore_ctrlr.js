@@ -396,7 +396,7 @@ i2b2.OntologyStore.execute = function () {
                                 if (productActionResults.msgResponse.includes('504 Gateway Timeout')) {
                                     msgTitle = 'Request Timeout';
                                     msgBody = 'The current request takes longer than normal.'
-                                            + '  If set to installed, the ontologies will appear in the "Terms" panel the next time you log back in after the installation is done.'
+                                            + '  If set to installed, the ontologies will appear in the "Terms" panel the next time you log back in after the installation is done.';
                                 } else {
                                     msgTitle = 'Download/Install Ontology Failed';
                                     try {
