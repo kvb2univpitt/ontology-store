@@ -119,16 +119,14 @@ public abstract class AbstractInstallService {
                 }
 
                 try {
-                    String[] values = TAB_DELIM.split(line);
+                    // add dummy value ($) at the beganing and end of the line before splitting
+                    String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
+
+                    // create a new array of data without the dummy values
+                    String[] values = new String[temp.length - 2];
+                    System.arraycopy(temp, 1, values, 0, values.length);
 
                     setColumns(stmt, columnTypes, values);
-
-                    // add null columns not provided
-                    if (values.length < columnTypes.length) {
-                        for (int i = values.length; i < columnTypes.length; i++) {
-                            stmt.setNull(i + 1, Types.NULL);
-                        }
-                    }
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
                 }
