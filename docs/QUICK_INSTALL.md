@@ -2,9 +2,14 @@
 
 A guide for installing the OntologyStore software.
 
-## Installing the Cell
+The OntologyStore has two components:
 
-The following instructions assume that the Wildfly directory on the server is ```/opt/wildfly```.
+1. The i2b2 OntologyStore cell (back-end).
+2. The i2b2 OntologyStore plugin (front-end).
+
+## Installing the i2b2 OntologyStore Cell
+
+The following instructions assume that the Wildfly is installed on the server and is located at ```/opt/wildfly```.
 
 ### Prerequisites
 
@@ -23,7 +28,7 @@ The following instructions assume that the Wildfly directory on the server is ``
     - OntologyStore.aar
     - OntologyStore.jar
 
-#### 3. Deploy the Cell in Wildfly
+#### 3. Deploy the OntologyStore Cell in Wildfly
 
 - Copy the **OntologyStore.aar** file from the ***ontologystore_cell*** folder to the i2b2 ***WEB-INF/services*** directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
 
@@ -48,15 +53,17 @@ The following instructions assume that the Wildfly directory on the server is ``
 
 #### 5. Restart Wildfly Server
 
-## Managing the Cell
+## Configuring the OntologyStore Cell
 
 ### Prerequisites
 
 - i2b2 database administrator privileges for adding entries into the i2b2 database tables.
 
-#### 1. Add New Cell
+#### 1. Add the Cell
 
-Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hostname ***localhost*** on port ***9090***
+All of the back-end communications go through the PM Cell first then get pass to the designated cell.  For the PM cell to recognize the OntologyStore cell, the cell information must be added to the **pm_cell_data** table in the i2b2 database.
+
+Assume that the i2b2 Core Servers is deployed in Wildfly with the hostname ***localhost*** on port ***9090***
 
 - Insert the following data to the i2b2 database table **pm_cell_data** to add the OntologyStore cell.
 
@@ -72,9 +79,13 @@ Assume that the i2b2 Core Servers is deployed on the Wildfly server with the hos
 
 #### 2. Configure Cell Properties
 
-The configuration below tells the OntologyStore cell where to fetch the list of ontologies to download and install.
+The OntologyStore has two properties that need to be set:
 
-- Insert the following data to the i2b2 database table **hive_cell_params** to set the cell properties:
+1. The location (URL) of the file (JSON) containing a list of ontologies to download.
+2. The location on the server to download the ontologies to.
+
+##### Set the URL Location
+- Insert the following data to the **hive_cell_params** table to set the cell properties:
 
     | Column        | Value                                                        |
     |---------------|--------------------------------------------------------------|
@@ -86,11 +97,11 @@ The configuration below tells the OntologyStore cell where to fetch the list of 
 
     > See the i2b2 documentation on [Configure cell properties](https://community.i2b2.org/wiki/pages/viewpage.action?pageId=28639260) for more detail.
 
-#### 3. Configure Additional Cell Properties
+##### Set the Download Location
 
 The configuration below tells the OntologyStore cell where to download the ontologies.  Assume that the directory where the ontologies are downloaded to is ```/home/wildfly/ontology```
 
-- Insert the following data to the i2b2 database table **pm_cell_params** to set the additional cell properties:
+- Insert the following data to the **pm_cell_params** table to set the additional cell properties:
 
     | Column        | Value                  |
     |---------------|------------------------|
@@ -127,7 +138,7 @@ The plugin communicator is the communication channel between the OntologyStore p
     | Web Client Version | Directory                                                                      |
     |--------------------|--------------------------------------------------------------------------------|
     | 1.7.13 Release     | /var/www/html/webclient/js-i2b2/cells                                          |
-    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells |
+    | 1.8.x Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells |
 
 #### 3. Add the Plugin to the i2b2 Webclient
 
@@ -138,7 +149,7 @@ The plugin communicator is the communication channel between the OntologyStore p
     | Web Client Version | Directory                                                                                        |
     |--------------------|--------------------------------------------------------------------------------------------------|
     | 1.7.13 Release     | /var/www/html/webclient/js-i2b2/cells/plugins/community                                          |
-    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells/plugins/community |
+    | 1.8.x Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2/cells/plugins/community |
 
 #### 4. Configure the i2b2 Webclient
 
@@ -159,7 +170,7 @@ The plugin communicator is the communication channel between the OntologyStore p
     | Web Client Version | Directory                                                                |
     |--------------------|--------------------------------------------------------------------------|
     | 1.7.13 Release     | /var/www/html/webclient/js-i2b2                                          |
-    | 1.8.0 Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2 |
+    | 1.8.x Release      | /var/www/html/webclient/js-i2b2/cells/LEGACYPLUGIN/legacy_plugin/js-i2b2 |
 
     > Remember to make a backup copy of the file before modifying it.
 
