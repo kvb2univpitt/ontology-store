@@ -5,16 +5,16 @@ i2b2.OntologyStore.products = [];
 
 i2b2.OntologyStore.modal = {
     progress: {
-        show: (title) => {
+        show: function (title) {
             $('#OntologyStore-ProgressModalTitle').text(title);
             $('#OntologyStore-ProgressModal').modal('show');
         },
-        hide: () => {
+        hide: function () {
             $('#OntologyStore-ProgressModal').modal('hide');
         }
     },
     message: {
-        show: (title, message) => {
+        show: function (title, message) {
             $('#OntologyStore-MessageModalLabel').text(title);
             $('#OntologyStore-MessageModalMessage').html(message);
             $('#OntologyStore-MessageModal').modal('show');
@@ -336,7 +336,7 @@ i2b2.OntologyStore.checkbox.installAction = (productIndex) => {
     disableChkbx.disabled = !installChkbx.checked;
 };
 
-i2b2.OntologyStore.showFailedDownloadStatusDetails = (index) => {
+i2b2.OntologyStore.showFailedInstallStatusDetails = (index) => {
     let product = i2b2.OntologyStore.products[index];
     if (product) {
         let msg = `<p class="text-danger fw-bold">${product.statusDetail}</p>
