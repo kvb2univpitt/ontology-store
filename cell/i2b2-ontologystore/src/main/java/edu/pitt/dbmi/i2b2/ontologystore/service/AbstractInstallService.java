@@ -127,6 +127,13 @@ public abstract class AbstractInstallService {
                     System.arraycopy(temp, 1, values, 0, values.length);
 
                     setColumns(stmt, columnTypes, values);
+
+                    // add null columns not provided
+                    if (values.length < columnTypes.length) {
+                        for (int i = values.length; i < columnTypes.length; i++) {
+                            stmt.setNull(i + 1, Types.NULL);
+                        }
+                    }
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
                 }

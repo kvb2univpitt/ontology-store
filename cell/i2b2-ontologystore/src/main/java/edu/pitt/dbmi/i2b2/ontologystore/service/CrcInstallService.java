@@ -94,7 +94,7 @@ public class CrcInstallService extends AbstractInstallService {
         try (Connection selectConn = dataSource.getConnection();
                 Connection insertConn = dataSource.getConnection();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
-            String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?;", selectConn.getSchema(), CONCEPT_DIMENSION_TABLE);
+            String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?", selectConn.getSchema(), CONCEPT_DIMENSION_TABLE);
             PreparedStatement selectStmt = selectConn.prepareStatement(sql);
 
             sql = createInsertStatement(insertConn.getSchema(), CONCEPT_DIMENSION_TABLE, getHeaders(reader.readLine()));
