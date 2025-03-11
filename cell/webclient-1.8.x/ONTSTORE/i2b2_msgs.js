@@ -156,7 +156,7 @@ i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UT
         <project_id>{{{sec_project}}}</project_id>
     </message_header>
     <request_header>
-        <result_waittime_ms>{{{result_wait_time}}}000</result_waittime_ms>
+        <result_waittime_ms>86400000</result_waittime_ms>
     </request_header>
     <message_body>
         <ns4:product_actions>
