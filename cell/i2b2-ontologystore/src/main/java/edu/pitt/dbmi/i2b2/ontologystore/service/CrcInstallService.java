@@ -30,6 +30,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -85,26 +88,70 @@ public class CrcInstallService extends AbstractInstallService {
         }
     }
 
+    private List<String> filterConceptDimensionUniquePkey(Connection conn, String schema, Map<String, String> dbData) throws SQLException, IOException {
+        List<String> entries = new LinkedList<>();
+
+        String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?", schema, CONCEPT_DIMENSION_TABLE);
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (String pkey : dbData.keySet()) {
+                pstmt.setString(1, pkey);
+                try (ResultSet resultSet = pstmt.executeQuery()) {
+                    if (!resultSet.next()) {
+                        entries.add(dbData.get(pkey));
+                    }
+                }
+            }
+        }
+
+        return entries;
+    }
+
+    private void batchInsertConceptDimension(Connection conn, String schema, List<String> headers, List<String> entries) throws SQLException, IOException {
+        String sql = createInsertStatement(schema, CONCEPT_DIMENSION_TABLE, headers);
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            // get columnTypes
+            int[] columnTypes = getColumnTypes(pstmt.getParameterMetaData());
+            for (String entry : entries) {
+                try {
+                    // add dummy value ($) at the beganing and end of the line before splitting
+                    String[] temp = TAB_DELIM.split(entry);
+
+                    // create a new array of data without the dummy values
+                    String[] values = new String[temp.length - 2];
+                    System.arraycopy(temp, 1, values, 0, values.length);
+
+                    // concept path not existed, add to batch for insert
+                    setColumns(pstmt, columnTypes, values);
+
+                    // add null columns not provided
+                    if (values.length < columnTypes.length) {
+                        for (int i = values.length; i < columnTypes.length; i++) {
+                            pstmt.setNull(i + 1, Types.NULL);
+                        }
+                    }
+
+                    pstmt.addBatch();
+                } catch (Exception exception) {
+                    exception.printStackTrace(System.err);
+                }
+            }
+
+            pstmt.executeBatch();
+        }
+    }
+
     private void insertConceptDimension(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
             return;
         }
 
-        try (Connection selectConn = dataSource.getConnection();
-                Connection insertConn = dataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
-            String sql = String.format("SELECT 1 FROM %s.%s WHERE concept_path = ?", selectConn.getSchema(), CONCEPT_DIMENSION_TABLE);
-            PreparedStatement selectStmt = selectConn.prepareStatement(sql);
+            List<String> headers = getHeaders(reader.readLine());
+            String schema = conn.getSchema();
 
-            sql = createInsertStatement(insertConn.getSchema(), CONCEPT_DIMENSION_TABLE, getHeaders(reader.readLine()));
-            PreparedStatement insertStmt = insertConn.prepareStatement(sql);
-
-            // get columnTypes
-            int[] columnTypes = getColumnTypes(insertStmt.getParameterMetaData());
-
-            int count = 0;
-            final int conceptPathIndex = 0;
+            Map<String, String> dbData = new HashMap<>();
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 // skip lines that are commented out
                 String cleanedLine = line.trim();
@@ -112,41 +159,21 @@ public class CrcInstallService extends AbstractInstallService {
                     continue;
                 }
 
-                try {
-                    String[] values = TAB_DELIM.split(line);
+                String entry = String.format("$\t%s\t$", line);
+                String[] values = TAB_DELIM.split(entry, 3);
+                String pkey = values[1].trim();
+                dbData.put(pkey, entry);
 
-                    // check to see if concept path already existed
-                    selectStmt.setString(1, values[conceptPathIndex]);
-                    ResultSet resultSet = selectStmt.executeQuery();
-                    if (!resultSet.next()) {
-                        // concept path not existed, add to batch for insert
-                        setColumns(insertStmt, columnTypes, values);
-
-                        // add null columns not provided
-                        if (values.length < columnTypes.length) {
-                            for (int i = values.length; i < columnTypes.length; i++) {
-                                insertStmt.setNull(i + 1, Types.NULL);
-                            }
-                        }
-
-                        insertStmt.addBatch();
-                        count++;
-                    }
-                } catch (Exception exception) {
-                    exception.printStackTrace(System.err);
-                }
-
-                if (count == DEFAULT_BATCH_SIZE) {
-                    insertStmt.executeBatch();
-                    insertStmt.clearBatch();
-                    count = 0;
+                if (dbData.size() == DEFAULT_BATCH_SIZE) {
+                    List<String> entries = filterConceptDimensionUniquePkey(conn, schema, dbData);
+                    batchInsertConceptDimension(conn, schema, headers, entries);
+                    dbData.clear();
                 }
             }
 
-            if (count > 0) {
-                insertStmt.executeBatch();
-                insertStmt.clearBatch();
-                count = 0;
+            if (!dbData.isEmpty()) {
+                List<String> entries = filterConceptDimensionUniquePkey(conn, schema, dbData);
+                batchInsertConceptDimension(conn, schema, headers, entries);
             }
         }
     }

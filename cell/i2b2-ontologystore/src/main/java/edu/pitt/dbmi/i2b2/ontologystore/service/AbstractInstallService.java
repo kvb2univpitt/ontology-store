@@ -66,7 +66,7 @@ public abstract class AbstractInstallService {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
-    protected static final int DEFAULT_BATCH_SIZE = 10000;
+    protected static final int DEFAULT_BATCH_SIZE = 50000;
 
     protected final FileSysService fileSysService;
 
@@ -105,52 +105,52 @@ public abstract class AbstractInstallService {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
             // create prepared statement
             String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
 
-            // get columnTypes
-            int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-
-            int count = 0;
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                // skip lines that are commented out
-                String cleanedLine = line.trim();
-                if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
-                    continue;
-                }
-
-                try {
-                    // add dummy value ($) at the beganing and end of the line before splitting
-                    String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
-
-                    // create a new array of data without the dummy values
-                    String[] values = new String[temp.length - 2];
-                    System.arraycopy(temp, 1, values, 0, values.length);
-
-                    setColumns(stmt, columnTypes, values);
-
-                    // add null columns not provided
-                    if (values.length < columnTypes.length) {
-                        for (int i = values.length; i < columnTypes.length; i++) {
-                            stmt.setNull(i + 1, Types.NULL);
-                        }
+                int count = 0;
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    // skip lines that are commented out
+                    String cleanedLine = line.trim();
+                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                        continue;
                     }
-                } catch (Exception exception) {
-                    LOGGER.error("", exception);
+
+                    try {
+                        // add dummy value ($) at the beganing and end of the line before splitting
+                        String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
+
+                        // create a new array of data without the dummy values
+                        String[] values = new String[temp.length - 2];
+                        System.arraycopy(temp, 1, values, 0, values.length);
+
+                        setColumns(stmt, columnTypes, values);
+
+                        // add null columns not provided
+                        if (values.length < columnTypes.length) {
+                            for (int i = values.length; i < columnTypes.length; i++) {
+                                stmt.setNull(i + 1, Types.NULL);
+                            }
+                        }
+
+                        stmt.addBatch();
+                        count++;
+                    } catch (Exception exception) {
+                        LOGGER.error("", exception);
+                    }
+
+                    if (count == batchSize) {
+                        stmt.executeBatch();
+                        stmt.clearBatch();
+                        count = 0;
+                    }
                 }
 
-                stmt.addBatch();
-                count++;
-                if (count == batchSize) {
+                if (count > 0) {
                     stmt.executeBatch();
                     stmt.clearBatch();
-                    count = 0;
                 }
-            }
-
-            if (count > 0) {
-                stmt.executeBatch();
-                stmt.clearBatch();
-                count = 0;
             }
         }
     }
@@ -169,48 +169,48 @@ public abstract class AbstractInstallService {
 
             // create prepared statement
             String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
 
-            // get columnTypes
-            int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-
-            int count = 0;
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                // skip lines that are commented out
-                String cleanedLine = line.trim();
-                if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
-                    continue;
-                }
-
-                String[] values = TAB_DELIM.split(line);
-                if (!pkeys.contains(values[pkIndex].toLowerCase())) {
-                    try {
-                        setColumns(stmt, columnTypes, values);
-
-                        // add null columns not provided
-                        if (values.length < columnTypes.length) {
-                            for (int i = values.length; i < columnTypes.length; i++) {
-                                stmt.setNull(i + 1, Types.NULL);
-                            }
-                        }
-                    } catch (Exception exception) {
-                        LOGGER.error("", exception);
+                int count = 0;
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    // skip lines that are commented out
+                    String cleanedLine = line.trim();
+                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                        continue;
                     }
 
-                    stmt.addBatch();
-                    count++;
+                    String[] values = TAB_DELIM.split(line);
+                    if (!pkeys.contains(values[pkIndex].toLowerCase())) {
+                        try {
+                            setColumns(stmt, columnTypes, values);
+
+                            // add null columns not provided
+                            if (values.length < columnTypes.length) {
+                                for (int i = values.length; i < columnTypes.length; i++) {
+                                    stmt.setNull(i + 1, Types.NULL);
+                                }
+                            }
+
+                            stmt.addBatch();
+                            count++;
+                        } catch (Exception exception) {
+                            LOGGER.error("", exception);
+                        }
+                    }
+
                     if (count == DEFAULT_BATCH_SIZE) {
                         stmt.executeBatch();
                         stmt.clearBatch();
                         count = 0;
                     }
                 }
-            }
 
-            if (count > 0) {
-                stmt.executeBatch();
-                stmt.clearBatch();
-                count = 0;
+                if (count > 0) {
+                    stmt.executeBatch();
+                    stmt.clearBatch();
+                }
             }
         }
     }
@@ -218,7 +218,7 @@ public abstract class AbstractInstallService {
     /**
      * Get the file header (the first line of the file).
      *
-     * @param file
+     * @param header
      * @return
      * @throws IOException
      */

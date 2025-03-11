@@ -98,7 +98,7 @@ public class OntologyInstallService extends AbstractOntologyService {
             JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
             JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
 
-            productsToInstall.forEach(productItem -> {
+            for (ProductItem productItem : productsToInstall) {
                 try {
                     install(downloadDirectory, productItem, project, ontJdbcTemplate, crcJdbcTemplate, summaries);
                 } catch (Exception exception) {
@@ -106,7 +106,7 @@ public class OntologyInstallService extends AbstractOntologyService {
                     summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
                     fileSysService.createInstallFailedIndicatorFile(downloadDirectory, productItem.getId(), exception.getMessage());
                 }
-            });
+            }
         }
     }
 
