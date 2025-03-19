@@ -155,6 +155,67 @@ public abstract class AbstractInstallService {
         }
     }
 
+    protected void insertTableAccessUnique(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
+            Set<String> pkeys = getColumnData(jdbcTemplate, table, pkColumn);
+            List<String> columnNames = getHeaders(reader.readLine());
+            final int pkIndex = columnNames.indexOf(pkColumn);
+
+            // create prepared statement
+            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+
+                int count = 0;
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    // skip lines that are commented out
+                    String cleanedLine = line.trim();
+                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                        continue;
+                    }
+
+                    String[] values = TAB_DELIM.split(line);
+                    values[12] = String.format("%s_CD", values[1]);
+                    if (!pkeys.contains(values[pkIndex].toLowerCase())) {
+                        try {
+                            setColumns(stmt, columnTypes, values);
+
+                            // add null columns not provided
+                            if (values.length < columnTypes.length) {
+                                for (int i = values.length; i < columnTypes.length; i++) {
+                                    stmt.setNull(i + 1, Types.NULL);
+                                }
+                            }
+
+                            stmt.addBatch();
+                            count++;
+                        } catch (Exception exception) {
+                            LOGGER.error("", exception);
+                        }
+                    }
+
+                    if (count == DEFAULT_BATCH_SIZE) {
+                        stmt.executeBatch();
+                        stmt.clearBatch();
+                        count = 0;
+                    }
+                }
+
+                if (count > 0) {
+                    stmt.executeBatch();
+                    stmt.clearBatch();
+                }
+            }
+        }
+    }
+
     protected void insertUnique(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {

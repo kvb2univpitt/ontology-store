@@ -133,7 +133,7 @@ public class OntologyInstallService extends AbstractOntologyService {
             }
 
             try {
-                crcInstallService.insertIntoConceptDimensionTable(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
+                crcInstallService.createConceptDimension(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
                 crcInstallService.insertIntoQtBreakdownPathTable(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
 
                 summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "CRC Data Installed."));

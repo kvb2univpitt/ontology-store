@@ -120,7 +120,8 @@ public class MetadataInstallService extends AbstractInstallService {
     }
 
     private void insertTableAccess(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        insertUnique(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, zipEntry, zipFile, TABLE_ACCESS_TABLE_PK);
+//        insertUnique(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, zipEntry, zipFile, TABLE_ACCESS_TABLE_PK);
+        insertTableAccessUnique(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, zipEntry, zipFile, TABLE_ACCESS_TABLE_PK);
     }
 
     private void insertSchemes(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
