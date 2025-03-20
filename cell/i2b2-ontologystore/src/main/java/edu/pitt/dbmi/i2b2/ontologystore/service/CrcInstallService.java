@@ -41,8 +41,6 @@ public class CrcInstallService extends AbstractInstallService {
 
     private static final Log LOGGER = LogFactory.getLog(CrcInstallService.class);
 
-    private static final String CONCEPT_DIMENSION_TABLE = "concept_dimension";
-
     private static final String QT_BREAKDOWN_PATH_TABLE = "qt_breakdown_path";
     protected static final String QT_BREAKDOWN_PATH_TABLE_PK = "name";
 

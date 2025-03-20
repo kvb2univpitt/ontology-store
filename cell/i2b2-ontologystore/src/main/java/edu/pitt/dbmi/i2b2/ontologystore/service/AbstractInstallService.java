@@ -95,69 +95,6 @@ public abstract class AbstractInstallService {
         }
     }
 
-    protected void batchInsertMetadata(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource == null) {
-            return;
-        }
-
-        try (Connection conn = dataSource.getConnection();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
-            // create prepared statement
-            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                // get columnTypes
-                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-
-                int count = 0;
-                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    // skip lines that are commented out
-                    String cleanedLine = line.trim();
-                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
-                        continue;
-                    }
-
-                    try {
-                        // add dummy value ($) at the beganing and end of the line before splitting
-                        String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
-
-                        // create a new array of data without the dummy values
-                        String[] values = new String[temp.length - 2];
-                        System.arraycopy(temp, 1, values, 0, values.length);
-
-                        // change the table name from concept_dimension to the name of the new table created to hold concept dimensions
-                        values[9] = String.format("%s_CD", table);
-
-                        setColumns(stmt, columnTypes, values);
-
-                        // add null columns not provided
-                        if (values.length < columnTypes.length) {
-                            for (int i = values.length; i < columnTypes.length; i++) {
-                                stmt.setNull(i + 1, Types.NULL);
-                            }
-                        }
-
-                        stmt.addBatch();
-                        count++;
-                    } catch (Exception exception) {
-                        LOGGER.error("", exception);
-                    }
-
-                    if (count == batchSize) {
-                        stmt.executeBatch();
-                        stmt.clearBatch();
-                        count = 0;
-                    }
-                }
-
-                if (count > 0) {
-                    stmt.executeBatch();
-                    stmt.clearBatch();
-                }
-            }
-        }
-    }
-
     protected void batchInsert(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
@@ -204,68 +141,6 @@ public abstract class AbstractInstallService {
                     }
 
                     if (count == batchSize) {
-                        stmt.executeBatch();
-                        stmt.clearBatch();
-                        count = 0;
-                    }
-                }
-
-                if (count > 0) {
-                    stmt.executeBatch();
-                    stmt.clearBatch();
-                }
-            }
-        }
-    }
-
-    protected void insertTableAccessUnique(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource == null) {
-            return;
-        }
-
-        try (Connection conn = dataSource.getConnection();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
-            Set<String> pkeys = getColumnData(jdbcTemplate, table, pkColumn);
-            List<String> columnNames = getHeaders(reader.readLine());
-            final int pkIndex = columnNames.indexOf(pkColumn);
-
-            // create prepared statement
-            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                // get columnTypes
-                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
-
-                int count = 0;
-                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    // skip lines that are commented out
-                    String cleanedLine = line.trim();
-                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
-                        continue;
-                    }
-
-                    String[] values = TAB_DELIM.split(line);
-                    // change the table name from concept_dimension to the name of the new table created to hold concept dimensions
-                    values[12] = String.format("%s_CD", values[1]);
-                    if (!pkeys.contains(values[pkIndex].toLowerCase())) {
-                        try {
-                            setColumns(stmt, columnTypes, values);
-
-                            // add null columns not provided
-                            if (values.length < columnTypes.length) {
-                                for (int i = values.length; i < columnTypes.length; i++) {
-                                    stmt.setNull(i + 1, Types.NULL);
-                                }
-                            }
-
-                            stmt.addBatch();
-                            count++;
-                        } catch (Exception exception) {
-                            LOGGER.error("", exception);
-                        }
-                    }
-
-                    if (count == DEFAULT_BATCH_SIZE) {
                         stmt.executeBatch();
                         stmt.clearBatch();
                         count = 0;
