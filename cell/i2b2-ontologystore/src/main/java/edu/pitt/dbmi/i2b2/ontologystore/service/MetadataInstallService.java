@@ -139,7 +139,8 @@ public class MetadataInstallService extends AbstractInstallService {
     }
 
     private void insertIntoOntologyTable(JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        batchInsert(jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
+//        batchInsert(jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
+        batchInsertMetadata(jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
     }
 
     private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
