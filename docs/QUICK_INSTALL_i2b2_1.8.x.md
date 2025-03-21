@@ -25,7 +25,7 @@ The following instructions assume that the Wildfly is installed on the server an
 
 #### 2. Download the Cell
 
-- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/ontologystore_cell.zip) to download the file.
+- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/v1.8.x/ontologystore_cell.zip) to download the file.
 
 - Extract ***ontologystore_cell.zip*** file.  Once extracted, there should be a folder called **ontologystore_cell** containing the followin files:
 
