@@ -25,7 +25,7 @@ The following instructions assume that the Wildfly is installed on the server an
 
 #### 2. Download the Cell
 
-- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/v1.8.x/ontologystore_cell.zip) to download the file.
+- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.us-east-1.amazonaws.com/ontology-store/0.5.0/v1.8.x/ontologystore_cell.zip) to download the file.
 
 - Extract ***ontologystore_cell.zip*** file.  Once extracted, there should be a folder called **ontologystore_cell** containing the followin files:
 
@@ -154,7 +154,7 @@ The following instructions assume that the i2b2 webclient is installed in the di
 
 The plugin communicator is the communication channel between the OntologyStore plugin and the OntologyStore cell.
 
--  Click on [ONTSTORE.zip](https://pitt-dbmi.s3.amazonaws.com/ontology-store/0.5.0/v1.8.x/ONTSTORE.zip) to download the file.
+-  Click on [ONTSTORE.zip](https://pitt-dbmi.s3.us-east-1.amazonaws.com/ontology-store/0.5.0/v1.8.x/ONTSTORE.zip) to download the file.
 
 - Extract the ***ONTSTORE.zip*** file to the following i2b2 webclient directory:
 
