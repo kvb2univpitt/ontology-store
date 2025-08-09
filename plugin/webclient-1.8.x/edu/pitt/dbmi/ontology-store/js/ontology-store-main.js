@@ -24,7 +24,7 @@ i2b2.OntologyStore.modal = {
         numOfHeaders: 4,
         getSummaryProgress: function (summary) {
             if (summary.actionType === 'Download') {
-                if (summary.inProgress) {
+                if (summary.inProgress === 'true') {
                     return '<span class="ontologystore-text-info"><i class="bi bi-file-earmark-arrow-down"></i> In Progress</span>';
                 } else {
                     return summary.success
@@ -32,7 +32,7 @@ i2b2.OntologyStore.modal = {
                             : '<span class="ontologystore-text-danger"><i class="bi bi-file-earmark-arrow-down"></i> Failed</span>';
                 }
             } else {
-                if (summary.inProgress) {
+                if (summary.inProgress === 'true') {
                     return '<span class="ontologystore-text-info"><i class="bi bi-server"></i> In Progress</span>';
                 } else {
                     return summary.success
@@ -40,7 +40,6 @@ i2b2.OntologyStore.modal = {
                             : '<span class="ontologystore-text-danger"><i class="bi bi-server"></i> Failed</span>';
                 }
             }
-
         },
         show: function (data) {
             // clear summary table
