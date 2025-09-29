@@ -6,14 +6,20 @@
  obtain one at http://mozilla.org/MPL/2.0/. I2b2 is also distributed under
  the terms of the Healthcare Disclaimer.
 -->
-<jxb:bindings version="1.0"
-              xmlns:jxb="http://java.sun.com/xml/ns/jaxb"
-              xmlns:xs="http://www.w3.org/2001/XMLSchema">
-
-    <jxb:bindings schemaLocation="i2b2_response.xsd" node="/xs:schema">
+<jxb:bindings version="3.0"
+               xmlns:jxb="https://jakarta.ee/xml/ns/jaxb"
+               xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <jxb:bindings schemaLocation="./i2b2_response.xsd" node="/xs:schema">
         <jxb:schemaBindings>
-            <jxb:package name="edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message" />
-        </jxb:schemaBindings>
-    </jxb:bindings>
-
-</jxb:bindings>
+	           <jxb:package name="edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message">
+	  	     </jxb:package>
+	  	     <!-- 
+	  	     <jxb:nameXmlTransform>
+	  	         <jxb:elementName suffix="Element"/>
+	  	    </jxb:nameXmlTransform>
+	  	    -->
+    </jxb:schemaBindings>
+  </jxb:bindings> 
+  
+<!-- schemaLocation="po.xsd" node="/xs:schema" -->
+</jxb:bindings> 

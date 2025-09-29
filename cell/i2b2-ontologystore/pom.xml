@@ -5,101 +5,71 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.pitt.dbmi</groupId>
     <artifactId>i2b2-ontologystore</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.8.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>OntologyStore Cell</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.ws.commons.axiom</groupId>
-            <artifactId>axiom-api</artifactId>
-            <version>1.2.17</version>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>5.1.8.RELEASE</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>5.1.8.RELEASE</version>
+            <version>6.1.11</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>5.1.8.RELEASE</version>
+            <version>6.1.11</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.1.11</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.owasp.esapi</groupId>
-            <artifactId>esapi</artifactId>
-            <version>2.2.3.1</version>
+            <version>1.3.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.axis2</groupId>
             <artifactId>axis2-kernel</artifactId>
-            <version>1.8.0</version>
+            <version>2.0.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.4.2</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.3.1</version>
+            <version>2.19.2</version>
         </dependency>
 
         <!-- i2b2 dependencies -->
         <dependency>
             <groupId>edu.harvard</groupId>
             <artifactId>i2b2-server-common</artifactId>
-            <version>1.7.13</version>
+            <version>1.8.2</version>
         </dependency>
 
-        <!-- unit tests -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>4.0.2</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-http</artifactId>
-            <version>1.8.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-transport-local</artifactId>
-            <version>1.8.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-adb</artifactId>
-            <version>1.8.0</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -107,72 +77,49 @@
         <finalName>OntologyStore</finalName>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>2.5.0</version>
-                <configuration>
-                    <clearOutputDir>false</clearOutputDir>
-                </configuration>
+                <groupId>org.jvnet.jaxb</groupId>
+                <artifactId>jaxb-maven-plugin</artifactId>
+                <version>4.0.9</version>
                 <executions>
                     <execution>
                         <id>xjc-i2b2message</id>
                         <goals>
-                            <goal>xjc</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <packageName>edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message</packageName>
-                            <xjbSources>
-                                <xjbSource>${basedir}/src/main/xsd/i2b2message/i2b2_response_message_bindings.xjb</xjbSource>
-                            </xjbSources>
-                            <sources>
-                                <source>${basedir}/src/main/xsd/i2b2message/i2b2_response.xsd</source>
-                            </sources>
+                            <schemaDirectory>${basedir}/src/main/xsd/i2b2message</schemaDirectory>
+                            <generateDirectory>${project.build.directory}/generated-sources/xjc/i2b2message</generateDirectory>
+                            <generatePackage>edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message</generatePackage>
                         </configuration>
                     </execution>
                     <execution>
                         <id>xjc-pm</id>
                         <goals>
-                            <goal>xjc</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <packageName>edu.pitt.dbmi.i2b2.ontologystore.datavo.pm</packageName>
-                            <xjbSources>
-                                <xjbSource>${basedir}/src/main/xsd/pm/i2b2_pm_bindings.xjb</xjbSource>
-                            </xjbSources>
-                            <sources>
-                                <source>${basedir}/src/main/xsd/pm/PM_USER.xsd</source>
-                            </sources>
+                            <schemaDirectory>${basedir}/src/main/xsd/pm</schemaDirectory>
+                            <generateDirectory>${project.build.directory}/generated-sources/xjc/pm</generateDirectory>
+                            <generatePackage>edu.pitt.dbmi.i2b2.ontologystore.datavo.pm</generatePackage>
                         </configuration>
                     </execution>
                     <execution>
                         <id>xjc-vdo</id>
                         <goals>
-                            <goal>xjc</goal>
+                            <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <packageName>edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo</packageName>
-                            <xjbSources>
-                                <xjbSource>${basedir}/src/main/xsd/vdo/ontologystore.xjb</xjbSource>
-                            </xjbSources>
-                            <sources>
-                                <source>${basedir}/src/main/xsd/vdo/ontologystore.xsd</source>
-                            </sources>
+                            <schemaDirectory>${basedir}/src/main/xsd/vdo</schemaDirectory>
+                            <generateDirectory>${project.build.directory}/generated-sources/xjc/vdo</generateDirectory>
+                            <generatePackage>edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo</generatePackage>
                         </configuration>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>xerces</groupId>
-                        <artifactId>xercesImpl</artifactId>
-                        <version>2.12.2</version>
-                        <scope>compile</scope>
-                    </dependency>
-                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.axis2</groupId>
                 <artifactId>axis2-java2wsdl-maven-plugin</artifactId>
-                <version>1.7.1</version>
+                <version>2.0.0</version>
                 <configuration>
                     <className>edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService</className>
                     <outputFileName>${project.build.directory}/OntologyStoreService.wsdl</outputFileName>
@@ -185,11 +132,18 @@
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.axis2</groupId>
+                        <artifactId>axis2-jaxws</artifactId>
+                        <version>2.0.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.axis2</groupId>
                 <artifactId>axis2-aar-maven-plugin</artifactId>
-                <version>1.7.1</version>
+                <version>2.0.0</version>
                 <configuration>
                     <servicesXmlFile>${basedir}/src/main/resources/services.xml</servicesXmlFile>
                     <wsdlFile>${project.build.directory}/OntologyStoreService.wsdl</wsdlFile>

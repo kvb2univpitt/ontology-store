@@ -8,13 +8,13 @@
  the terms of the Healthcare Disclaimer.
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:hive="http://www.i2b2.org/xsd/hive/msg/1.1/"
-           targetNamespace="http://www.i2b2.org/xsd/hive/msg/1.1/">
-
+    xmlns:hive="http://www.i2b2.org/xsd/hive/msg/1.1/"
+    targetNamespace="http://www.i2b2.org/xsd/hive/msg/1.1/">
+    
     <xs:include schemaLocation="./i2b2_request.xsd"/>
-
+    
     <xs:element name="response" type="hive:response_messageType"/>
-
+    
     <xs:complexType name="response_messageType" final="extension">
         <xs:sequence>
             <xs:element name="message_header" type="hive:message_headerType"/>
@@ -23,14 +23,14 @@
             <xs:element name="message_body" type="hive:bodyType"/>
         </xs:sequence>
     </xs:complexType>
-
+    
     <xs:complexType name="response_headerType">
         <xs:sequence>
             <xs:element name="info" type="hive:infoType"/>
             <xs:element name="result_status" type="hive:result_statusType"/>
         </xs:sequence>
     </xs:complexType>
-
+    
     <xs:complexType name="infoType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
@@ -38,7 +38,7 @@
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
-
+    
     <xs:complexType name="result_statusType">
         <xs:sequence>
             <xs:element name="status" type="hive:statusType"/>
@@ -46,7 +46,7 @@
             <xs:element name="conditions" type="hive:conditionsType"/>
         </xs:sequence>
     </xs:complexType>
-
+    
     <xs:complexType name="statusType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
@@ -62,7 +62,7 @@
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
-
+    
     <xs:complexType name="polling_urlType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
@@ -70,7 +70,7 @@
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
-
+    
     <xs:complexType name="conditionsType">
         <xs:sequence>
             <xs:element name="condition" maxOccurs="unbounded">
@@ -94,5 +94,5 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-
+    
 </xs:schema>

@@ -25,7 +25,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.RequestHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.RequestMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.util.OntologyStoreJAXBUtil;
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 
 /**
  *
