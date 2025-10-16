@@ -25,9 +25,9 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.RequestHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.RequestMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.GetUserConfigurationType;
 import edu.pitt.dbmi.i2b2.ontologystore.util.OntologyStoreJAXBUtil;
+import jakarta.xml.bind.JAXBElement;
 import java.io.IOException;
 import java.io.StringWriter;
-import javax.xml.bind.JAXBElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

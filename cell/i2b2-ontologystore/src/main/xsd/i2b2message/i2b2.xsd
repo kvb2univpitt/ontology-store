@@ -8,19 +8,19 @@
  the terms of the Healthcare Disclaimer.
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:i2b2="http://www.i2b2.org/xsd/hive/msg/1.1/"
-           xmlns:docs="http://i2b2.mgh.harvard.edu/schema_docs"
-           targetNamespace="http://www.i2b2.org/xsd/hive/msg/1.1/">
+    xmlns:i2b2="http://www.i2b2.org/xsd/hive/msg/1.1/" 
+    xmlns:docs="http://i2b2.mgh.harvard.edu/schema_docs"
+    targetNamespace="http://www.i2b2.org/xsd/hive/msg/1.1/">
 
     <xs:complexType name="message_headerType">
         <xs:annotation>
             <xs:appinfo>
                 <docs:comment>message_headerType contains info used for generic message
-                    processing</docs:comment>
+                processing</docs:comment>
             </xs:appinfo>
         </xs:annotation>
         <xs:sequence>
-            <xs:element name="i2b2_version_compatible" type="i2b2:decimal" minOccurs="1"/>
+            <xs:element name="i2b2_version_compatible" type="i2b2:decimal" minOccurs="1"/>                   
             <xs:element name="hl7_version_compatible" type="i2b2:decimal" minOccurs="1"/>
             <xs:element name="sending_application" type="i2b2:applicationType"/>
             <xs:element name="sending_facility" type="i2b2:facilityType"/>
@@ -66,15 +66,15 @@
         </xs:sequence>
     </xs:complexType>
 
-    <xs:complexType name="passwordType">
-        <xs:simpleContent>
-            <xs:extension base="xs:string">
-                <xs:attribute name="is_token" type="xs:boolean"
-                              default="false" />
-                <xs:attribute name="token_ms_timeout" type="xs:int" />
-            </xs:extension>
-        </xs:simpleContent>
-    </xs:complexType>
+	<xs:complexType name="passwordType">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="is_token" type="xs:boolean"
+					default="false" />
+				<xs:attribute name="token_ms_timeout" type="xs:int" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
 
     <xs:complexType name="message_control_idType">
         <xs:sequence>
@@ -160,7 +160,7 @@
         <xs:annotation>
             <xs:appinfo>
                 <docs:comment>securityType may contain (domain,username,password) or
-                    ticket</docs:comment>
+                ticket</docs:comment>
             </xs:appinfo>
         </xs:annotation>
         <xs:choice>
@@ -171,9 +171,9 @@
             </xs:sequence>
         </xs:choice>
     </xs:complexType>
-
-
-
+  
+  
+  
     <xs:simpleType name="int">
         <xs:annotation>
             <xs:appinfo>
@@ -183,7 +183,7 @@
         </xs:annotation>
         <xs:restriction base="xs:int"/>
     </xs:simpleType>
-
+    
     <xs:simpleType name="decimal">
         <xs:annotation>
             <xs:appinfo>
@@ -193,7 +193,7 @@
         </xs:annotation>
         <xs:restriction base="xs:decimal"/>
     </xs:simpleType>
-
+      
     <xs:simpleType name="date">
         <xs:annotation>
             <xs:appinfo>
@@ -203,7 +203,7 @@
         </xs:annotation>
         <xs:restriction base="xs:date"/>
     </xs:simpleType>
-
+    
     <xs:simpleType name="dateTime">
         <xs:annotation>
             <xs:appinfo>

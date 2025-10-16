@@ -26,7 +26,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.util.OntologyStoreJAXBUtil;
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -54,7 +54,7 @@ public class PMResponseMessage {
             return null;
         }
 
-        // Get response message status 
+        // Get response message status
         ResponseHeaderType responseHeader = pmRespMessageType.getResponseHeader();
 
         StatusType status = responseHeader.getResultStatus().getStatus();

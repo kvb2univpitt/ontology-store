@@ -44,8 +44,6 @@ import javax.sql.DataSource;
 import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.owasp.esapi.ESAPI;
-import org.owasp.esapi.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -59,7 +57,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class PmDBAccess {
 
     private static final Log LOGGER = LogFactory.getLog(PmDBAccess.class);
-    private static final Logger API_LOGGER = ESAPI.getLogger(PmDBAccess.class);
+    private static final Log API_LOGGER = LogFactory.getLog(PmDBAccess.class);
 
     public static final String PM_ENDPOINT_REFERENCE = "ontology.ws.pm.url";
     public static final String ONTSTORE_PRODUCT_LIST_URL = "ontstore.product.list.url";
@@ -124,7 +122,7 @@ public class PmDBAccess {
         try {
             PMResponseMessage msg = new PMResponseMessage();
             String response = getUserConfigurationResponsetMessage(new GetUserConfigurationType(), header);
-            API_LOGGER.debug(null, response);
+            API_LOGGER.debug(response);
             StatusType procStatus = msg.processResult(response);
             if (procStatus.getType().equals("ERROR")) {
                 return null;

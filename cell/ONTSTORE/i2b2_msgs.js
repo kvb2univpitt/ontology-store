@@ -66,8 +66,8 @@ i2b2.ONTSTORE.cfg.parsers.ExtractProductActionResults = function () {
 i2b2.ONTSTORE.cfg.msgs = {};
 i2b2.ONTSTORE.cfg.msgs.GetProducts = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
-             xmlns:ns4="http://www.i2b2.org/xsd/cell/ont/1.1/"
-             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/">
+             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
     <message_header>
         {{{proxy_info}}}
         <i2b2_version_compatible>1.1</i2b2_version_compatible>
@@ -109,14 +109,14 @@ i2b2.ONTSTORE.cfg.msgs.GetProducts = `<?xml version="1.0" encoding="UTF-8" stand
         <result_waittime_ms>{{{result_wait_time}}}000</result_waittime_ms>
     </request_header>
     <message_body>
-        <ns4:getProducts></ns4:getProducts>
+        <ns4:getProducts/>
     </message_body>
 </ns3:request>`;
 i2b2.ONTSTORE.ajax._addFunctionCall("GetProducts", "{{{URL}}}getProducts", i2b2.ONTSTORE.cfg.msgs.GetProducts, null, i2b2.ONTSTORE.cfg.parsers.ExtractProductResults);
 
-
-i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UTF-8"?>
+i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/"
              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
     <message_header>
         {{{proxy_info}}}
@@ -156,7 +156,7 @@ i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UT
         <project_id>{{{sec_project}}}</project_id>
     </message_header>
     <request_header>
-        <result_waittime_ms>86400000</result_waittime_ms>
+        <result_waittime_ms>{{{result_wait_time}}}000</result_waittime_ms>
     </request_header>
     <message_body>
         <ns4:product_actions>
