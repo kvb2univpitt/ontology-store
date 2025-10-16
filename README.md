@@ -14,9 +14,10 @@ The software consists of the following software components:
 - [i2b2-ontologystore](cell), a backend API (i2b2 cell).
 - [OntologyStore](plugin), a frontend client (i2b2 plug-in).
 
-## Requirements
+## Installing the Software
 
-- i2b2 version 1.8.2
+- [Quick installation guide](docs/QUICK_INSTALL_i2b2_1.8.2.md).
+
 
 ## Using the Software
 
