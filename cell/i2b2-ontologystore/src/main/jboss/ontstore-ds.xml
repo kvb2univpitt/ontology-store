@@ -13,7 +13,7 @@
     <!--
     <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
                 pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
-        <connection-url>jdbc:oracle:thin:@localhost:1521:xe</connection-url>
+        <connection-url>jdbc:oracle:thin:@localhost:1521/XEPDB1</connection-url>
         <driver-class>oracle.jdbc.OracleDriver</driver-class>
         <driver>ojdbc11.jar</driver>
         <security>
