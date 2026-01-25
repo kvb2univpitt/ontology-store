@@ -238,23 +238,23 @@ public abstract class AbstractInstallService {
             try (Connection conn = dataSource.getConnection()) {
                 PreparedStatement pstmt = null;
                 switch (conn.getMetaData().getDatabaseProductName()) {
-                    case "PostgreSQL":
+                    case "PostgreSQL" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
-                        break;
-                    case "Oracle":
+                    }
+                    case "Oracle" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM user_tables WHERE table_name = UPPER(?) OR table_name = LOWER(?)");
                         pstmt.setString(1, tableName);
                         pstmt.setString(2, tableName);
-                        break;
-                    case "Microsoft SQL Server":
+                    }
+                    case "Microsoft SQL Server" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
-                        break;
+                    }
                 }
 
                 if (pstmt != null) {
@@ -312,50 +312,32 @@ public abstract class AbstractInstallService {
                 stmt.setNull(columnIndex, Types.NULL);
             } else {
                 switch (columnTypes[i]) {
-                    case Types.CHAR:
-                    case Types.VARCHAR:
-                    case Types.LONGVARCHAR:
-                    case Types.CLOB:
+                    case Types.CHAR, Types.VARCHAR, Types.LONGVARCHAR, Types.CLOB ->
                         stmt.setString(columnIndex, value);
-                        break;
-                    case Types.TINYINT:
+                    case Types.TINYINT ->
                         stmt.setByte(columnIndex, Byte.parseByte(value));
-                        break;
-                    case Types.SMALLINT:
+                    case Types.SMALLINT ->
                         stmt.setShort(columnIndex, Short.parseShort(value));
-                        break;
-                    case Types.INTEGER:
+                    case Types.INTEGER ->
                         stmt.setInt(columnIndex, Integer.parseInt(value));
-                        break;
-                    case Types.BIGINT:
+                    case Types.BIGINT ->
                         stmt.setLong(columnIndex, Long.parseLong(value));
-                        break;
-                    case Types.REAL:
-                    case Types.FLOAT:
+                    case Types.REAL, Types.FLOAT ->
                         stmt.setFloat(columnIndex, Float.parseFloat(value));
-                        break;
-                    case Types.DOUBLE:
+                    case Types.DOUBLE ->
                         stmt.setDouble(columnIndex, Double.parseDouble(value));
-                        break;
-                    case Types.NUMERIC:
+                    case Types.NUMERIC ->
                         stmt.setBigDecimal(columnIndex, new BigDecimal(value));
-                        break;
-                    case Types.DATE:
+                    case Types.DATE ->
                         stmt.setDate(columnIndex, new Date(DATE_FORMATTER.parse(value).getTime()));
-                        break;
-                    case Types.TIME:
+                    case Types.TIME ->
                         stmt.setTime(columnIndex, new Time(DATE_FORMATTER.parse(value).getTime()));
-                        break;
-                    case Types.TIMESTAMP:
+                    case Types.TIMESTAMP ->
                         stmt.setTimestamp(columnIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
-                        break;
-                    case Types.BIT:
+                    case Types.BIT ->
                         stmt.setBoolean(columnIndex, value.equals("1"));
-                        break;
-                    case Types.VARBINARY:
-                    case Types.BINARY:
+                    case Types.VARBINARY, Types.BINARY ->
                         stmt.setBytes(columnIndex, value.getBytes());
-                        break;
                 }
             }
         }
