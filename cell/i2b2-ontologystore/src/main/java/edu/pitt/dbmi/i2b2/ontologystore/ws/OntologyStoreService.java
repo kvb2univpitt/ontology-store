@@ -84,10 +84,8 @@ public class OntologyStoreService extends AbstractWebService {
 
         ProductActionDataMessage productActionDataMsg = new ProductActionDataMessage(req.toString());
 
-        long waitTime = 0;
-        if ((productActionDataMsg.getRequestMessageType() != null) && (productActionDataMsg.getRequestMessageType().getRequestHeader() != null)) {
-            waitTime = productActionDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
-        }
+        // terminate in 24 hours
+        long waitTime = -1;
 
         return execute(
                 new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, ontologyInstallService, ontologyDisableService, pmDBAccess),
