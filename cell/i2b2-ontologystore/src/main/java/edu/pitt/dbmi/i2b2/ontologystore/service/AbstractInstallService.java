@@ -66,7 +66,7 @@ public abstract class AbstractInstallService {
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
     protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
 
-    protected static final int DEFAULT_BATCH_SIZE = 50000;
+    protected static final int DEFAULT_BATCH_SIZE = 50;
 
     protected final FileSysService fileSysService;
 
@@ -106,6 +106,8 @@ public abstract class AbstractInstallService {
             // create prepared statement
             String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                conn.setAutoCommit(false);
+
                 // get columnTypes
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
 
@@ -142,6 +144,7 @@ public abstract class AbstractInstallService {
 
                     if (count == batchSize) {
                         stmt.executeBatch();
+                        conn.commit();
                         stmt.clearBatch();
                         count = 0;
                     }
@@ -149,6 +152,7 @@ public abstract class AbstractInstallService {
 
                 if (count > 0) {
                     stmt.executeBatch();
+                    conn.commit();
                     stmt.clearBatch();
                 }
             }
@@ -170,6 +174,8 @@ public abstract class AbstractInstallService {
             // create prepared statement
             String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                conn.setAutoCommit(false);
+
                 // get columnTypes
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
 
@@ -201,7 +207,8 @@ public abstract class AbstractInstallService {
                     }
 
                     if (count == DEFAULT_BATCH_SIZE) {
-                        stmt.executeBatch();
+                       stmt.executeBatch();
+                        conn.commit();
                         stmt.clearBatch();
                         count = 0;
                     }
@@ -209,6 +216,7 @@ public abstract class AbstractInstallService {
 
                 if (count > 0) {
                     stmt.executeBatch();
+                    conn.commit();
                     stmt.clearBatch();
                 }
             }
