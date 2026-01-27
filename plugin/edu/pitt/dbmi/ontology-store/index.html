@@ -7,16 +7,16 @@
         <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.min.css" />
         <link rel="stylesheet" href="assets/datatables/datatables.min.css" />
-        <link rel="stylesheet" href="css/ontology-store-main.css">
+        <link rel="stylesheet" href="css/ontology-store-main.css" />
         <script src="js/i2b2-loader.js"></script>
     </head>
     <body>
         <div class="p-4">
             <main>
-                <div class="card">
+                <div class="card rounded-0">
                     <div class="card-header d-flex justify-content-between align-items-center ontstore-border">
                         <h6 class="ontstore-panel-title m-0">Ontologies</h6>
-                        <button id="OntologyStore-SyncFromCloud" class="btn btn-sm btn-primary">
+                        <button id="OntologyStore-SyncFromCloud" class="btn btn-primary-invert">
                             <i class="bi bi-cloud-download-fill"></i> Sync From Cloud
                         </button>
                     </div>
@@ -42,18 +42,19 @@
                         </div>
                     </div>
                     <div class="card-footer ontstore-border">
-                        <button type="button" id="OntologyStore-ExecuteBtn" class="btn btn-success float-end" disabled="disabled">
+                        <button type="button" id="OntologyStore-ExecuteBtn" class="btn btn-success-invert float-end" disabled="disabled">
                             <i class="bi bi-play-fill"></i> Execute
                         </button>
                     </div>
                 </div>
             </main>
         </div>
+        <!-- progress modal -->
         <div class="modal fade" id="OntologyStore-ProgressModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="OntologyStore-ProgressModalTitle" aria-hidden="true">
             <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="OntologyStore-ProgressModalTitle">Progress</h5>
+                <div class="modal-content rounded-0">
+                    <div class="modal-header rounded-0 bg-ontstore text-white p-2">
+                        <h6 class="modal-title" id="OntologyStore-ProgressModalTitle">Progress</h6>
                     </div>
                     <div class="modal-body">
                         <div class="text-center">
@@ -65,25 +66,29 @@
                 </div>
             </div>
         </div>
+        <!-- end of progress modal -->
+        <!-- message modal -->
         <div class="modal fade" id="OntologyStore-MessageModal" tabindex="-1" aria-labelledby="OntologyStore-MessageModalLabel" aria-hidden="true">
             <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="OntologyStore-MessageModalLabel">Message Title</h5>
+                <div class="modal-content rounded-0">
+                    <div class="modal-header rounded-0 bg-ontstore text-white p-2">
+                        <h6 class="modal-title" id="OntologyStore-MessageModalLabel">Message Title</h6>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body" id="OntologyStore-MessageModalMessage">Message</div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="modal-footer bg-light p-1">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- end of message modal -->
+        <!-- summary modal -->
         <div class="modal fade" id="OntologyStore-SummaryModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="summaryModalLabel">Download/Install Summary</h5>
+                <div class="modal-content rounded-0">
+                    <div class="modal-header rounded-0 bg-ontstore text-white p-2">
+                        <h6 class="modal-title" id="summaryModalLabel">Download/Install Summary</h6>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -99,13 +104,14 @@
                             <tbody></tbody>
                         </table>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light p-1">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
-        <script src="assets/jquery/jquery-3.7.1.min.js"></script>
+        <!-- end of summary modal -->
+        <script src="assets/jquery/jquery-3.7.1.slim.min.js"></script>
         <script src="assets/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script src="assets/datatables/datatables.min.js"></script>
         <script src="js/ontology-store-main.js"></script>

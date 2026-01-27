@@ -1,8 +1,13 @@
+if (typeof i2b2 === 'undefined') {
+    var i2b2 = {};
+}
+
 i2b2.OntologyStore = {};
 
 // ontologies fetched from cloud
 i2b2.OntologyStore.products = [];
 
+// modal
 i2b2.OntologyStore.modal = {
     progress: {
         show: function (title) {
@@ -70,6 +75,7 @@ i2b2.OntologyStore.modal = {
     }
 };
 
+// sync-from-cloud functions
 i2b2.OntologyStore.syncFromCloud = {};
 i2b2.OntologyStore.syncFromCloud.action = (successHandler, errorHandler) => {
     i2b2.ajax.ONTSTORE.GetProducts().then(successHandler).catch(errorHandler);
@@ -115,7 +121,7 @@ i2b2.OntologyStore.syncFromCloud.successHandler = (resultXmlStr) => {
         i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
 
         i2b2.OntologyStore.table.refresh();
-        $('#OntologyStore-ExecuteBtn').removeAttr('disabled');
+        i2b2.OntologyStore.execute.enableDisable();
         i2b2.OntologyStore.modal.progress.hide();
     }, 500);
 };
@@ -124,21 +130,17 @@ i2b2.OntologyStore.syncFromCloud.errorHandler = () => {
         i2b2.OntologyStore.modal.progress.hide();
     }, 500);
 };
-i2b2.OntologyStore.syncFromCloud.clickAction = () => {
-    i2b2.OntologyStore.modal.progress.show('Sync From Clould');
+i2b2.OntologyStore.syncFromCloud.onClick = () => {
+    i2b2.OntologyStore.modal.progress.show('Sync From Cloud');
     i2b2.OntologyStore.syncFromCloud.action(
             i2b2.OntologyStore.syncFromCloud.successHandler,
             i2b2.OntologyStore.syncFromCloud.errorHandler);
 };
 
+// execute button
 i2b2.OntologyStore.execute = {};
-i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHandler) => {
-    let options = {
-        products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
-    };
-    i2b2.ajax.ONTSTORE.PerformProductActions(options)
-            .then(successHandler)
-            .catch(errorHandler);
+i2b2.OntologyStore.execute.enableDisable = () => {
+    $('#OntologyStore-ExecuteBtn').prop("disabled", (i2b2.OntologyStore.products.length === 0));
 };
 i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
     let models = [];
@@ -174,7 +176,7 @@ i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
             }
         }
 
-        $('#OntologyStore-ExecuteBtn').prop("disabled", false);
+        i2b2.OntologyStore.execute.enableDisable();
         i2b2.OntologyStore.modal.progress.hide();
         i2b2.OntologyStore.modal.summary.show(data);
     }, 500);
@@ -200,7 +202,15 @@ i2b2.OntologyStore.execute.errorHandler = (error) => {
         i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
     }, 500);
 };
-i2b2.OntologyStore.execute.clickAction = () => {
+i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHandler) => {
+    let options = {
+        products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
+    };
+    i2b2.ajax.ONTSTORE.PerformProductActions(options)
+            .then(successHandler)
+            .catch(errorHandler);
+};
+i2b2.OntologyStore.execute.onClick = () => {
     let products = i2b2.OntologyStore.products;
     if (products && products.length > 0) {
         i2b2.authorizedTunnel.variable["i2b2.PM.model.isAdmin"].then((isAdmin) => {
@@ -215,7 +225,7 @@ i2b2.OntologyStore.execute.clickAction = () => {
                             i2b2.OntologyStore.execute.errorHandler);
                 } else {
                     // at least one ontology must be selected to download/install.
-                    i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download/install.');
+                    i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download, install, or disable.');
                 }
             } else {
                 // requires administrative privileges
@@ -301,6 +311,7 @@ i2b2.OntologyStore.getSelectedProducts = (products) => {
     return data;
 };
 
+// checkboxes
 i2b2.OntologyStore.checkbox = {};
 i2b2.OntologyStore.checkbox.downloadAction = (productIndex) => {
     let installChkbx = document.getElementById(`install-${productIndex}`);
@@ -345,7 +356,17 @@ i2b2.OntologyStore.showFailedInstallStatusDetails = (index) => {
         i2b2.OntologyStore.modal.message.show('Status Detail', msg);
     }
 };
+i2b2.OntologyStore.showFailedDownloadStatusDetails = function (index) {
+    let product = i2b2.OntologyStore.products[index];
+    if (product) {
+        let msg = '<p class="ontstore-bs-text-danger ontstore-bs-font-weight-bold">' + product.statusDetail + '</p>';
+        msg += '<p>To redownload, please fix the issue and then delete the folder <b><i>' + product.id + '</i></b> from the download directory on the server.</p>';
+        msg += '<p>Please search for "OntologyDownloadService" in the Wildfly\'s server log (<b>server.log</b>) for more detail.</p>';
+        i2b2.OntologyStore.modal.message.show('Status Detail', msg);
+    }
+};
 
+// table
 i2b2.OntologyStore.table = {};
 i2b2.OntologyStore.table.refresh = () => {
     let datatables = i2b2.OntologyStore.table.datatables;
@@ -416,8 +437,9 @@ i2b2.OntologyStore.table.refresh = () => {
 };
 
 // ---------------------------------------------------------------------------------------
-window.addEventListener("I2B2_READY", () => {
+window.addEventListener('I2B2_READY', () => {
     i2b2.OntologyStore.table.datatables = $('#OntologyStore-ProductTable').DataTable({
+        pageLength: 25,
         columnDefs: [
             {targets: 0, className: 'ontstore-title', width: '40%'},
             {targets: 4, className: 'text-center ontstore-network-chkbx', width: '75px', orderable: false},
@@ -427,9 +449,9 @@ window.addEventListener("I2B2_READY", () => {
         ]
     });
 
-    $('#OntologyStore-SyncFromCloud').on('click', i2b2.OntologyStore.syncFromCloud.clickAction);
-    $('#OntologyStore-ExecuteBtn').on('click', i2b2.OntologyStore.execute.clickAction);
+    $('#OntologyStore-SyncFromCloud').on('click', i2b2.OntologyStore.syncFromCloud.onClick);
+    $('#OntologyStore-ExecuteBtn').on('click', i2b2.OntologyStore.execute.onClick);
 
     // fetch ontologies from cloud
-    i2b2.OntologyStore.syncFromCloud.clickAction();
+    i2b2.OntologyStore.syncFromCloud.onClick();
 });
