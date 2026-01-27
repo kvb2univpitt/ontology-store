@@ -100,7 +100,7 @@ public class OntologyInstallService extends AbstractOntologyService {
 
             for (ProductItem productItem : productsToInstall) {
                 try {
-                    install(downloadDirectory, productItem, project, ontJdbcTemplate, crcJdbcTemplate, summaries);
+                    install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
                     summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
@@ -110,7 +110,7 @@ public class OntologyInstallService extends AbstractOntologyService {
         }
     }
 
-    private void install(String downloadDirectory, ProductItem productItem, String project, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummaryType> summaries) throws InstallationException {
+    private void install(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummaryType> summaries) throws InstallationException {
         File productFile = fileSysService.getProductFile(downloadDirectory, productItem).toFile();
         try (ZipFile zipFile = new ZipFile(productFile)) {
             Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
@@ -180,6 +180,7 @@ public class OntologyInstallService extends AbstractOntologyService {
                         validProductItems.add(productItem);
                     } catch (ZipFileValidationException exception) {
                         summaries.add(createActionSummary(title, ACTION_TYPE, false, false, exception.getMessage()));
+                        fileSysService.createInstallFailedIndicatorFile(downloadDirectory, productItem.getId(), exception.getMessage());
                     }
                 }
             } else if (fileSysService.hasFailedDownload(downloadDirectory, productFolder)) {
