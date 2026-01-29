@@ -238,6 +238,7 @@ i2b2.OntologyStore.execute.onClick = () => {
 i2b2.OntologyStore.productToXml = (product) => {
     return `            <product_action>
                 <id>${product.id}</id>
+                <title>${product.title}</title>
                 <include_network_package>${product.includeNetworkPackage}</include_network_package>
                 <download>${product.download}</download>
                 <install>${product.install}</install>
@@ -301,6 +302,7 @@ i2b2.OntologyStore.getSelectedProducts = (products) => {
 
         data.push({
             id: product.id,
+            title: product.title,
             includeNetworkPackage: includeNetChkbx.checked,
             download: downloadChkbx.disabled ? false : downloadChkbx.checked,
             install: installChkbx.disabled ? false : installChkbx.checked,
