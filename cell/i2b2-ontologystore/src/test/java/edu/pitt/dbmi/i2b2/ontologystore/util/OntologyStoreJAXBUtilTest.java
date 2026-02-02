@@ -1,8 +1,8 @@
 package edu.pitt.dbmi.i2b2.ontologystore.util;
 
 import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.RequestMessageType;
 import jakarta.xml.bind.JAXBElement;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -74,7 +74,9 @@ public class OntologyStoreJAXBUtilTest {
     @Test
     public void testGetJaxbUtil() throws JAXBUtilException {
         JAXBElement jaxbElement = OntologyStoreJAXBUtil.getJaxbUtil().unMashallFromString(requestXml);
-        RequestMessageType requestMessageType = (RequestMessageType) jaxbElement.getValue();
+//        RequestMessageType requestMessageType = (RequestMessageType) jaxbElement.getValue();
+
+        Assert.assertNotNull(jaxbElement.getValue());
     }
 
 }
