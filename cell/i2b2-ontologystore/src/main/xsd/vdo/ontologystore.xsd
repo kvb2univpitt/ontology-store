@@ -31,6 +31,8 @@
             <xs:element name="started" type="xs:boolean" default="false"/>
             <xs:element name="failed" type="xs:boolean" default="false"/>
             <xs:element name="disabled" type="xs:boolean" default="false"/>
+            <xs:element name="download_pending" type="xs:boolean" default="false"/>
+            <xs:element name="install_pending" type="xs:boolean" default="false"/>
             <xs:element name="status_detail" type="xs:string" />
         </xs:sequence>
     </xs:complexType>

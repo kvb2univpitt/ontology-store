@@ -26,7 +26,7 @@ i2b2.OntologyStore.modal = {
         }
     },
     summary: {
-        numOfHeaders: 4,
+        numOfHeaders: 5,
         getSummaryProgress: function (summary) {
             if (summary.actionType === 'Download') {
                 if (summary.inProgress === 'true') {
@@ -63,11 +63,10 @@ i2b2.OntologyStore.modal = {
 
                 let summary = data[i];
                 columns[0].innerHTML = summary.title;
-                columns[1].innerHTML = summary.actionType;
-                columns[2].innerHTML = this.getSummaryProgress(summary);
-                columns[3].innerHTML = summary.detail;
-
-                columns[2].className = "text-center";
+                columns[1].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.includeNetworkPackage ? 'checked="checked"' : ''} disabled="disabled" />`;
+                columns[2].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.download ? 'checked="checked"' : ''} disabled="disabled" />`;
+                columns[3].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.install ? 'checked="checked"' : ''} disabled="disabled" />`;
+                columns[4].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.disableEnable ? 'checked="checked"' : ''} disabled="disabled" />`;
             }
 
             $('#OntologyStore-SummaryModal').modal('show');
@@ -101,6 +100,8 @@ i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
         obj.started = 'true' === product.getElementsByTagName('started')[0].childNodes[0].nodeValue;
         obj.failed = 'true' === product.getElementsByTagName('failed')[0].childNodes[0].nodeValue;
         obj.disabled = 'true' === product.getElementsByTagName('disabled')[0].childNodes[0].nodeValue;
+        obj.downloadPending = 'true' === product.getElementsByTagName('download_pending')[0].childNodes[0].nodeValue;
+        obj.installPending = 'true' === product.getElementsByTagName('install_pending')[0].childNodes[0].nodeValue;
 
         const statusDetail = product.getElementsByTagName('status_detail');
         obj.statusDetail = (statusDetail.length > 0) ? statusDetail[0].childNodes[0].nodeValue : '';
@@ -145,16 +146,24 @@ i2b2.OntologyStore.execute.enableDisable = () => {
 i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
     let models = [];
     const doc = new DOMParser().parseFromString(resultXmlStr, 'text/xml');
-    let actionSummaries = doc.getElementsByTagName('action_summary');
+    let actionSummaries = doc.getElementsByTagName('product_action');
     for (let i = 0; i < actionSummaries.length; i++) {
+//      <product_action>
+//          <id>act_vital_signs_v4</id>
+//          <title>ACT Vital Signs Ontology</title>
+//          <include_network_package>false</include_network_package>
+//          <download>true</download>
+//          <install>true</install>
+//          <disable_enable>false</disable_enable>
+//      </product_action>
         let actionSummary = actionSummaries[i];
 
         let obj = new Object;
         obj.title = actionSummary.getElementsByTagName('title')[0].childNodes[0].nodeValue;
-        obj.actionType = actionSummary.getElementsByTagName('action_type')[0].childNodes[0].nodeValue;
-        obj.inProgress = actionSummary.getElementsByTagName('in_progress')[0].childNodes[0].nodeValue;
-        obj.success = actionSummary.getElementsByTagName('success')[0].childNodes[0].nodeValue;
-        obj.detail = actionSummary.getElementsByTagName('detail')[0].childNodes[0].nodeValue;
+        obj.includeNetworkPackage = JSON.parse(actionSummary.getElementsByTagName('include_network_package')[0].childNodes[0].nodeValue);
+        obj.download = JSON.parse(actionSummary.getElementsByTagName('download')[0].childNodes[0].nodeValue);
+        obj.install = JSON.parse(actionSummary.getElementsByTagName('install')[0].childNodes[0].nodeValue);
+        obj.disableEnable = JSON.parse(actionSummary.getElementsByTagName('disable_enable')[0].childNodes[0].nodeValue);
 
         models.push(obj);
     }
@@ -170,7 +179,7 @@ i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
     setTimeout(() => {
         let data = i2b2.OntologyStore.execute.parseResults(resultXmlStr);
         for (let i = 0; i < data.length; i++) {
-            if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
+            if ((data[i].download) || (data[i].install) || (data[i].install)) {
                 i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
                 break;
             }
@@ -433,6 +442,18 @@ i2b2.OntologyStore.table.refresh = () => {
             columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" onclick="i2b2.OntologyStore.checkbox.installAction(${index})" />`;
         }
 
+        if (product.downloadPending && product.installPending) {
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" checked="checked" disabled="disabled" />`;
+            columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" checked="checked" disabled="disabled" />`;
+            columns[8] = `<span class="text-success fw-bold">Pending</span>`;
+        } else if (product.downloadPending) {
+            columns[6] = `<input type="checkbox" class="form-check-input" id="download-${index}" data-id="${index}" name="download" checked="checked" disabled="disabled" />`;
+            columns[8] = `<span class="text-success fw-bold">Pending</span>`;
+        } else if (product.installPending) {
+            columns[7] = `<input type="checkbox" class="form-check-input" id="install-${index}" data-id="${index}" name="install" checked="checked" disabled="disabled" />`;
+            columns[8] = `<span class="text-success fw-bold">Pending</span>`;
+        }
+
         datatables.row.add(columns);
     });
     datatables.draw();
@@ -441,7 +462,7 @@ i2b2.OntologyStore.table.refresh = () => {
 // ---------------------------------------------------------------------------------------
 window.addEventListener('I2B2_READY', () => {
     i2b2.OntologyStore.table.datatables = $('#OntologyStore-ProductTable').DataTable({
-        pageLength: 25,
+        pageLength: 6,
         columnDefs: [
             {targets: 0, className: 'ontstore-title', width: '40%'},
             {targets: 4, className: 'text-center ontstore-network-chkbx', width: '75px', orderable: false},

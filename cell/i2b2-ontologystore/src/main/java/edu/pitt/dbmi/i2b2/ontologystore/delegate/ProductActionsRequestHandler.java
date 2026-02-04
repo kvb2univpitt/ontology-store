@@ -20,22 +20,20 @@ package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
-import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyActionService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -50,21 +48,14 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private static final Log LOGGER = LogFactory.getLog(ProductActionsRequestHandler.class);
 
     private final ProductActionDataMessage productActionDataMsg;
-    private final OntologyDownloadService ontologyDownloadService;
-    private final OntologyInstallService ontologyInstallService;
-    private final OntologyDisableService ontologyDisableService;
+    private final OntologyFileService ontologyFileService;
+    private final OntologyActionService ontologyActionService;
 
-    public ProductActionsRequestHandler(
-            ProductActionDataMessage productActionDataMsg,
-            OntologyDownloadService ontologyDownloadService,
-            OntologyInstallService ontologyInstallService,
-            OntologyDisableService ontologyDisableService,
-            PmDBAccess pmDBAccess) {
+    public ProductActionsRequestHandler(ProductActionDataMessage productActionDataMsg, OntologyFileService ontologyFileService, OntologyActionService ontologyActionService, PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
-        this.ontologyDownloadService = ontologyDownloadService;
-        this.ontologyInstallService = ontologyInstallService;
-        this.ontologyDisableService = ontologyDisableService;
+        this.ontologyFileService = ontologyFileService;
+        this.ontologyActionService = ontologyActionService;
     }
 
     @Override
@@ -79,33 +70,48 @@ public class ProductActionsRequestHandler extends RequestHandler {
             return createNotAdminResponse(messageHeader);
         }
 
-        // get properties
-        String productListUrl = getProductListUrl();
-        String downloadDirectory = getDownloadDirectory(configureType);
+        // get requested actions from the client
+        List<ProductActionType> requestedActions = getRequestActions();
+        if (requestedActions.isEmpty()) {
+            return createResponse(messageHeader, new ProductActionsType());
+        }
 
-        List<ProductActionType> actions = new LinkedList<>();
+        // get all available ontologies from the cloud
+        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(getProductListUrl());
+        if (availableProducts.isEmpty()) {
+            return createResponse(messageHeader, new ProductActionsType());
+        }
+
+        // keep the requested actions to products that are in the available from the cloud
+        ProductActionsType reducedRequestActions = new ProductActionsType();
+        requestedActions.stream()
+                .filter(e -> availableProducts.containsKey(e.getId()))
+                .forEach(reducedRequestActions.getProductAction()::add);
+
+        ontologyActionService.executeActions(availableProducts, reducedRequestActions.getProductAction(), getDownloadDirectory(configureType));
+
+        return createResponse(messageHeader, reducedRequestActions);
+    }
+
+    private String createResponse(MessageHeaderType messageHeader, ProductActionsType productActionsType) throws I2B2Exception {
+        ResponseMessageType responseMessageType = MessageFactory
+                .buildResponseProductActionsType(messageHeader, productActionsType);
+
+        return MessageFactory.convertToXMLString(responseMessageType);
+    }
+
+    private List<ProductActionType> getRequestActions() throws I2B2Exception {
+        List<ProductActionType> requestedActions = new LinkedList<>();
+
         try {
             ProductActionsType productsType = productActionDataMsg.getProductActionsType();
-            actions.addAll(productsType.getProductAction());
+            requestedActions.addAll(productsType.getProductAction());
         } catch (JAXBUtilException exception) {
             LOGGER.error("Error setting up ProductActionsRequestHandler");
             throw new I2B2Exception("ProductActionsType not configured");
         }
 
-        ActionSummariesType actionSummariesType = new ActionSummariesType();
-        List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
-        try {
-            ontologyDownloadService.performDownload(downloadDirectory, productListUrl, actions, summaries);
-            ontologyInstallService.performInstallation(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
-            ontologyDisableService.performDisableEnable(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
-        } catch (InstallationException exception) {
-            throw new I2B2Exception(exception.getMessage());
-        }
-
-        ResponseMessageType responseMessageType = MessageFactory
-                .buildGetActionSummariesResponse(messageHeader, actionSummariesType);
-
-        return MessageFactory.convertToXMLString(responseMessageType);
+        return requestedActions;
     }
 
 }

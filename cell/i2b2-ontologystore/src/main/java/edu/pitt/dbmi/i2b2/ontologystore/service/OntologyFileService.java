@@ -25,6 +25,8 @@ import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductList;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  *
@@ -42,17 +45,18 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class OntologyFileService {
 
     private static final Log LOGGER = LogFactory.getLog(OntologyFileService.class);
 
     private final ObjectMapper objMapper = new ObjectMapper();
 
-    private final FileSysService fileSysService;
+    private final FileSystemService fileSystemService;
 
     @Autowired
-    public OntologyFileService(FileSysService fileSysService) {
-        this.fileSysService = fileSysService;
+    public OntologyFileService(FileSystemService fileSystemService) {
+        this.fileSystemService = fileSystemService;
     }
 
     public List<ProductType> getAvailableProducts(String downloadDirectory, String productListUrl) {
@@ -93,27 +97,37 @@ public class OntologyFileService {
 
     private void getStatus(String downloadDirectory, ProductType product, ProductItem productItem) {
         String productFolder = product.getId();
-        if (fileSysService.hasDirectory(downloadDirectory, productFolder)) {
-            if (fileSysService.hasFinshedDownload(downloadDirectory, productFolder) && fileSysService.isProductFileExists(downloadDirectory, productItem)) {
-                product.setDownloaded(true);
-                product.setIncludeNetworkPackage(fileSysService.hasNetworkFiles(downloadDirectory, productFolder));
+        Path productDir = Paths.get(downloadDirectory, productFolder);
+        Path productFile = getProductFile(productDir, productItem);
+        if (hasProductDirectory(productDir)) {
+            product.setDownloadPending(isDownloadPending(productDir));
+            product.setInstallPending(isInstallPending(productDir));
 
-                if (fileSysService.hasFinshedInstall(downloadDirectory, productFolder)) {
-                    product.setInstalled(true);
-                    if (fileSysService.hasOntologyDisabled(downloadDirectory, productFolder)) {
-                        product.setDisabled(true);
+            if (!product.isDownloadPending()) {
+                if (isDownloadFinshed(productDir, productFile)) {
+                    product.setDownloaded(true);
+                    product.setIncludeNetworkPackage(hasNetworkFileDirectory(productDir));
+
+                    if (!product.isInstallPending()) {
+                        if (isInstallFinshed(productDir)) {
+                            product.setInstalled(true);
+
+                            if (isDisabled(productDir)) {
+                                product.setDisabled(true);
+                            }
+                        } else if (isInstallFailed(productDir)) {
+                            product.setFailed(true);
+                            product.setStatusDetail(getInstallFailedMessage(productDir));
+                        } else if (isInstallStarted(productDir)) {
+                            product.setStarted(true);
+                        }
                     }
-                } else if (fileSysService.hasFailedInstall(downloadDirectory, productFolder)) {
+                } else if (isDownloadFailed(productDir)) {
                     product.setFailed(true);
-                    product.setStatusDetail(fileSysService.getFailedInstallMessage(downloadDirectory, productFolder));
-                } else if (fileSysService.hasStartedInstall(downloadDirectory, productFolder)) {
+                    product.setStatusDetail(getDownloadFailedMessage(productDir));
+                } else if (isDownloadStarted(productDir)) {
                     product.setStarted(true);
                 }
-            } else if (fileSysService.hasFailedDownload(downloadDirectory, productFolder)) {
-                product.setFailed(true);
-                product.setStatusDetail(fileSysService.getFailedDownloadMessage(downloadDirectory, productFolder));
-            } else if (fileSysService.hasStartedDownload(downloadDirectory, productFolder)) {
-                product.setStarted(true);
             }
         }
     }
@@ -139,6 +153,84 @@ public class OntologyFileService {
         }
 
         return productItems;
+    }
+
+    public Path getProductFile(Path productDir, ProductItem productItem) {
+        String fileURI = productItem.getFile();
+        String fileName = fileURI.substring(fileURI.lastIndexOf("/") + 1, fileURI.length());
+
+        return productDir.resolve(fileName);
+    }
+
+    public boolean createDirectoryIfNotExists(Path productDir) {
+        return fileSystemService.createDirectoryIfNotExists(productDir);
+    }
+
+    public boolean createDownloadPendingFile(Path productDir) {
+        return fileSystemService.createFile(SystemFiles.getDownloadPendingFile(productDir));
+    }
+
+    public boolean createInstallPendingFile(Path productDir) {
+        return fileSystemService.createFile(SystemFiles.getInstallPendingFile(productDir));
+    }
+
+    public String getDownloadFailedMessage(Path productDir) {
+        Path file = SystemFiles.getDownloadFailedFile(productDir);
+        String defaultErrorMessage = "Download previously failed.";
+
+        return fileSystemService.getResourceFileContents(file, defaultErrorMessage);
+    }
+
+    public String getInstallFailedMessage(Path productDir) {
+        Path file = SystemFiles.getInstallFailedFile(productDir);
+        String defaultErrorMessage = "Install previously failed.";
+
+        return fileSystemService.getResourceFileContents(file, defaultErrorMessage);
+    }
+
+    public boolean hasNetworkFileDirectory(Path productDir) {
+        return fileSystemService.hasDirectory(SystemFiles.getNetworkDirectory(productDir));
+    }
+
+    public boolean hasProductDirectory(Path productDir) {
+        return fileSystemService.hasDirectory(productDir);
+    }
+
+    public boolean isDownloadPending(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getDownloadPendingFile(productDir));
+    }
+
+    public boolean isDownloadFinshed(Path productDir, Path productFile) {
+        return fileSystemService.hasFile(SystemFiles.getDownloadFinishedFile(productDir))
+                && fileSystemService.hasFile(productFile);
+    }
+
+    public boolean isDownloadFailed(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getDownloadFailedFile(productDir));
+    }
+
+    public boolean isDownloadStarted(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getDownloadStartedFile(productDir));
+    }
+
+    public boolean isInstallPending(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getInstallPendingFile(productDir));
+    }
+
+    public boolean isInstallFinshed(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getInstallFinishedFile(productDir));
+    }
+
+    public boolean isInstallFailed(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getInstallFailedFile(productDir));
+    }
+
+    public boolean isInstallStarted(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getInstallStartedFile(productDir));
+    }
+
+    public boolean isDisabled(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getDisabledFile(productDir));
     }
 
 }

@@ -109,12 +109,16 @@ public abstract class AbstractWebService implements ServiceLifeCycle {
                 ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, runnable.getException().getMessage());
                 responseData = MessageFactory.convertToXMLString(responseMsgType);
             } else if (!runnable.isJobCompleted()) {
-                String timeOuterror = "Remote server timed out \n"
-                        + "Result waittime = " + waitTime
-                        + " ms elapsed,\nPlease try again";
-                LOGGER.error(timeOuterror);
+                String errorMsg = """
+                                  Remote server timed out.
+                                  Result waittime = %d ms elapsed.
+                                  Please try again.
+                                  """;
+                String timeOutError = String.format(errorMsg, waitTime);
 
-                ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, timeOuterror);
+                LOGGER.error(timeOutError);
+
+                ResponseMessageType responseMsgType = MessageFactory.doBuildErrorResponse(null, timeOutError);
                 responseData = MessageFactory.convertToXMLString(responseMsgType);
             } else {
                 LOGGER.error("ontologystore data response is null");
