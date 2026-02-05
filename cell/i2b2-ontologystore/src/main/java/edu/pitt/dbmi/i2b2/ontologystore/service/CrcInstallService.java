@@ -29,7 +29,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
 
 /**
  *
@@ -37,6 +39,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class CrcInstallService extends AbstractInstallService {
 
     private static final Log LOGGER = LogFactory.getLog(CrcInstallService.class);
@@ -44,8 +47,9 @@ public class CrcInstallService extends AbstractInstallService {
     private static final String QT_BREAKDOWN_PATH_TABLE = "qt_breakdown_path";
     protected static final String QT_BREAKDOWN_PATH_TABLE_PK = "name";
 
-    public CrcInstallService(FileSysService fileSysService) {
-        super(fileSysService);
+    @Autowired
+    public CrcInstallService(FileSystemService fileSystemService) {
+        super(fileSystemService);
     }
 
     public void createConceptDimension(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate crcJdbcTemplate) throws InstallationException {

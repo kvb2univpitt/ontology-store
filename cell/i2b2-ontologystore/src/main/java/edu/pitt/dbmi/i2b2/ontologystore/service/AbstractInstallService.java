@@ -68,10 +68,10 @@ public abstract class AbstractInstallService {
 
     protected static final int DEFAULT_BATCH_SIZE = 50;
 
-    protected final FileSysService fileSysService;
+    protected final FileSystemService fileSystemService;
 
-    public AbstractInstallService(FileSysService fileSysService) {
-        this.fileSysService = fileSysService;
+    public AbstractInstallService(FileSystemService fileSystemService) {
+        this.fileSystemService = fileSystemService;
     }
 
     protected void deleteFromTableAccess(JdbcTemplate jdbcTemplate, String table, String columnName, List<String> tableNames) throws SQLException, IOException {
@@ -207,7 +207,7 @@ public abstract class AbstractInstallService {
                     }
 
                     if (count == DEFAULT_BATCH_SIZE) {
-                       stmt.executeBatch();
+                        stmt.executeBatch();
                         conn.commit();
                         stmt.clearBatch();
                         count = 0;
@@ -277,7 +277,7 @@ public abstract class AbstractInstallService {
     }
 
     protected void createTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
-        String query = fileSysService.getResourceFileContents(file);
+        String query = fileSystemService.getResourceFileContents(file);
 
         jdbcTemplate.execute(query.replaceAll("I2B2", tableName));
     }
@@ -296,7 +296,7 @@ public abstract class AbstractInstallService {
     }
 
     protected void createTableIndexes(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
-        List<String> queries = fileSysService.getResourceFileContentByLines(file);
+        List<String> queries = fileSystemService.getResourceFileContentByLines(file);
         for (String query : queries) {
             // skip lines that are commented out
             if (query.startsWith("--")) {

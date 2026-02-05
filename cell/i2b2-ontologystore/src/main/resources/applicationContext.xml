@@ -22,12 +22,12 @@
     <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess" />
 
     <!-- provide specific services -->
-    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
+    <bean id="fileSystemService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSystemService" />
     <bean id="ontologyFileService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService" />
-    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
-    <bean id="ontologyInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
     <bean id="crcInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallService" />
     <bean id="metadataInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.MetadataInstallService" />
+    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
+    <bean id="ontologyInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
     <bean id="ontologyDisableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
