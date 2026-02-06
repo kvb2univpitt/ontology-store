@@ -23,16 +23,24 @@ import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -56,6 +64,52 @@ public class MetadataInstallService extends AbstractInstallService {
     @Autowired
     public MetadataInstallService(FileSystemService fileSystemService) {
         super(fileSystemService);
+    }
+
+    public void updateTableAccessVisualAttributes(Map<String, String> attrs, JdbcTemplate ontJdbcTemplate) throws SQLException {
+        DataSource dataSource = ontJdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            String sql = String.format("UPDATE %s.table_access SET c_visualattributes = ? WHERE c_table_name = ?", conn.getSchema());
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                for (String tableName : attrs.keySet()) {
+                    stmt.setString(1, attrs.get(tableName));
+                    stmt.setString(2, tableName);
+
+                    stmt.execute();
+                }
+            }
+        }
+    }
+
+    public Map<String, String> getTableAccessVisualAttributes(PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws SQLException {
+        DataSource dataSource = ontJdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return Collections.EMPTY_MAP;
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            try {
+                String sql = String.format("SELECT c_table_name,c_visualattributes FROM %s.table_access WHERE c_table_name IN (:values)", conn.getSchema());
+
+                NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(ontJdbcTemplate);
+                return namedParameterJdbcTemplate.query(sql, new MapSqlParameterSource("values", getMetadataTableNames(packageFile)), (ResultSet rs) -> {
+                    Map<String, String> map = new HashMap<>();
+                    while (rs.next()) {
+                        map.put(rs.getString(1), rs.getString(2));
+                    }
+
+                    return map;
+                });
+            } catch (Exception exception) {
+                LOGGER.error("", exception);
+            }
+        }
+
+        return Collections.EMPTY_MAP;
     }
 
     public void deleteFromTableAccessTable(PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws IOException, SQLException {
@@ -109,7 +163,7 @@ public class MetadataInstallService extends AbstractInstallService {
         }
     }
 
-    private List<String> getMetadataTableNames(PackageFile packageFile) {
+    public List<String> getMetadataTableNames(PackageFile packageFile) {
         List<String> tableNames = new LinkedList<>();
 
         String[] ontologyFiles = packageFile.getDomainOntologies();

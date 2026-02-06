@@ -97,8 +97,8 @@ public class OntologyDisableService extends AbstractOntologyService {
         Path productDir = Paths.get(downloadDirectory, productFolder);
         File productFile = ontologyFileService.getProductFile(productDir, productItem).toFile();
 
-        // if it was previous disabled, we want to enable it now
-        boolean enable = ontologyFileService.isDisabled(productDir);
+        // active is true if previously disabled
+        boolean active = ontologyFileService.isDisabled(productDir);
 
         try (ZipFile zipFile = new ZipFile(productFile)) {
             Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
@@ -106,29 +106,38 @@ public class OntologyDisableService extends AbstractOntologyService {
             ZipEntry packageJsonZipEntry = zipEntries.get("package.json");
             PackageFile packageFile = ZipFileUtils.getPackageFile(packageJsonZipEntry, zipFile);
 
-            if (enable) {
-                String rootFolder = new File(packageJsonZipEntry.getName()).getParent();
+            try {
+                Map<String, String> attrs = metadataInstallService.getTableAccessVisualAttributes(packageFile, ontJdbcTemplate);
+                attrs.forEach((k, v) -> attrs.replace(k, changeVisualAttribute(v, active)));
 
-                try {
-                    metadataInstallService.insertIntoTableAccessTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                metadataInstallService.updateTableAccessVisualAttributes(attrs, ontJdbcTemplate);
+
+                if (active) {
                     ontologyFileService.setEnabled(productDir);
                     summaries.add(createActionSummary(productItem.getTitle(), ENABLE_ACTION_TYPE, false, true, "Enabled."));
-                } catch (Exception exception) {
-                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Enable Ontology Failed."));
-                }
-            } else {
-                try {
-                    metadataInstallService.deleteFromTableAccessTable(packageFile, ontJdbcTemplate);
+                } else {
                     ontologyFileService.setDisabled(productDir);
                     summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, true, "Disabled."));
-                } catch (Exception exception) {
-                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Disable Ontology Failed."));
                 }
+            } catch (Exception exception) {
+                String errMsg = active ? "Enable Ontology Failed." : "Disable Ontology Failed.";
+                summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, errMsg));
             }
         } catch (IOException exception) {
             // this error occurs when the product file is not a zip file.
             LOGGER.error("", exception);
         }
+    }
+
+    private String changeVisualAttribute(String attribute, boolean active) {
+        if (attribute == null || attribute.length() < 2) {
+            return attribute;
+        }
+
+        char[] value = attribute.toCharArray();
+        value[1] = active ? 'A' : 'H';
+
+        return new String(value);
     }
 
     private List<ProductItem> getValidProductsToDisableEnable(

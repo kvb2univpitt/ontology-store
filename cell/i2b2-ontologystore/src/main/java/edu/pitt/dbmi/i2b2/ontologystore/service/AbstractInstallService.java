@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.sql.DataSource;
@@ -381,13 +380,14 @@ public abstract class AbstractInstallService {
 
     protected String createInsertStatement(String schema, String tableName, List<String> columnNames) {
         String columns = columnNames.stream().collect(Collectors.joining(","));
-        String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
+//        String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
+        String placeholder = String.join(",", Collections.nCopies(columnNames.size(), "?"));
 
         return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columns, placeholder);
     }
 
     protected String createDeleteStatement(String schema, String tableName, String columnName) {
-        return String.format("DELETE FROM  %s.%s WHERE %s = ?", schema, tableName, columnName);
+        return String.format("DELETE FROM %s.%s WHERE %s = ?", schema, tableName, columnName);
     }
 
 }
