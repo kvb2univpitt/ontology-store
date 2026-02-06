@@ -48,6 +48,7 @@
 
     <xs:complexType name="actionSummaryType">
         <xs:sequence>
+            <xs:element name="id" type="xs:string" />
             <xs:element name="title" type="xs:string" />
             <xs:element name="action_type" type="xs:string" />
             <xs:element name="in_progress" type="xs:boolean" default="false"/>

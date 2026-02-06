@@ -114,14 +114,14 @@ public class OntologyDisableService extends AbstractOntologyService {
 
                 if (active) {
                     ontologyFileService.setEnabled(productDir);
-                    summaries.add(createActionSummary(productItem.getTitle(), ENABLE_ACTION_TYPE, false, true, "Enabled."));
+                    summaries.add(createActionSummary(productItem, ENABLE_ACTION_TYPE, false, true, "Enabled."));
                 } else {
                     ontologyFileService.setDisabled(productDir);
-                    summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, true, "Disabled."));
+                    summaries.add(createActionSummary(productItem, DISABLE_ACTION_TYPE, false, true, "Disabled."));
                 }
             } catch (Exception exception) {
                 String errMsg = active ? "Enable Ontology Failed." : "Disable Ontology Failed.";
-                summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, errMsg));
+                summaries.add(createActionSummary(productItem, DISABLE_ACTION_TYPE, false, false, errMsg));
             }
         } catch (IOException exception) {
             // this error occurs when the product file is not a zip file.
@@ -165,7 +165,7 @@ public class OntologyDisableService extends AbstractOntologyService {
             if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile) && ontologyFileService.isInstallFinshed(productDir)) {
                 validProductItems.add(productItem);
             } else {
-                summaries.add(createActionSummary(productItem.getTitle(), DISABLE_ACTION_TYPE, false, false, "Ontology not installed."));
+                summaries.add(createActionSummary(productItem, DISABLE_ACTION_TYPE, false, false, "Ontology not installed."));
             }
         });
 

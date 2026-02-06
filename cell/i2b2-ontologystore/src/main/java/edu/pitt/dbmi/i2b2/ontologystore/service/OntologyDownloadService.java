@@ -78,11 +78,11 @@ public class OntologyDownloadService extends AbstractOntologyService {
             String sha256Checksum = ontologyFileService.createSha256Checksum(productDir, fileURI);
             if (sha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
                 ontologyFileService.setDownloadFinished(productDir);
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Downloaded successfully."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Downloaded successfully."));
             } else {
                 String errorMsg = "File verification failed.  SHA-256 checksum does not match.";
                 ontologyFileService.setDownloadFailed(productDir, errorMsg);
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
             }
         });
     }
@@ -118,7 +118,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
                                 LOGGER.error("", exception);
                             }
                         } else {
-                            summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
+                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
                         }
                     }
                     downloadedProducts.add(productItem);
@@ -126,10 +126,10 @@ public class OntologyDownloadService extends AbstractOntologyService {
                     LOGGER.error("", exception);
                     String errorMsg = "Unable to download from the given URL.";
                     ontologyFileService.setDownloadFailed(productDir, errorMsg);
-                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
                 }
             } else {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to create directories for download."));
             }
         });
 
@@ -167,13 +167,13 @@ public class OntologyDownloadService extends AbstractOntologyService {
                 Path productFile = ontologyFileService.getProductFile(productDir, productItem);
                 if (ontologyFileService.hasDirectory(productDir)) {
                     if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already downloaded."));
                         return;
                     } else if (ontologyFileService.isDownloadFailed(productDir)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
                         return;
                     } else if (ontologyFileService.isDownloadStarted(productDir)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, true, false, "Download already started."));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Download already started."));
                         return;
                     }
                 }

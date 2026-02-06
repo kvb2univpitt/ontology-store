@@ -108,7 +108,7 @@ public class OntologyInstallService extends AbstractOntologyService {
                     install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
-                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
                     ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
                 }
             }
@@ -131,9 +131,9 @@ public class OntologyInstallService extends AbstractOntologyService {
                 metadataInstallService.insertIntoSchemesTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
                 metadataInstallService.insertIntoTableAccessTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
 
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Metadata Installed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Metadata Installed."));
             } catch (InstallationException exception) {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
 
                 throw exception;
             }
@@ -142,9 +142,9 @@ public class OntologyInstallService extends AbstractOntologyService {
                 crcInstallService.createConceptDimension(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
                 crcInstallService.insertIntoQtBreakdownPathTable(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
 
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "CRC Data Installed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "CRC Data Installed."));
             } catch (InstallationException exception) {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "CRC Data Installation Failed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "CRC Data Installation Failed."));
 
                 throw exception;
             }
@@ -174,34 +174,33 @@ public class OntologyInstallService extends AbstractOntologyService {
             Path productDir = Paths.get(downloadDirectory, productFolder);
             Path productFile = ontologyFileService.getProductFile(productDir, productItem);
 
-            String title = productItem.getTitle();
             if (ontologyFileService.hasDirectory(productDir)) {
                 if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
                     if (ontologyFileService.isInstallFinshed(productDir)) {
-                        summaries.add(createActionSummary(title, ACTION_TYPE, false, true, "Already Installed."));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already Installed."));
                     } else if (ontologyFileService.isInstallFailed(productDir)) {
-                        summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Installation previously failed."));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Installation previously failed."));
                     } else if (ontologyFileService.isInstallStarted(productDir)) {
-                        summaries.add(createActionSummary(title, ACTION_TYPE, true, false, "Installation already started."));
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Installation already started."));
                     } else {
                         ZipFileValidation zipFileValidation = new ZipFileValidation(ontologyFileService.getProductFile(productDir, productItem));
                         try {
                             zipFileValidation.validate();
                             validProductItems.add(productItem);
                         } catch (ZipFileValidationException exception) {
-                            summaries.add(createActionSummary(title, ACTION_TYPE, false, false, exception.getMessage()));
+                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, exception.getMessage()));
                             ontologyFileService.setInstallFailed(productDir, exception.getMessage());
                         }
                     }
                 } else if (ontologyFileService.isDownloadFailed(productDir)) {
-                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
                 } else if (ontologyFileService.isDownloadStarted(productDir)) {
-                    summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Download not finished."));
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Download not finished."));
                 } else {
-                    summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Has not been downloaded."));
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
                 }
             } else {
-                summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Has not been downloaded."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
             }
         });
 
