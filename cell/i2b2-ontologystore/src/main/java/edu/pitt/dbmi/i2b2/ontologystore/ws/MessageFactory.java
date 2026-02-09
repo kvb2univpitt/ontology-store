@@ -215,4 +215,16 @@ public class MessageFactory {
         return createResponseMessageType(messageHeaderType, respHeader, bodyType);
     }
 
+    public static ResponseMessageType buildProductActionsResponse(MessageHeaderType messageHeaderType, ProductActionsType value) {
+        ResponseHeaderType respHeader = createResponseHeader("DONE", "OntologyStore processing completed");
+
+        BodyType bodyType = new BodyType();
+        if (value != null) {
+            edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory of = new edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ObjectFactory();
+            bodyType.getAny().add(of.createProductActions(value));
+        }
+
+        return createResponseMessageType(messageHeaderType, respHeader, bodyType);
+    }
+
 }

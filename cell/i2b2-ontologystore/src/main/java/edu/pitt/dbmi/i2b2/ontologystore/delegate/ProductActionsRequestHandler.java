@@ -24,18 +24,17 @@ import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummariesType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -50,20 +49,17 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private static final Log LOGGER = LogFactory.getLog(ProductActionsRequestHandler.class);
 
     private final ProductActionDataMessage productActionDataMsg;
-    private final OntologyDownloadService ontologyDownloadService;
-    private final OntologyInstallService ontologyInstallService;
+    private final AsyncActionService asyncActionService;
     private final OntologyDisableService ontologyDisableService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
-            OntologyDownloadService ontologyDownloadService,
-            OntologyInstallService ontologyInstallService,
+            AsyncActionService asyncActionService,
             OntologyDisableService ontologyDisableService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
-        this.ontologyDownloadService = ontologyDownloadService;
-        this.ontologyInstallService = ontologyInstallService;
+        this.asyncActionService = asyncActionService;
         this.ontologyDisableService = ontologyDisableService;
     }
 
@@ -83,27 +79,29 @@ public class ProductActionsRequestHandler extends RequestHandler {
         String productListUrl = getProductListUrl();
         String downloadDirectory = getDownloadDirectory(configureType);
 
-        List<ProductActionType> actions = new LinkedList<>();
+        ProductActionsType productActions = new ProductActionsType();
         try {
             ProductActionsType productsType = productActionDataMsg.getProductActionsType();
-            actions.addAll(productsType.getProductAction());
+            productActions.getProductAction().addAll(productsType.getProductAction());
         } catch (JAXBUtilException exception) {
             LOGGER.error("Error setting up ProductActionsRequestHandler");
             throw new I2B2Exception("ProductActionsType not configured");
         }
 
-        ActionSummariesType actionSummariesType = new ActionSummariesType();
-        List<ActionSummaryType> summaries = actionSummariesType.getActionSummary();
+        List<ProductActionType> actions = productActions.getProductAction();
+        String projectId = messageHeader.getProjectId();
+        List<ActionSummaryType> summaries = new LinkedList<>();
         try {
-            ontologyDownloadService.performDownload(downloadDirectory, productListUrl, actions, summaries);
-            ontologyInstallService.performInstallation(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
-            ontologyDisableService.performDisableEnable(downloadDirectory, messageHeader.getProjectId(), productListUrl, actions, summaries);
+            ontologyDisableService.performDisableEnable(downloadDirectory, projectId, productListUrl, actions, summaries);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }
 
+        CompletableFuture<List<ActionSummaryType>> taskResult = asyncActionService.performActions(projectId, downloadDirectory, productListUrl, actions);
+        taskResult.thenAccept(summaries::addAll);
+
         ResponseMessageType responseMessageType = MessageFactory
-                .buildGetActionSummariesResponse(messageHeader, actionSummariesType);
+                .buildProductActionsResponse(messageHeader, productActions);
 
         return MessageFactory.convertToXMLString(responseMessageType);
     }

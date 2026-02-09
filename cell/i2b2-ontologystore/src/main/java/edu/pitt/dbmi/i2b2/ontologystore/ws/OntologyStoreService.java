@@ -22,14 +22,11 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
+import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
-import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,26 +39,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class OntologyStoreService extends AbstractWebService {
 
-    private static final Log LOGGER = LogFactory.getLog(OntologyStoreService.class);
-
     private final PmDBAccess pmDBAccess;
     private final OntologyFileService ontologyFileService;
-    private final OntologyDownloadService ontologyDownloadService;
-    private final OntologyInstallService ontologyInstallService;
     private final OntologyDisableService ontologyDisableService;
+    private final AsyncActionService asyncActionService;
 
     @Autowired
     public OntologyStoreService(
             PmDBAccess pmDBAccess,
             OntologyFileService ontologyFileService,
-            OntologyDownloadService ontologyDownloadService,
-            OntologyInstallService ontologyInstallService,
-            OntologyDisableService ontologyDisableService) {
+            OntologyDisableService ontologyDisableService,
+            AsyncActionService asyncActionService) {
         this.pmDBAccess = pmDBAccess;
         this.ontologyFileService = ontologyFileService;
-        this.ontologyDownloadService = ontologyDownloadService;
-        this.ontologyInstallService = ontologyInstallService;
         this.ontologyDisableService = ontologyDisableService;
+        this.asyncActionService = asyncActionService;
     }
 
     public OMElement getProducts(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -90,7 +82,7 @@ public class OntologyStoreService extends AbstractWebService {
         long waitTime = -1;
 
         return execute(
-                new ProductActionsRequestHandler(productActionDataMsg, ontologyDownloadService, ontologyInstallService, ontologyDisableService, pmDBAccess),
+                new ProductActionsRequestHandler(productActionDataMsg, asyncActionService, ontologyDisableService, pmDBAccess),
                 waitTime);
     }
 
