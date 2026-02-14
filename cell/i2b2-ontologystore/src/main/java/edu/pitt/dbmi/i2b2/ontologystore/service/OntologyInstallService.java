@@ -81,36 +81,34 @@ public class OntologyInstallService extends AbstractOntologyService {
         actions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
 
         List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, actions, summaries);
-        if (!productsToInstall.isEmpty()) {
-            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
-            String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
-            if (ontJNDIName == null || crcJNDIName == null) {
-                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
-            }
+        String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
+        String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
+        if (ontJNDIName == null || crcJNDIName == null) {
+            throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
+        }
 
-            DataSource ontDataSource = getDataSource(ontJNDIName);
-            DataSource crcDataSource = getDataSource(crcJNDIName);
-            if (ontDataSource == null || crcDataSource == null) {
-                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
-            }
+        DataSource ontDataSource = getDataSource(ontJNDIName);
+        DataSource crcDataSource = getDataSource(crcJNDIName);
+        if (ontDataSource == null || crcDataSource == null) {
+            throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
+        }
 
-            // prepare for installation
-            productsToInstall.stream()
-                    .map(ProductItem::getId)
-                    .map(productFolder -> Paths.get(downloadDirectory, productFolder))
-                    .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
+        // prepare for installation
+        productsToInstall.stream()
+                .map(ProductItem::getId)
+                .map(productFolder -> Paths.get(downloadDirectory, productFolder))
+                .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
 
-            JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
-            JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
+        JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
+        JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
 
-            for (ProductItem productItem : productsToInstall) {
-                try {
-                    install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
-                } catch (Exception exception) {
-                    LOGGER.error("", exception);
-                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
-                    ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
-                }
+        for (ProductItem productItem : productsToInstall) {
+            try {
+                install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
+            } catch (Exception exception) {
+                LOGGER.error("", exception);
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
             }
         }
     }
