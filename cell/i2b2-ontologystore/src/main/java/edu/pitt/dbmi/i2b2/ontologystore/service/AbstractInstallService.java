@@ -62,8 +62,18 @@ public abstract class AbstractInstallService {
 
     protected static final String ACTION_TYPE = "Install";
 
+    protected static final String YYYYMMDD_REGX = "^\\d{4}/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])$";
+    protected static final String DDMMMYY_REGX = "^(0[1-9]|[12][0-9]|3[01])-(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)-(\\d{2})$";
+    protected static final String YYYYMMDD_DASH_REGX = "^\\d{4}-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$";
+
     protected static final Pattern TAB_DELIM = Pattern.compile("\t");
-    protected static final DateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MMM-yy");
+    protected static final Pattern YYYYMMDD_PATTERN = Pattern.compile(YYYYMMDD_REGX);
+    protected static final Pattern DDMMMYY_PATTERN = Pattern.compile(DDMMMYY_REGX);
+    protected static final Pattern YYYYMMDD_DASH_PATTERN = Pattern.compile(YYYYMMDD_DASH_REGX);
+
+    protected static final DateFormat YYYYMMDD_DF = new SimpleDateFormat("yyyy/mm/dd");
+    protected static final DateFormat DDMMMYY_DF = new SimpleDateFormat("dd-MMM-yy");
+    protected static final DateFormat YYYYMMDD_DASH_DF = new SimpleDateFormat("yyyy-mm-dd");
 
     protected static final int DEFAULT_BATCH_SIZE = 50;
 
@@ -335,12 +345,33 @@ public abstract class AbstractInstallService {
                         stmt.setDouble(columnIndex, Double.parseDouble(value));
                     case Types.NUMERIC ->
                         stmt.setBigDecimal(columnIndex, new BigDecimal(value));
-                    case Types.DATE ->
-                        stmt.setDate(columnIndex, new Date(DATE_FORMATTER.parse(value).getTime()));
-                    case Types.TIME ->
-                        stmt.setTime(columnIndex, new Time(DATE_FORMATTER.parse(value).getTime()));
-                    case Types.TIMESTAMP ->
-                        stmt.setTimestamp(columnIndex, new Timestamp(DATE_FORMATTER.parse(value).getTime()));
+                    case Types.DATE -> {
+                        if (YYYYMMDD_PATTERN.matcher(value).matches()) {
+                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DF.parse(value).getTime()));
+                        } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
+                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                        } else {
+                            stmt.setDate(columnIndex, new Date(DDMMMYY_DF.parse(value).getTime()));
+                        }
+                    }
+                    case Types.TIME -> {
+                        if (YYYYMMDD_PATTERN.matcher(value).matches()) {
+                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DF.parse(value).getTime()));
+                        } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
+                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                        } else {
+                            stmt.setTime(columnIndex, new Time(DDMMMYY_DF.parse(value).getTime()));
+                        }
+                    }
+                    case Types.TIMESTAMP -> {
+                        if (YYYYMMDD_PATTERN.matcher(value).matches()) {
+                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DF.parse(value).getTime()));
+                        } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
+                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                        } else {
+                            stmt.setTimestamp(columnIndex, new Timestamp(DDMMMYY_DF.parse(value).getTime()));
+                        }
+                    }
                     case Types.BIT ->
                         stmt.setBoolean(columnIndex, value.equals("1"));
                     case Types.VARBINARY, Types.BINARY ->
