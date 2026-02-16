@@ -73,7 +73,7 @@ public class ZipFileValidation {
             validateConceptDimension(packageFile, rootFolder, zipEntries);
             validateDomainOntology(packageFile, rootFolder, zipEntries);
             validateScheme(packageFile, rootFolder, zipEntries);
-            validateBreakdownPath(packageFile, rootFolder, zipEntries);
+//            validateBreakdownPath(packageFile, rootFolder, zipEntries);
         } catch (IOException exception) {
             throw new ZipFileValidationException(String.format("Not a zip file: %s.", zipFileName));
         }
