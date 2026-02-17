@@ -436,12 +436,14 @@ i2b2.OntologyStore.table.refresh = () => {
         datatables.row.add(columns);
     });
     datatables.draw();
+
+    i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
 };
 
 // ---------------------------------------------------------------------------------------
 window.addEventListener('I2B2_READY', () => {
     i2b2.OntologyStore.table.datatables = $('#OntologyStore-ProductTable').DataTable({
-        pageLength: 25,
+//        pageLength: 10,
         columnDefs: [
             {targets: 0, className: 'ontstore-title', width: '40%'},
             {targets: 4, className: 'text-center ontstore-network-chkbx', width: '75px', orderable: false},
