@@ -49,6 +49,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.JdbcUtils;
 
 /**
  *
@@ -296,6 +297,19 @@ public abstract class AbstractInstallService {
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
                 return conn.getMetaData().getDatabaseProductName();
+            } catch (SQLException exception) {
+                LOGGER.error("", exception);
+            }
+        }
+
+        return "Unknown";
+    }
+
+    protected String getDatabaseVendorName(JdbcTemplate jdbcTemplate) {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource != null) {
+            try (Connection conn = dataSource.getConnection()) {
+                return JdbcUtils.commonDatabaseName(conn.getMetaData().getDatabaseProductName());
             } catch (SQLException exception) {
                 LOGGER.error("", exception);
             }
