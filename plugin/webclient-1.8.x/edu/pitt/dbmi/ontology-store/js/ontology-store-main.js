@@ -167,12 +167,6 @@ i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
 
     setTimeout(() => {
         let data = i2b2.OntologyStore.execute.parseResults(resultXmlStr);
-        for (let i = 0; i < data.length; i++) {
-            if ((data[i].actionType === 'Install') || (data[i].actionType === 'Enable') || (data[i].actionType === 'Disable')) {
-                i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
-                break;
-            }
-        }
 
         $('#OntologyStore-ExecuteBtn').prop("disabled", false);
         i2b2.OntologyStore.modal.progress.hide();
@@ -413,6 +407,8 @@ i2b2.OntologyStore.table.refresh = () => {
         datatables.row.add(columns);
     });
     datatables.draw();
+    
+    i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
 };
 
 // ---------------------------------------------------------------------------------------
