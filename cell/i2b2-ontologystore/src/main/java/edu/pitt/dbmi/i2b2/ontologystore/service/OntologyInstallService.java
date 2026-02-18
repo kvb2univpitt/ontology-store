@@ -29,6 +29,8 @@ import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileUtils;
 import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileValidation;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,18 +62,18 @@ public class OntologyInstallService extends AbstractOntologyService {
 
     private final MetadataInstallService metadataInstallService;
     private final CrcInstallService crcInstallService;
+    private final OntologyFileService ontologyFileService;
 
     @Autowired
     public OntologyInstallService(
             HiveDBAccess hiveDBAccess,
             MetadataInstallService metadataInstallService,
             CrcInstallService crcInstallService,
-            FileSysService fileSysService,
             OntologyFileService ontologyFileService) {
-        super(fileSysService, ontologyFileService);
         this.hiveDBAccess = hiveDBAccess;
         this.metadataInstallService = metadataInstallService;
         this.crcInstallService = crcInstallService;
+        this.ontologyFileService = ontologyFileService;
     }
 
     public synchronized void performInstallation(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
@@ -79,41 +81,41 @@ public class OntologyInstallService extends AbstractOntologyService {
         actions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
 
         List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, actions, summaries);
-        if (!productsToInstall.isEmpty()) {
-            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
-            String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
-            if (ontJNDIName == null || crcJNDIName == null) {
-                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
-            }
+        String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
+        String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
+        if (ontJNDIName == null || crcJNDIName == null) {
+            throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
+        }
 
-            DataSource ontDataSource = getDataSource(ontJNDIName);
-            DataSource crcDataSource = getDataSource(crcJNDIName);
-            if (ontDataSource == null || crcDataSource == null) {
-                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
-            }
+        DataSource ontDataSource = getDataSource(ontJNDIName);
+        DataSource crcDataSource = getDataSource(crcJNDIName);
+        if (ontDataSource == null || crcDataSource == null) {
+            throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
+        }
 
-            // prepare for installation
-            productsToInstall.stream()
-                    .map(ProductItem::getId)
-                    .forEach(id -> fileSysService.createInstallStartedIndicatorFile(downloadDirectory, id));
+        // prepare for installation
+        productsToInstall.stream()
+                .map(ProductItem::getId)
+                .map(productFolder -> Paths.get(downloadDirectory, productFolder))
+                .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
 
-            JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
-            JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
+        JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
+        JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
 
-            for (ProductItem productItem : productsToInstall) {
-                try {
-                    install(downloadDirectory, productItem, project, ontJdbcTemplate, crcJdbcTemplate, summaries);
-                } catch (Exception exception) {
-                    LOGGER.error("", exception);
-                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
-                    fileSysService.createInstallFailedIndicatorFile(downloadDirectory, productItem.getId(), exception.getMessage());
-                }
+        for (ProductItem productItem : productsToInstall) {
+            try {
+                install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
+            } catch (Exception exception) {
+                LOGGER.error("", exception);
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
             }
         }
     }
 
-    private void install(String downloadDirectory, ProductItem productItem, String project, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummaryType> summaries) throws InstallationException {
-        File productFile = fileSysService.getProductFile(downloadDirectory, productItem).toFile();
+    private void install(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummaryType> summaries) throws InstallationException {
+        Path productDir = Paths.get(downloadDirectory, productItem.getId());
+        File productFile = ontologyFileService.getProductFile(productDir, productItem).toFile();
         try (ZipFile zipFile = new ZipFile(productFile)) {
             Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
 
@@ -127,9 +129,9 @@ public class OntologyInstallService extends AbstractOntologyService {
                 metadataInstallService.insertIntoSchemesTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
                 metadataInstallService.insertIntoTableAccessTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
 
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Metadata Installed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Metadata Installed."));
             } catch (InstallationException exception) {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
 
                 throw exception;
             }
@@ -138,9 +140,9 @@ public class OntologyInstallService extends AbstractOntologyService {
                 crcInstallService.createConceptDimension(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
                 crcInstallService.insertIntoQtBreakdownPathTable(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
 
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "CRC Data Installed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "CRC Data Installed."));
             } catch (InstallationException exception) {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "CRC Data Installation Failed."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "CRC Data Installation Failed."));
 
                 throw exception;
             }
@@ -149,7 +151,7 @@ public class OntologyInstallService extends AbstractOntologyService {
             throw new InstallationException("", exception);
         }
 
-        fileSysService.createInstallFinishedIndicatorFile(downloadDirectory, productItem.getId());
+        ontologyFileService.setInstallFinished(productDir);
     }
 
     private List<ProductItem> getValidProductsToInstall(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
@@ -167,29 +169,36 @@ public class OntologyInstallService extends AbstractOntologyService {
 
         productsToInstall.values().forEach(productItem -> {
             String productFolder = productItem.getId();
-            String title = productItem.getTitle();
-            if (fileSysService.hasFinshedDownload(downloadDirectory, productFolder) && fileSysService.isProductFileExists(downloadDirectory, productItem)) {
-                if (fileSysService.hasFinshedInstall(downloadDirectory, productFolder)) {
-                    summaries.add(createActionSummary(title, ACTION_TYPE, false, true, "Already Installed."));
-                } else if (fileSysService.hasFailedInstall(downloadDirectory, productFolder)) {
-                    summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Installation previously failed."));
-                } else if (fileSysService.hasStartedInstall(downloadDirectory, productFolder)) {
-                    summaries.add(createActionSummary(title, ACTION_TYPE, true, false, "Installation already started."));
-                } else {
-                    ZipFileValidation zipFileValidation = new ZipFileValidation(fileSysService.getProductFile(downloadDirectory, productItem));
-                    try {
-                        zipFileValidation.validate();
-                        validProductItems.add(productItem);
-                    } catch (ZipFileValidationException exception) {
-                        summaries.add(createActionSummary(title, ACTION_TYPE, false, false, exception.getMessage()));
+            Path productDir = Paths.get(downloadDirectory, productFolder);
+            Path productFile = ontologyFileService.getProductFile(productDir, productItem);
+
+            if (ontologyFileService.hasDirectory(productDir)) {
+                if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
+                    if (ontologyFileService.isInstallFinshed(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already Installed."));
+                    } else if (ontologyFileService.isInstallFailed(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Installation previously failed."));
+                    } else if (ontologyFileService.isInstallStarted(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Installation already started."));
+                    } else {
+                        ZipFileValidation zipFileValidation = new ZipFileValidation(ontologyFileService.getProductFile(productDir, productItem));
+                        try {
+                            zipFileValidation.validate();
+                            validProductItems.add(productItem);
+                        } catch (ZipFileValidationException exception) {
+                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, exception.getMessage()));
+                            ontologyFileService.setInstallFailed(productDir, exception.getMessage());
+                        }
                     }
+                } else if (ontologyFileService.isDownloadFailed(productDir)) {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
+                } else if (ontologyFileService.isDownloadStarted(productDir)) {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Download not finished."));
+                } else {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
                 }
-            } else if (fileSysService.hasFailedDownload(downloadDirectory, productFolder)) {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(downloadDirectory, productFolder)));
-            } else if (fileSysService.hasStartedDownload(downloadDirectory, productFolder)) {
-                summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Download not finished."));
             } else {
-                summaries.add(createActionSummary(title, ACTION_TYPE, false, false, "Has not been downloaded."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
             }
         });
 

@@ -19,6 +19,7 @@
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,17 +35,10 @@ public abstract class AbstractOntologyService {
 
     private static final Log LOGGER = LogFactory.getLog(AbstractOntologyService.class);
 
-    protected final FileSysService fileSysService;
-    protected final OntologyFileService ontologyFileService;
-
-    public AbstractOntologyService(FileSysService fileSysService, OntologyFileService ontologyFileService) {
-        this.fileSysService = fileSysService;
-        this.ontologyFileService = ontologyFileService;
-    }
-
-    protected ActionSummaryType createActionSummary(String title, String actionType, boolean inProgress, boolean success, String detail) {
+    protected ActionSummaryType createActionSummary(ProductItem productItem, String actionType, boolean inProgress, boolean success, String detail) {
         ActionSummaryType summary = new ActionSummaryType();
-        summary.setTitle(title);
+        summary.setId(productItem.getId());
+        summary.setTitle(productItem.getTitle());
         summary.setActionType(actionType);
         summary.setInProgress(inProgress);
         summary.setSuccess(success);

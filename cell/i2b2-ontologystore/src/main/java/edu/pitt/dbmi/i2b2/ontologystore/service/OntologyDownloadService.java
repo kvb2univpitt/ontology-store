@@ -46,9 +46,11 @@ public class OntologyDownloadService extends AbstractOntologyService {
 
     private static final String ACTION_TYPE = "Download";
 
+    private final OntologyFileService ontologyFileService;
+
     @Autowired
-    public OntologyDownloadService(FileSysService fileSysService, OntologyFileService ontologyFileService) {
-        super(fileSysService, ontologyFileService);
+    public OntologyDownloadService(OntologyFileService ontologyFileService) {
+        this.ontologyFileService = ontologyFileService;
     }
 
     public synchronized void performDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
@@ -72,15 +74,15 @@ public class OntologyDownloadService extends AbstractOntologyService {
             String productFolder = productItem.getId();
 
             String fileURI = productItem.getFile();
-            Path productDir = fileSysService.getProductDirectory(downloadDirectory, productFolder);
-            String generatedSha256Checksum = fileSysService.getSha256Checksum(fileURI, productDir);
-            if (generatedSha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
-                fileSysService.createDownloadFinishedIndicatorFile(downloadDirectory, productFolder);
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Downloaded successfully."));
+            Path productDir = Paths.get(downloadDirectory, productFolder);
+            String sha256Checksum = ontologyFileService.createSha256Checksum(productDir, fileURI);
+            if (sha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
+                ontologyFileService.setDownloadFinished(productDir);
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Downloaded successfully."));
             } else {
                 String errorMsg = "File verification failed.  SHA-256 checksum does not match.";
-                fileSysService.createDownloadFailedIndicatorFile(downloadDirectory, productFolder, errorMsg);
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+                ontologyFileService.setDownloadFailed(productDir, errorMsg);
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
             }
         });
     }
@@ -97,37 +99,37 @@ public class OntologyDownloadService extends AbstractOntologyService {
 
         productsToDownload.forEach(productItem -> {
             String productFolder = productItem.getId();
-            Path productDir = fileSysService.getProductDirectory(downloadDirectory, productFolder);
-            if (fileSysService.createDirectory(productDir) && fileSysService.createDownloadStartedIndicatorFile(downloadDirectory, productFolder)) {
+            Path productDir = Paths.get(downloadDirectory, productFolder);
+            if (ontologyFileService.createDirectory(productDir) && ontologyFileService.setDownloadStarted(productDir)) {
                 try {
                     // download product file
-                    fileSysService.downloadFile(productItem.getFile(), productDir);
+                    ontologyFileService.downloadFile(productItem.getFile(), productDir);
 
                     //download network files, if any
                     String[] networkFiles = productItem.getNetworkFiles();
                     if (hasNetworkFiles(networkFiles)) {
                         Path networkDir = Paths.get(productDir.toString(), "network_files");
-                        if (fileSysService.createDirectory(networkDir)) {
+                        if (ontologyFileService.createDirectory(networkDir)) {
                             try {
                                 for (String networkFile : networkFiles) {
-                                    fileSysService.downloadFile(networkFile, networkDir);
+                                    ontologyFileService.downloadFile(networkFile, networkDir);
                                 }
                             } catch (IOException exception) {
                                 LOGGER.error("", exception);
                             }
                         } else {
-                            summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
+                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
                         }
                     }
                     downloadedProducts.add(productItem);
                 } catch (Exception exception) {
                     LOGGER.error("", exception);
                     String errorMsg = "Unable to download from the given URL.";
-                    fileSysService.createDownloadFailedIndicatorFile(downloadDirectory, productFolder, errorMsg);
-                    summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, errorMsg));
+                    ontologyFileService.setDownloadFailed(productDir, errorMsg);
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
                 }
             } else {
-                summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, "Unable to create directories for download."));
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to create directories for download."));
             }
         });
 
@@ -160,15 +162,18 @@ public class OntologyDownloadService extends AbstractOntologyService {
             String productFolder = action.getId();
             if (products.containsKey(productFolder)) {
                 ProductItem productItem = products.get(productFolder);
-                if (fileSysService.hasDirectory(downloadDirectory, productFolder)) {
-                    if (fileSysService.hasFinshedDownload(downloadDirectory, productFolder) && fileSysService.isProductFileExists(downloadDirectory, productItem)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, true, "Already downloaded."));
+
+                Path productDir = Paths.get(downloadDirectory, productFolder);
+                Path productFile = ontologyFileService.getProductFile(productDir, productItem);
+                if (ontologyFileService.hasDirectory(productDir)) {
+                    if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already downloaded."));
                         return;
-                    } else if (fileSysService.hasFailedDownload(downloadDirectory, productFolder)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, false, false, fileSysService.getFailedDownloadMessage(downloadDirectory, productFolder)));
+                    } else if (ontologyFileService.isDownloadFailed(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
                         return;
-                    } else if (fileSysService.hasStartedDownload(downloadDirectory, productFolder)) {
-                        summaries.add(createActionSummary(productItem.getTitle(), ACTION_TYPE, true, false, "Download already started."));
+                    } else if (ontologyFileService.isDownloadStarted(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Download already started."));
                         return;
                     }
                 }
