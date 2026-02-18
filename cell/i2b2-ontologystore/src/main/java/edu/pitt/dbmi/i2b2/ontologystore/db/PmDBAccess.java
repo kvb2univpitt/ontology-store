@@ -49,6 +49,7 @@ import org.owasp.esapi.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
 
 /**
  *
@@ -56,6 +57,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class PmDBAccess {
 
     private static final Log LOGGER = LogFactory.getLog(PmDBAccess.class);

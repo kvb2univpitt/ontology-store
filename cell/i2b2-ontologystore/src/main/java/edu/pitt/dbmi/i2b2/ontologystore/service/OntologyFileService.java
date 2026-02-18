@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  *
@@ -42,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class OntologyFileService {
 
     private static final Log LOGGER = LogFactory.getLog(OntologyFileService.class);

@@ -31,7 +31,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
 
 /**
  *
@@ -39,6 +41,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  *
  * @author Kevin V. Bui (kvb2univpitt@gmail.com)
  */
+@Service
 public class MetadataInstallService extends AbstractInstallService {
 
     private static final Log LOGGER = LogFactory.getLog(MetadataInstallService.class);
@@ -50,6 +53,7 @@ public class MetadataInstallService extends AbstractInstallService {
     protected static final String TABLE_ACCESS_TABLE_NAME_COLUMN = "c_table_name";
     protected static final String TABLE_ACCESS_TABLE_PK = "c_table_cd";
 
+    @Autowired
     public MetadataInstallService(FileSysService fileSysService) {
         super(fileSysService);
     }

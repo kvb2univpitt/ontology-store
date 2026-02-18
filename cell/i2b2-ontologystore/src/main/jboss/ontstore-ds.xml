@@ -2,7 +2,7 @@
 <datasources xmlns="http://www.jboss.org/ironjacamar/schema">
     <!--
     The bootstrap points to the data source for your database lookup table which is a hivedata table, this is required.
-
+    
     1) This database defaults to Oracle, uncomment SQL Server or PostgreSQL and comment out the Oracle one.
     2) Update the <connection-url> with the location of your hostname, port  and SID (Oracle Only).
     2) Update the <user-name> with the database user.

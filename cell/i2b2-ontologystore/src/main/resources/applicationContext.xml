@@ -4,7 +4,11 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
 
+    <!-- enable annotation support -->
     <context:annotation-config />
+
+    <!-- enable scanning for beans -->
+    <context:component-scan base-package="edu.pitt.dbmi.i2b2.ontologystore.db,edu.pitt.dbmi.i2b2.ontologystore.service" />
 
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />
@@ -16,19 +20,6 @@
     <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
         <property name="jndiName" value="OntologyStoreBootStrapDS" />
     </bean>
-
-    <!-- peform database tasks -->
-    <bean id="pmDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess" />
-    <bean id="hiveDBAccess" class="edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess" />
-
-    <!-- provide specific services -->
-    <bean id="fileSysService" class="edu.pitt.dbmi.i2b2.ontologystore.service.FileSysService" />
-    <bean id="ontologyFileService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService" />
-    <bean id="ontologyDownloadService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService" />
-    <bean id="ontologyInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService" />
-    <bean id="crcInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.CrcInstallService" />
-    <bean id="metadataInstallService" class="edu.pitt.dbmi.i2b2.ontologystore.service.MetadataInstallService" />
-    <bean id="ontologyDisableService" class="edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService" />
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->
     <bean id="ontologyStoreService" class="edu.pitt.dbmi.i2b2.ontologystore.ws.OntologyStoreService" />
