@@ -114,7 +114,7 @@ public class AsyncActionService extends AbstractOntologyService {
 
         // get products from the install list that are in the product list
         Map<String, ProductItem> productsToInstall = new HashMap<>();
-        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(productListUrl);
+        Map<String, ProductItem> availableProducts = ontologyFileService.getUniqueProductItems(productListUrl);
         actions.forEach(action -> {
             String productId = action.getId();
             if (availableProducts.containsKey(productId)) {
