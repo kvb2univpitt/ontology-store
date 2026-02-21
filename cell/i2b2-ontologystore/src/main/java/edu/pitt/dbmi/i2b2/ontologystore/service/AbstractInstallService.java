@@ -137,12 +137,15 @@ public abstract class AbstractInstallService {
                         String[] values = new String[temp.length - 2];
                         System.arraycopy(temp, 1, values, 0, values.length);
 
+                        // trim each element in-place
+                        Arrays.setAll(values, i -> values[i].trim());
+
                         setColumns(stmt, columnTypes, values);
 
                         // add null columns not provided
                         if (values.length < columnTypes.length) {
-                            for (int i = values.length; i < columnTypes.length; i++) {
-                                stmt.setNull(i + 1, Types.NULL);
+                            for (int i = values.length + 1; i <= columnTypes.length; i++) {
+                                stmt.setNull(i, Types.NULL);
                             }
                         }
 
@@ -197,15 +200,24 @@ public abstract class AbstractInstallService {
                         continue;
                     }
 
-                    String[] values = TAB_DELIM.split(line);
+                    // add dummy value ($) at the beganing and end of the line before splitting
+                    String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
+
+                    // create a new array of data without the dummy values
+                    String[] values = new String[temp.length - 2];
+                    System.arraycopy(temp, 1, values, 0, values.length);
+
+                    // trim each element in-place
+                    Arrays.setAll(values, i -> values[i].trim());
+
                     if (!pkeys.contains(values[pkIndex].toLowerCase())) {
                         try {
                             setColumns(stmt, columnTypes, values);
 
                             // add null columns not provided
                             if (values.length < columnTypes.length) {
-                                for (int i = values.length; i < columnTypes.length; i++) {
-                                    stmt.setNull(i + 1, Types.NULL);
+                                for (int i = values.length + 1; i <= columnTypes.length; i++) {
+                                    stmt.setNull(i, Types.NULL);
                                 }
                             }
 
@@ -337,59 +349,59 @@ public abstract class AbstractInstallService {
 
     protected void setColumns(PreparedStatement stmt, int[] columnTypes, String[] values) throws SQLException, ParseException, NumberFormatException {
         for (int i = 0; i < values.length; i++) {
-            int columnIndex = i + 1;
-            String value = values[i].trim();
-            if (value.isEmpty()) {
-                stmt.setNull(columnIndex, Types.NULL);
+            int parameterIndex = i + 1;
+            String value = values[i];
+            if (value == null || value.isEmpty()) {
+                stmt.setNull(parameterIndex, Types.NULL);
             } else {
                 switch (columnTypes[i]) {
                     case Types.CHAR, Types.VARCHAR, Types.LONGVARCHAR, Types.CLOB ->
-                        stmt.setString(columnIndex, value);
+                        stmt.setString(parameterIndex, value);
                     case Types.TINYINT ->
-                        stmt.setByte(columnIndex, Byte.parseByte(value));
+                        stmt.setByte(parameterIndex, Byte.parseByte(value));
                     case Types.SMALLINT ->
-                        stmt.setShort(columnIndex, Short.parseShort(value));
+                        stmt.setShort(parameterIndex, Short.parseShort(value));
                     case Types.INTEGER ->
-                        stmt.setInt(columnIndex, Integer.parseInt(value));
+                        stmt.setInt(parameterIndex, Integer.parseInt(value));
                     case Types.BIGINT ->
-                        stmt.setLong(columnIndex, Long.parseLong(value));
+                        stmt.setLong(parameterIndex, Long.parseLong(value));
                     case Types.REAL, Types.FLOAT ->
-                        stmt.setFloat(columnIndex, Float.parseFloat(value));
+                        stmt.setFloat(parameterIndex, Float.parseFloat(value));
                     case Types.DOUBLE ->
-                        stmt.setDouble(columnIndex, Double.parseDouble(value));
+                        stmt.setDouble(parameterIndex, Double.parseDouble(value));
                     case Types.NUMERIC ->
-                        stmt.setBigDecimal(columnIndex, new BigDecimal(value));
+                        stmt.setBigDecimal(parameterIndex, new BigDecimal(value));
                     case Types.DATE -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setDate(columnIndex, new Date(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.TIME -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setTime(columnIndex, new Time(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.TIMESTAMP -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setTimestamp(columnIndex, new Timestamp(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.BIT ->
-                        stmt.setBoolean(columnIndex, value.equals("1"));
+                        stmt.setBoolean(parameterIndex, value.equals("1"));
                     case Types.VARBINARY, Types.BINARY ->
-                        stmt.setBytes(columnIndex, value.getBytes());
+                        stmt.setBytes(parameterIndex, value.getBytes());
                 }
             }
         }
