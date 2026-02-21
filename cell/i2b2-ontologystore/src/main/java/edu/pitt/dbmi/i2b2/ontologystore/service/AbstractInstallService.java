@@ -105,6 +105,85 @@ public abstract class AbstractInstallService {
         }
     }
 
+    protected void batchInsertMetadata(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
+        DataSource dataSource = jdbcTemplate.getDataSource();
+        if (dataSource == null) {
+            return;
+        }
+
+        try (Connection conn = dataSource.getConnection();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
+            // create prepared statement
+            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                conn.setAutoCommit(false);
+
+                // get columnTypes
+                int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
+
+                int count = 0;
+                final int C_FACTTABLECOLUMN = 9;
+                final int C_OPERATOR = 13;
+                final int C_FACTTABLECOLUMN_INDEX = 8;
+                final int C_OPERATOR_INDEX = 12;
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    // skip lines that are commented out
+                    String cleanedLine = line.trim();
+                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                        continue;
+                    }
+
+                    try {
+                        // add dummy value ($) at the beganing and end of the line before splitting
+                        String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
+
+                        // create a new array of data without the dummy values
+                        String[] values = new String[temp.length - 2];
+                        System.arraycopy(temp, 1, values, 0, values.length);
+
+                        // trim each element in-place
+                        Arrays.setAll(values, i -> values[i].trim());
+
+                        setColumns(stmt, columnTypes, values);
+
+                        // add null columns not provided
+                        if (values.length < columnTypes.length) {
+                            for (int i = values.length + 1; i <= columnTypes.length; i++) {
+                                stmt.setNull(i, Types.NULL);
+                            }
+                        }
+
+                        // ensure not-null constraint is satisfied
+                        if (values[C_FACTTABLECOLUMN_INDEX].isEmpty()) {
+                            stmt.setString(C_FACTTABLECOLUMN, "");
+                        }
+                        if (values[C_OPERATOR_INDEX].isEmpty()) {
+                            stmt.setString(C_OPERATOR, "");
+                        }
+
+                        stmt.addBatch();
+                        count++;
+                    } catch (Exception exception) {
+                        LOGGER.error("", exception);
+                    }
+
+                    if (count == batchSize) {
+                        stmt.executeBatch();
+                        conn.commit();
+                        stmt.clearBatch();
+                        count = 0;
+                    }
+                }
+
+                if (count > 0) {
+                    stmt.executeBatch();
+                    conn.commit();
+                    stmt.clearBatch();
+                }
+            }
+        }
+    }
+
     protected void batchInsert(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
