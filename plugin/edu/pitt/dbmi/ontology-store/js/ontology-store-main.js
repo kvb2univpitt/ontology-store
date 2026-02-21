@@ -332,21 +332,18 @@ i2b2.OntologyStore.checkbox.downloadAction = (productIndex) => {
         disableChkbx.disabled = !installChkbx.checked;
     }
 };
-i2b2.OntologyStore.checkbox.installAction = (productIndex) => {
-    let installChkbx = document.getElementById(`install-${productIndex}`);
-    let downloadChkbx = document.getElementById(`download-${productIndex}`);
-    let disableChkbx = document.getElementById(`disable-${productIndex}`);
+i2b2.OntologyStore.checkbox.installAction = (index) => {
+    let installChkbx = document.getElementById(`install-${index}`);
+    let downloadChkbx = document.getElementById(`download-${index}`);
+    let disableChkbx = document.getElementById(`disable-${index}`);
 
     if (installChkbx.checked) {
         // automatically select download if install is selected
         downloadChkbx.checked = true;
-    } else {
-        // unselect disable when install is not selected
-        disableChkbx.checked = false;
     }
 
     // prevent selection when install is not selected
-    disableChkbx.disabled = !installChkbx.checked;
+    disableChkbx.disabled = !i2b2.OntologyStore.products[index].installed;
 };
 
 i2b2.OntologyStore.showFailedInstallStatusDetails = (index) => {
