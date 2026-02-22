@@ -19,17 +19,26 @@
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
+import edu.pitt.dbmi.i2b2.ontologystore.ZipFileValidationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileUtils;
+import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileValidation;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.sql.DataSource;
@@ -51,6 +60,7 @@ public class OntologyInstallService extends AbstractOntologyService {
     private static final Log LOGGER = LogFactory.getLog(OntologyInstallService.class);
 
     private static final String ACTION_TYPE = "Install";
+    private static final int NUM_THREAD = 4;
 
     private final HiveDBAccess hiveDBAccess;
 
@@ -70,7 +80,45 @@ public class OntologyInstallService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performInstallation(String downloadDirectory, String project, String productListUrl, ProductItem productItem, List<ActionSummaryType> summaries) throws InstallationException {
+    public void performInstallation(
+            String projectId,
+            String downloadDirectory,
+            String productListUrl,
+            List<ProductActionType> actions,
+            List<ActionSummaryType> summaries) {
+        List<ProductActionType> installActions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
+        List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, installActions, summaries);
+
+        // prepare for installation
+        productsToInstall.stream()
+                .map(ProductItem::getId)
+                .map(productFolder -> Paths.get(downloadDirectory, productFolder))
+                .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
+
+        if (productsToInstall.size() > 1) {
+            ExecutorService executor = Executors.newFixedThreadPool(NUM_THREAD);
+            productsToInstall.forEach(productItem -> {
+                executor.submit(() -> {
+                    try {
+                        performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
+                    } catch (InstallationException exception) {
+                        LOGGER.error("Failed to install ontologies.", exception);
+                    }
+                });
+            });
+            shutdownAndAwaitTermination(executor);
+        } else {
+            productsToInstall.forEach(productItem -> {
+                try {
+                    performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
+                } catch (InstallationException exception) {
+                    LOGGER.error("Failed to install ontologies.", exception);
+                }
+            });
+        }
+    }
+
+    public synchronized void performInstallationTask(String downloadDirectory, String project, String productListUrl, ProductItem productItem, List<ActionSummaryType> summaries) throws InstallationException {
         String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
         String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
         if (ontJNDIName == null || crcJNDIName == null) {
@@ -134,6 +182,76 @@ public class OntologyInstallService extends AbstractOntologyService {
         }
 
         ontologyFileService.setInstallFinished(productDir);
+    }
+
+    private List<ProductItem> getValidProductsToInstall(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+        List<ProductItem> validProductItems = new LinkedList<>();
+
+        // get products from the install list that are in the product list
+        Map<String, ProductItem> productsToInstall = new HashMap<>();
+        Map<String, ProductItem> availableProducts = ontologyFileService.getUniqueProductItems(productListUrl);
+        actions.forEach(action -> {
+            String productId = action.getId();
+            if (availableProducts.containsKey(productId)) {
+                productsToInstall.put(productId, availableProducts.get(productId));
+            }
+        });
+
+        productsToInstall.values().forEach(productItem -> {
+            String productFolder = productItem.getId();
+            Path productDir = Paths.get(downloadDirectory, productFolder);
+            Path productFile = ontologyFileService.getProductFile(productDir, productItem);
+
+            if (ontologyFileService.hasDirectory(productDir)) {
+                if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
+                    if (ontologyFileService.isInstallFinshed(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already Installed."));
+                    } else if (ontologyFileService.isInstallFailed(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Installation previously failed."));
+                    } else if (ontologyFileService.isInstallStarted(productDir)) {
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Installation already started."));
+                    } else {
+                        ZipFileValidation zipFileValidation = new ZipFileValidation(ontologyFileService.getProductFile(productDir, productItem));
+                        try {
+                            zipFileValidation.validate();
+                            validProductItems.add(productItem);
+                        } catch (ZipFileValidationException exception) {
+                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, exception.getMessage()));
+                            ontologyFileService.setInstallFailed(productDir, exception.getMessage());
+                        }
+                    }
+                } else if (ontologyFileService.isDownloadFailed(productDir)) {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
+                } else if (ontologyFileService.isDownloadStarted(productDir)) {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Download not finished."));
+                } else {
+                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
+                }
+            } else {
+                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Has not been downloaded."));
+            }
+        });
+
+        return validProductItems;
+    }
+
+    private void shutdownAndAwaitTermination(ExecutorService pool) {
+        pool.shutdown();
+        try {
+            boolean isTerminated = pool.awaitTermination(24, TimeUnit.HOURS);
+
+            // force shutdown if the executor is not terminated
+            if (!isTerminated) {
+                pool.shutdownNow();
+                if (!pool.awaitTermination(6000, TimeUnit.MILLISECONDS)) {
+                    System.err.println("Pool did not terminate");
+                }
+            }
+        } catch (InterruptedException exception) {
+            pool.shutdownNow();
+
+            LOGGER.error(exception.getMessage());
+        }
     }
 
 }
