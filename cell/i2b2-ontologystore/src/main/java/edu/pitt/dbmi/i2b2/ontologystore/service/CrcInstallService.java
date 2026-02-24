@@ -57,7 +57,7 @@ public class CrcInstallService extends AbstractInstallService {
         for (String conceptDimensionFile : conceptDimensionFiles) {
             Path zipFilePath = Paths.get(rootFolder, conceptDimensionFile);
             try {
-                String tableName = zipFilePath.getFileName().toString().replace(".tsv", "").replace(".TSV", "");
+                String tableName = getTableNameFromFileName(zipFilePath);
                 if (!conceptDimensionExists(crcJdbcTemplate, tableName)) {
                     ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
 

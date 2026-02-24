@@ -163,12 +163,7 @@ public class MetadataInstallService extends AbstractInstallService {
     private void installMetadata(String ontologyFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         Path zipFilePath = Paths.get(rootFolder, ontologyFile);
         try {
-            String tableName = zipFilePath.getFileName().toString()
-                    .replace(".tsv", "")
-                    .replace(".TSV", "")
-                    .replace("_POSTGRESQL", "")
-                    .replace("_ORACLE", "")
-                    .replace("_SQLSERVER", "");
+            String tableName = getTableNameFromFileName(zipFilePath);
             if (!metadataExists(ontJdbcTemplate, tableName)) {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
 
@@ -186,12 +181,7 @@ public class MetadataInstallService extends AbstractInstallService {
         String[] ontologyFiles = packageFile.getDomainOntologies();
         for (String ontologyFile : ontologyFiles) {
             Path zipFilePath = Paths.get(ontologyFile);
-            String tableName = zipFilePath.getFileName().toString()
-                    .replace(".tsv", "")
-                    .replace(".TSV", "")
-                    .replace("_POSTGRESQL", "")
-                    .replace("_ORACLE", "")
-                    .replace("_SQLSERVER", "");
+            String tableName = getTableNameFromFileName(zipFilePath);
 
             tableNames.add(tableName);
         }

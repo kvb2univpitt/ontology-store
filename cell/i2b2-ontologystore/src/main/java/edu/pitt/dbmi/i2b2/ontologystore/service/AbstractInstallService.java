@@ -528,4 +528,14 @@ public abstract class AbstractInstallService {
         return String.format("DELETE FROM %s.%s WHERE %s = ?", schema, tableName, columnName);
     }
 
+    protected String getTableNameFromFileName(Path file) {
+        return file.getFileName().toString()
+                .toLowerCase()
+                .replace(".tsv", "")
+                .replace("_postgresql", "")
+                .replace("_oracle", "")
+                .replace("_sqlserver", "")
+                .toUpperCase();
+    }
+
 }
