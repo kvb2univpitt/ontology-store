@@ -121,11 +121,17 @@ public abstract class AbstractInstallService {
                 // get columnTypes
                 int[] columnTypes = getColumnTypes(stmt.getParameterMetaData());
 
-                int count = 0;
+                // metadata table column numbers
                 final int C_FACTTABLECOLUMN = 9;
                 final int C_OPERATOR = 13;
+                final int C_DIMCODE = 14;
+
+                // values array indexes
                 final int C_FACTTABLECOLUMN_INDEX = 8;
                 final int C_OPERATOR_INDEX = 12;
+                final int C_DIMCODE_INDEX = 13;
+
+                int count = 0;
                 for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                     // skip lines that are commented out
                     String cleanedLine = line.trim();
@@ -155,10 +161,13 @@ public abstract class AbstractInstallService {
 
                         // ensure not-null constraint is satisfied
                         if (values[C_FACTTABLECOLUMN_INDEX].isEmpty()) {
-                            stmt.setString(C_FACTTABLECOLUMN, "");
+                            stmt.setString(C_FACTTABLECOLUMN, " ");
                         }
                         if (values[C_OPERATOR_INDEX].isEmpty()) {
-                            stmt.setString(C_OPERATOR, "");
+                            stmt.setString(C_OPERATOR, " ");
+                        }
+                        if (values[C_DIMCODE_INDEX].isEmpty()) {
+                            stmt.setString(C_DIMCODE, " ");
                         }
 
                         stmt.addBatch();
