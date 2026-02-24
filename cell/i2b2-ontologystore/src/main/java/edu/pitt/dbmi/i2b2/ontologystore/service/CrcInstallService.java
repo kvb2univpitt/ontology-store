@@ -103,12 +103,12 @@ public class CrcInstallService extends AbstractInstallService {
     }
 
     private void createConceptDimensionTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        switch (getDatabaseVendor(jdbcTemplate)) {
-            case "PostgreSQL" ->
+        switch (simplifiedDatabaseVendorName(getDatabaseVendor(jdbcTemplate))) {
+            case "postgresql" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "postgresql", "concept_dimension_table.sql"));
-            case "Oracle" ->
+            case "oracle" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "oracle", "concept_dimension_table.sql"));
-            case "Microsoft SQL Server" ->
+            case "sqlserver" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "concept_dimension_table.sql"));
         }
     }

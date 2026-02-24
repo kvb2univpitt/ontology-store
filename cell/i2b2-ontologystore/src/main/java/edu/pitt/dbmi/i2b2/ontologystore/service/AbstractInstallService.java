@@ -406,8 +406,8 @@ public abstract class AbstractInstallService {
 
     protected String simplifiedDatabaseVendorName(String databaseProductName) {
         return databaseProductName
-                .replaceAll("\\s+", "")
                 .toLowerCase()
+                .replaceAll("\\s+", "")
                 .replace("microsoft", "");
     }
 
@@ -518,7 +518,6 @@ public abstract class AbstractInstallService {
 
     protected String createInsertStatement(String schema, String tableName, List<String> columnNames) {
         String columns = columnNames.stream().collect(Collectors.joining(","));
-//        String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
         String placeholder = String.join(",", Collections.nCopies(columnNames.size(), "?"));
 
         return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columns, placeholder);
