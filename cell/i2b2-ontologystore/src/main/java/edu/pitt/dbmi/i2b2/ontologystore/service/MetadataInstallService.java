@@ -149,7 +149,7 @@ public class MetadataInstallService extends AbstractInstallService {
         String[] ontologyFiles = packageFile.getDomainOntologies();
         for (String ontologyFile : ontologyFiles) {
             String file = ontologyFile.toLowerCase().trim();
-            String dbVendor = getDatabaseVendorName(ontJdbcTemplate).replaceAll("\\s+", "").toLowerCase();
+            String dbVendor = simplifiedDatabaseVendorName(getDatabaseVendor(ontJdbcTemplate));
             if (file.contains("postgresql") || file.contains("oracle") || file.contains("sqlserver")) {
                 if (file.contains(dbVendor)) {
                     installMetadata(ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);

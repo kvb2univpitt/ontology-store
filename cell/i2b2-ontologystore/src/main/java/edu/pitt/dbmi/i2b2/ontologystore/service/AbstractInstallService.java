@@ -49,7 +49,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.JdbcUtils;
 
 /**
  *
@@ -355,19 +354,19 @@ public abstract class AbstractInstallService {
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
                 PreparedStatement pstmt = null;
-                switch (conn.getMetaData().getDatabaseProductName()) {
-                    case "PostgreSQL" -> {
+                switch (simplifiedDatabaseVendorName(conn.getMetaData().getDatabaseProductName())) {
+                    case "postgresql" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
                     }
-                    case "Oracle" -> {
+                    case "oracle" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM user_tables WHERE table_name = UPPER(?) OR table_name = LOWER(?)");
                         pstmt.setString(1, tableName);
                         pstmt.setString(2, tableName);
                     }
-                    case "Microsoft SQL Server" -> {
+                    case "sqlserver" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
@@ -405,17 +404,11 @@ public abstract class AbstractInstallService {
         return "Unknown";
     }
 
-    protected String getDatabaseVendorName(JdbcTemplate jdbcTemplate) {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                return JdbcUtils.commonDatabaseName(conn.getMetaData().getDatabaseProductName());
-            } catch (SQLException exception) {
-                LOGGER.error("", exception);
-            }
-        }
-
-        return "Unknown";
+    protected String simplifiedDatabaseVendorName(String databaseProductName) {
+        return databaseProductName
+                .replaceAll("\\s+", "")
+                .toLowerCase()
+                .replace("microsoft", "");
     }
 
     protected void createTableIndexes(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
