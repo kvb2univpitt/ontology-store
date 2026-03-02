@@ -35,6 +35,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -57,6 +60,7 @@ public class OntologyInstallService extends AbstractOntologyService {
     private static final Log LOGGER = LogFactory.getLog(OntologyInstallService.class);
 
     private static final String ACTION_TYPE = "Install";
+    private static final int NUM_THREAD = 4;
 
     private final HiveDBAccess hiveDBAccess;
 
@@ -76,11 +80,45 @@ public class OntologyInstallService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performInstallation(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
-        // get actions that are marked for install
-        actions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
+    public void performInstallation(
+            String projectId,
+            String downloadDirectory,
+            String productListUrl,
+            List<ProductActionType> actions,
+            List<ActionSummaryType> summaries) {
+        List<ProductActionType> installActions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
+        List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, installActions, summaries);
 
-        List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, actions, summaries);
+        // prepare for installation
+        productsToInstall.stream()
+                .map(ProductItem::getId)
+                .map(productFolder -> Paths.get(downloadDirectory, productFolder))
+                .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
+
+        if (productsToInstall.size() > 1) {
+            ExecutorService executor = Executors.newFixedThreadPool(NUM_THREAD);
+            productsToInstall.forEach(productItem -> {
+                executor.submit(() -> {
+                    try {
+                        performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
+                    } catch (InstallationException exception) {
+                        LOGGER.error("Failed to install ontologies.", exception);
+                    }
+                });
+            });
+            shutdownAndAwaitTermination(executor);
+        } else {
+            productsToInstall.forEach(productItem -> {
+                try {
+                    performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
+                } catch (InstallationException exception) {
+                    LOGGER.error("Failed to install ontologies.", exception);
+                }
+            });
+        }
+    }
+
+    public synchronized void performInstallationTask(String downloadDirectory, String project, String productListUrl, ProductItem productItem, List<ActionSummaryType> summaries) throws InstallationException {
         String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
         String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
         if (ontJNDIName == null || crcJNDIName == null) {
@@ -93,23 +131,15 @@ public class OntologyInstallService extends AbstractOntologyService {
             throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
         }
 
-        // prepare for installation
-        productsToInstall.stream()
-                .map(ProductItem::getId)
-                .map(productFolder -> Paths.get(downloadDirectory, productFolder))
-                .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
-
         JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
         JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
 
-        for (ProductItem productItem : productsToInstall) {
-            try {
-                install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
-            } catch (Exception exception) {
-                LOGGER.error("", exception);
-                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
-                ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
-            }
+        try {
+            install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
+        } catch (Exception exception) {
+            LOGGER.error("", exception);
+            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
+            ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
         }
     }
 
@@ -159,7 +189,7 @@ public class OntologyInstallService extends AbstractOntologyService {
 
         // get products from the install list that are in the product list
         Map<String, ProductItem> productsToInstall = new HashMap<>();
-        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(productListUrl);
+        Map<String, ProductItem> availableProducts = ontologyFileService.getUniqueProductItems(productListUrl);
         actions.forEach(action -> {
             String productId = action.getId();
             if (availableProducts.containsKey(productId)) {
@@ -203,6 +233,25 @@ public class OntologyInstallService extends AbstractOntologyService {
         });
 
         return validProductItems;
+    }
+
+    private void shutdownAndAwaitTermination(ExecutorService pool) {
+        pool.shutdown();
+        try {
+            boolean isTerminated = pool.awaitTermination(24, TimeUnit.HOURS);
+
+            // force shutdown if the executor is not terminated
+            if (!isTerminated) {
+                pool.shutdownNow();
+                if (!pool.awaitTermination(6000, TimeUnit.MILLISECONDS)) {
+                    System.err.println("Pool did not terminate");
+                }
+            }
+        } catch (InterruptedException exception) {
+            pool.shutdownNow();
+
+            LOGGER.error(exception.getMessage());
+        }
     }
 
 }

@@ -149,7 +149,7 @@ public class MetadataInstallService extends AbstractInstallService {
         String[] ontologyFiles = packageFile.getDomainOntologies();
         for (String ontologyFile : ontologyFiles) {
             String file = ontologyFile.toLowerCase().trim();
-            String dbVendor = getDatabaseVendorName(ontJdbcTemplate).replaceAll("\\s+", "").toLowerCase();
+            String dbVendor = simplifiedDatabaseVendorName(getDatabaseVendor(ontJdbcTemplate));
             if (file.contains("postgresql") || file.contains("oracle") || file.contains("sqlserver")) {
                 if (file.contains(dbVendor)) {
                     installMetadata(ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
@@ -163,12 +163,7 @@ public class MetadataInstallService extends AbstractInstallService {
     private void installMetadata(String ontologyFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         Path zipFilePath = Paths.get(rootFolder, ontologyFile);
         try {
-            String tableName = zipFilePath.getFileName().toString()
-                    .replace(".tsv", "")
-                    .replace(".TSV", "")
-                    .replace("_POSTGRESQL", "")
-                    .replace("_ORACLE", "")
-                    .replace("_SQLSERVER", "");
+            String tableName = getTableNameFromFileName(zipFilePath);
             if (!metadataExists(ontJdbcTemplate, tableName)) {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
 
@@ -186,12 +181,7 @@ public class MetadataInstallService extends AbstractInstallService {
         String[] ontologyFiles = packageFile.getDomainOntologies();
         for (String ontologyFile : ontologyFiles) {
             Path zipFilePath = Paths.get(ontologyFile);
-            String tableName = zipFilePath.getFileName().toString()
-                    .replace(".tsv", "")
-                    .replace(".TSV", "")
-                    .replace("_POSTGRESQL", "")
-                    .replace("_ORACLE", "")
-                    .replace("_SQLSERVER", "");
+            String tableName = getTableNameFromFileName(zipFilePath);
 
             tableNames.add(tableName);
         }
@@ -222,12 +212,12 @@ public class MetadataInstallService extends AbstractInstallService {
     }
 
     private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        switch (getDatabaseVendor(jdbcTemplate)) {
-            case "PostgreSQL" ->
+        switch (simplifiedDatabaseVendorName(getDatabaseVendor(jdbcTemplate))) {
+            case "postgresql" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "postgresql", "ontology_table.sql"));
-            case "Oracle" ->
+            case "oracle" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "oracle", "ontology_table.sql"));
-            case "Microsoft SQL Server" ->
+            case "sqlserver" ->
                 createTable(jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "ontology_table.sql"));
         }
     }

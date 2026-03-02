@@ -32,11 +32,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -129,27 +128,28 @@ public class OntologyFileService {
         }
     }
 
-    public Map<String, ProductItem> getProductItems(String productListUrl) {
-        try {
-            return getProducts(productListUrl).stream()
-                    .collect(Collectors.toMap(e -> e.getId(), Function.identity()));
-        } catch (IOException exception) {
-            return Collections.EMPTY_MAP;
-        }
-    }
-
-    private List<ProductItem> getProducts(String productListUrl) throws IOException {
-        List<ProductItem> productItems = new LinkedList<>();
+    public Map<String, ProductItem> getUniqueProductItems(String productListUrl) {
+        Map<String, ProductItem> productItems = new LinkedHashMap<>();
         try {
             ProductList productList = objMapper.readValue(new URL(productListUrl), ProductList.class);
-            if (productList != null) {
-                productItems.addAll(productList.getProducts());
-            }
+            productList.getProducts().forEach(productItem -> {
+                String id = productItem.getId();
+                if (!productItems.containsKey(id)) {
+                    productItems.put(id, productItem);
+                }
+            });
         } catch (IOException exception) {
             LOGGER.error("", exception);
         }
 
         return productItems;
+    }
+
+    private List<ProductItem> getProducts(String productListUrl) throws IOException {
+        return getUniqueProductItems(productListUrl)
+                .values()
+                .stream()
+                .collect(Collectors.toList());
     }
 
     public Path getProductFile(Path productDir, ProductItem productItem) {

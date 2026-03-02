@@ -2,13 +2,19 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
     <!-- enable annotation support -->
     <context:annotation-config />
 
     <!-- enable scanning for beans -->
     <context:component-scan base-package="edu.pitt.dbmi.i2b2.ontologystore.db,edu.pitt.dbmi.i2b2.ontologystore.service" />
+
+    <!-- enable asynchronous support -->
+    <task:annotation-driven proxy-target-class="true" />
 
     <!-- Configure spring to give a hook to axis2 without a ServletContext -->
     <bean id="applicationContext" class="org.apache.axis2.extensions.spring.receivers.ApplicationContextHolder" />

@@ -49,7 +49,6 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.JdbcUtils;
 
 /**
  *
@@ -123,9 +122,9 @@ public abstract class AbstractInstallService {
 
                 int count = 0;
                 for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    // skip lines that are commented out
+                    // skip blank line
                     String cleanedLine = line.trim();
-                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                    if (cleanedLine.isEmpty()) {
                         continue;
                     }
 
@@ -141,8 +140,8 @@ public abstract class AbstractInstallService {
 
                         // add null columns not provided
                         if (values.length < columnTypes.length) {
-                            for (int i = values.length; i < columnTypes.length; i++) {
-                                stmt.setNull(i + 1, Types.NULL);
+                            for (int i = values.length + 1; i <= columnTypes.length; i++) {
+                                stmt.setNull(i, Types.NULL);
                             }
                         }
 
@@ -191,21 +190,27 @@ public abstract class AbstractInstallService {
 
                 int count = 0;
                 for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                    // skip lines that are commented out
+                    // skip blank line
                     String cleanedLine = line.trim();
-                    if (cleanedLine.isEmpty() || cleanedLine.startsWith("--")) {
+                    if (cleanedLine.isEmpty()) {
                         continue;
                     }
 
-                    String[] values = TAB_DELIM.split(line);
+                    // add dummy value ($) at the beganing and end of the line before splitting
+                    String[] temp = TAB_DELIM.split(String.format("$\t%s\t$", line));
+
+                    // create a new array of data without the dummy values
+                    String[] values = new String[temp.length - 2];
+                    System.arraycopy(temp, 1, values, 0, values.length);
+
                     if (!pkeys.contains(values[pkIndex].toLowerCase())) {
                         try {
                             setColumns(stmt, columnTypes, values);
 
                             // add null columns not provided
                             if (values.length < columnTypes.length) {
-                                for (int i = values.length; i < columnTypes.length; i++) {
-                                    stmt.setNull(i + 1, Types.NULL);
+                                for (int i = values.length + 1; i <= columnTypes.length; i++) {
+                                    stmt.setNull(i, Types.NULL);
                                 }
                             }
 
@@ -255,19 +260,19 @@ public abstract class AbstractInstallService {
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
                 PreparedStatement pstmt = null;
-                switch (conn.getMetaData().getDatabaseProductName()) {
-                    case "PostgreSQL" -> {
+                switch (simplifiedDatabaseVendorName(conn.getMetaData().getDatabaseProductName())) {
+                    case "postgresql" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
                     }
-                    case "Oracle" -> {
+                    case "oracle" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM user_tables WHERE table_name = UPPER(?) OR table_name = LOWER(?)");
                         pstmt.setString(1, tableName);
                         pstmt.setString(2, tableName);
                     }
-                    case "Microsoft SQL Server" -> {
+                    case "sqlserver" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
                         pstmt.setString(1, conn.getSchema());
                         pstmt.setString(2, tableName);
@@ -305,17 +310,11 @@ public abstract class AbstractInstallService {
         return "Unknown";
     }
 
-    protected String getDatabaseVendorName(JdbcTemplate jdbcTemplate) {
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                return JdbcUtils.commonDatabaseName(conn.getMetaData().getDatabaseProductName());
-            } catch (SQLException exception) {
-                LOGGER.error("", exception);
-            }
-        }
-
-        return "Unknown";
+    protected String simplifiedDatabaseVendorName(String databaseProductName) {
+        return databaseProductName
+                .toLowerCase()
+                .replaceAll("\\s+", "")
+                .replace("microsoft", "");
     }
 
     protected void createTableIndexes(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
@@ -337,59 +336,59 @@ public abstract class AbstractInstallService {
 
     protected void setColumns(PreparedStatement stmt, int[] columnTypes, String[] values) throws SQLException, ParseException, NumberFormatException {
         for (int i = 0; i < values.length; i++) {
-            int columnIndex = i + 1;
-            String value = values[i].trim();
-            if (value.isEmpty()) {
-                stmt.setNull(columnIndex, Types.NULL);
+            int parameterIndex = i + 1;
+            String value = values[i];
+            if (value == null || value.isEmpty()) {
+                stmt.setNull(parameterIndex, Types.NULL);
             } else {
                 switch (columnTypes[i]) {
                     case Types.CHAR, Types.VARCHAR, Types.LONGVARCHAR, Types.CLOB ->
-                        stmt.setString(columnIndex, value);
+                        stmt.setString(parameterIndex, value);
                     case Types.TINYINT ->
-                        stmt.setByte(columnIndex, Byte.parseByte(value));
+                        stmt.setByte(parameterIndex, Byte.parseByte(value));
                     case Types.SMALLINT ->
-                        stmt.setShort(columnIndex, Short.parseShort(value));
+                        stmt.setShort(parameterIndex, Short.parseShort(value));
                     case Types.INTEGER ->
-                        stmt.setInt(columnIndex, Integer.parseInt(value));
+                        stmt.setInt(parameterIndex, Integer.parseInt(value));
                     case Types.BIGINT ->
-                        stmt.setLong(columnIndex, Long.parseLong(value));
+                        stmt.setLong(parameterIndex, Long.parseLong(value));
                     case Types.REAL, Types.FLOAT ->
-                        stmt.setFloat(columnIndex, Float.parseFloat(value));
+                        stmt.setFloat(parameterIndex, Float.parseFloat(value));
                     case Types.DOUBLE ->
-                        stmt.setDouble(columnIndex, Double.parseDouble(value));
+                        stmt.setDouble(parameterIndex, Double.parseDouble(value));
                     case Types.NUMERIC ->
-                        stmt.setBigDecimal(columnIndex, new BigDecimal(value));
+                        stmt.setBigDecimal(parameterIndex, new BigDecimal(value));
                     case Types.DATE -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setDate(columnIndex, new Date(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setDate(columnIndex, new Date(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setDate(parameterIndex, new Date(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.TIME -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setTime(columnIndex, new Time(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setTime(columnIndex, new Time(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setTime(parameterIndex, new Time(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.TIMESTAMP -> {
                         if (YYYYMMDD_PATTERN.matcher(value).matches()) {
-                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(YYYYMMDD_DF.parse(value).getTime()));
                         } else if (YYYYMMDD_DASH_PATTERN.matcher(value).matches()) {
-                            stmt.setTimestamp(columnIndex, new Timestamp(YYYYMMDD_DASH_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(YYYYMMDD_DASH_DF.parse(value).getTime()));
                         } else {
-                            stmt.setTimestamp(columnIndex, new Timestamp(DDMMMYY_DF.parse(value).getTime()));
+                            stmt.setTimestamp(parameterIndex, new Timestamp(DDMMMYY_DF.parse(value).getTime()));
                         }
                     }
                     case Types.BIT ->
-                        stmt.setBoolean(columnIndex, value.equals("1"));
+                        stmt.setBoolean(parameterIndex, value.equals("1"));
                     case Types.VARBINARY, Types.BINARY ->
-                        stmt.setBytes(columnIndex, value.getBytes());
+                        stmt.setBytes(parameterIndex, value.getBytes());
                 }
             }
         }
@@ -425,7 +424,6 @@ public abstract class AbstractInstallService {
 
     protected String createInsertStatement(String schema, String tableName, List<String> columnNames) {
         String columns = columnNames.stream().collect(Collectors.joining(","));
-//        String placeholder = IntStream.range(0, columnNames.size()).mapToObj(e -> "?").collect(Collectors.joining(","));
         String placeholder = String.join(",", Collections.nCopies(columnNames.size(), "?"));
 
         return String.format("INSERT INTO %s.%s (%s) VALUES (%s)", schema, tableName, columns, placeholder);
@@ -433,6 +431,16 @@ public abstract class AbstractInstallService {
 
     protected String createDeleteStatement(String schema, String tableName, String columnName) {
         return String.format("DELETE FROM %s.%s WHERE %s = ?", schema, tableName, columnName);
+    }
+
+    protected String getTableNameFromFileName(Path file) {
+        return file.getFileName().toString()
+                .toLowerCase()
+                .replace(".tsv", "")
+                .replace("_postgresql", "")
+                .replace("_oracle", "")
+                .replace("_sqlserver", "")
+                .toUpperCase();
     }
 
 }

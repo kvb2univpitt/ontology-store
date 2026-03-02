@@ -157,7 +157,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
     private List<ProductItem> getValidProductsToDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
         List<ProductItem> validProductItems = new LinkedList<>();
 
-        Map<String, ProductItem> products = ontologyFileService.getProductItems(productListUrl);
+        Map<String, ProductItem> products = ontologyFileService.getUniqueProductItems(productListUrl);
         actions.forEach(action -> {
             String productFolder = action.getId();
             if (products.containsKey(productFolder)) {

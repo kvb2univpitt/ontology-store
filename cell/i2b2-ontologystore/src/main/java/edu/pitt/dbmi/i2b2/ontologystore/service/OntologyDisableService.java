@@ -149,7 +149,7 @@ public class OntologyDisableService extends AbstractOntologyService {
 
         // get products from the disable list that are in the product list
         Map<String, ProductItem> productsToDisableEnable = new HashMap<>();
-        Map<String, ProductItem> availableProducts = ontologyFileService.getProductItems(productListUrl);
+        Map<String, ProductItem> availableProducts = ontologyFileService.getUniqueProductItems(productListUrl);
         actions.forEach(action -> {
             String productId = action.getId();
             if (availableProducts.containsKey(productId)) {
