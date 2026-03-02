@@ -1,11 +1,15 @@
-# Quick Installation Guide for the OntologyStore v1.8.2
+# OntologyStore Installation Guide
 
-A guide for installing the OntologyStore software for RHEL or RHEL-derived systems.
+This guide will help you install the OntologyStore software for **i2b2 1.8.2 Release**.
 
-The OntologyStore has two components:
+The OntologyStore software consists of the following components:
 
-1. The i2b2 OntologyStore cell (back-end).
-2. The i2b2 OntologyStore plugin (front-end).
+* The i2b2 OntologyStore plugin.
+* The i2b2 OnologyStore cell.
+
+The OntologyStore plugin is an i2b2 webclient plugin that allows users to see the list of available ontologies for downloading and installing into the i2b2 database.
+
+The OntologyStore cell is an i2b2 cell that fetches a list of available ontologies from the cloud, downloads ontologies onto the server, and installs downloaded ontologies.
 
 ## Installing the i2b2 OntologyStore Cell
 
@@ -102,17 +106,15 @@ The OntologyStore has two properties that need to be set:
 ##### Set the URL Location
 - Insert the following data to the **hive_cell_params** table to set the cell properties:
 
-    | Column        | Value                                                                  |
-    |---------------|------------------------------------------------------------------------|
-    | datatype_cd   | T                                                                      |
-    | cell_id       | ONTSTORE                                                               |
-    | param_name_cd | ontstore.product.list.url                                              |
-    | value         | https://ontology-store-v2.s3.amazonaws.com/product-list-prod-v1.0.json |
-    | status_cd     | A                                                                      |
+    | Column        | Value                                                                          |
+    |---------------|--------------------------------------------------------------------------------|
+    | datatype_cd   | T                                                                              |
+    | cell_id       | ONTSTORE                                                                       |
+    | param_name_cd | ontstore.product.list.url                                                      |
+    | value         | https://ontology-store-v2.s3.us-east-1.amazonaws.com/product-list-aws-all.json |
+    | status_cd     | A                                                                              |
 
     > See the i2b2 documentation on [Configure cell properties](https://community.i2b2.org/wiki/pages/viewpage.action?pageId=28639260) for more detail.
-
-    We have a list of ontologies that are for testing purposes: [https://ontology-store-v2.s3.amazonaws.com/product-list-dev-v1.0.json](https://ontology-store-v2.s3.amazonaws.com/product-list-dev-v1.0.json "For development purposes.").
 
 ##### Set the Download Location
 
