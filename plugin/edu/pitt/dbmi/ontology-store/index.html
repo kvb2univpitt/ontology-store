@@ -21,6 +21,14 @@
                         </button>
                     </div>
                     <div class="card-body ontstore-border">
+                        <div class="alert alert-warning" role="alert">
+                            <p>
+                                The ontology metadata will be imported in a separate table. The ontology concept dimension will be imported in a separate table subfixed with "_cd".
+                            </p>
+                            <p class="m-0">
+                                The ontology concept dimension table must be merged with the main concept dimension table to run queries.
+                            </p>
+                        </div>
                         <div class="table-responsive pb-4">
                             <table id="OntologyStore-ProductTable" class="table table-sm table-bordered table-hover w-100">
                                 <thead>
