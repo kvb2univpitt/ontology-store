@@ -29,20 +29,29 @@ The following instructions assume that the Wildfly is installed on the server an
 
 #### 2. Download the Cell
 
-- Click on [ontologystore_cell.zip](https://pitt-dbmi.s3.us-east-1.amazonaws.com/ontology-store/1.8.2/ontologystore_cell.zip) to download the file.
+- Click on [ontstore_cell.zip](https://pitt-dbmi.s3.us-east-1.amazonaws.com/ontology-store/1.8.2/ontstore_cell.zip) to download the file.
 
-- Extract ***ontologystore_cell.zip*** file.  Once extracted, there should be a folder called **ontologystore_cell** containing the followin files:
+- Extract ***ontstore_cell.zip*** file.  Once extracted, you should see the followin files:
 
-    - OntologyStore.aar
-    - OntologyStore.jar
+    - WEB-INF/services/OntologyStore.aar
+    - WEB-INF/lib/OntologyStore.jar
 
-#### 3. Deploy the OntologyStore Cell in Wildfly
+#### 3. Add the OntologyStore Cell to the i2b2 WAR File
 
-- Copy the **OntologyStore.aar** file from the ***ontologystore_cell*** folder to the i2b2 ***WEB-INF/services*** directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/services```.
+Update the i2b2 WAR file by adding the files to the OntologyStore cell files.
 
-- Copy the **OntologyStore.jar** file from the ***ontologystore_cell*** folder to the i2b2 ***WEB-INF/lib*** directory ```/opt/wildfly/standalone/deployments/i2b2.war/WEB-INF/lib```.
+- Add the **OntologyStore.aar** file from the ***WEB-INF/services*** folder to the ***WEB-INF/services*** folder in the i2b2 WAR file.
 
-> Note that the ***i2b2.war*** in the Wildfly directory ```/opt/wildfly/standalone/deployments``` may be an actual WAR file instead of a directory.  In this case, you will need to open up the ***i2b2.war*** file and add the ***OntologyStore.aar*** file to the ```WEB-INF/services``` folder and the ***OntologyStore.jar*** file to the ```WEB-INF/lib``` folder.
+- Add the **OntologyStore.jar** file from the ***WEB-INF/lib*** folder to the ***WEB-INF/lib*** folder in the i2b2 WAR file.
+
+##### Linux Command
+
+Below is the Linux command for updating the i2b2 WAR file using the ***jar*** command from the Java SDK:
+
+```bash
+jar -uvf i2b2.war WEB-INF/services/OntologyStore.aar
+jar -uvf i2b2.war WEB-INF/lib/OntologyStore.jar
+```
 
 #### 4. Add the Datasource Configuration File
 
