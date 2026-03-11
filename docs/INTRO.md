@@ -17,7 +17,15 @@ ontologies to download and install, and hiding (disabled) installed ontologies.
 
 ## OntologyStore Cell
 
-The OntologyStore cell retrieves a list of ontologies by fetching the JSON data.  The JSON data is a JSON object that has an array of ontology products.
+The OntologyStore cell imports the ontology by getting the list of ontologies from the cloud (AWS S3), downloading the ontology package from the list onto the server, and import the ontology into the i2b2 database.  See Figure 1.
+
+The cell retrieves a list of ontologies by fetching the JSON data and parsing the information from it. The URL that points to the JSON data is stored in the **hive_cell_params** table of the i2b2 database.
+
+To download the ontology, the cell fetch the list of ontology products and get the URL for the ontology package from the ***file*** attribute.  The cell download the package onto server in the location specified in the **pm_cell_params** table of the i2b2 database. The cell ensures that the file downloaded is not corrupted by computing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute.
+
+### JSON Data
+
+The JSON data is a JSON object that has an array of ontology products.
 
 The ontology product contains the following ontology information:
 
