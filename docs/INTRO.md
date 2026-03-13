@@ -17,22 +17,12 @@ ontologies to download and install, and hiding (disabled) installed ontologies.
 
 ## Ontology Files
 
-The ontology consists of the following tab-delimited (tsv) files:
+The ontology consists of the following tab-delimited (tsv) files.
 
-<dl>
-    <dt><strong>1. Metadata Files</strong></dt>
-    <dd>
-        A new metadata table will be created for importing the data.  The filename will be used as the metadata table name.
-    </dd>
-    <dt><strong>2. Concept Dimension Files</strong></dt>
-    <dd>
-        A new concept dimension table will be created for importing the data.  The filename suffixed with <b><i>_cd</i></b> will be used as the concept dimension table name.  To run queries, the data must be copied over to the main i2b2 <b>Concept Dimension</b> table.
-    </dd>
-    <dt><strong>3. Schemes File</strong></dt>
-    <dd>Data will be directly imported into the i2b2 <b>Scheme</b> table</dd>
-    <dt><strong>4. Table Access File</strong></dt>
-    <dd>Data will be directly imported into the i2b2 <b>Table Access</b> table</dd>
-</dl>
+- **Metadata**: A new metadata table will be created for importing the data. The filename will be used as the table name.
+- **Concept Dimension**: A new concept dimension table will be created for importing the data. The filename suffixed with _cd will be used as the table name. To run queries, the data must be copied over to the main i2b2 ***CONCEPT_DIMENSION*** table.
+- **Schemes**: Data will be directly imported into the i2b2 ***SCHEMES*** table.
+- **Table Access**: Data will be directly imported into the i2b2 ***TABLE_ACCESS*** table.
 
 ## Ontology Package
 
@@ -139,6 +129,58 @@ The Ontology product list is a JSON object containing a list of the ontology pro
 
 The OntologyStore cell install the ontology by fetching the list of ontology products from **AWS S3**, downloading the ontology package from the list of products into the **download directory** on the server, and import the ontology from the package into the **i2b2 database**.  See Figure 1.
 
-The URL to the ontology product list is stored in the **hive_cell_params** table in the i2b2 database.
+### Datasource
+
+Like all other cells in i2b2, the OntologyStore cell access the i2b2 database through configurations set in the XML file ***ontstore-ds.xml***.
+
+An example datasource XML file for Oracle database:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema">
+    <!--
+    The bootstrap points to the data source for your database lookup table which is a hivedata table, this is required.
+    -->
+
+    <!-- Oracle -->
+    <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
+                pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
+        <connection-url>jdbc:oracle:thin:@localhost:1521:xe</connection-url>
+        <driver-class>oracle.jdbc.OracleDriver</driver-class>
+        <driver>ojdbc11.jar</driver>
+        <security>
+            <user-name>i2b2hive</user-name>
+            <password>demouser</password>
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+            <validate-on-match>false</validate-on-match>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <use-fast-fail>true</use-fast-fail>
+            <check-valid-connection-sql>SELECT 1 FROM DUAL</check-valid-connection-sql>
+        </validation>
+        <statement>
+            <share-prepared-statements>false</share-prepared-statements>
+        </statement>
+    </datasource>
+</datasources>
+```
+
+The datasource to the i2b2hive schema is the only datasource the cell initially needs.  The cell also needs the datasource to the i2b2demodata schema and to the i2b2metadata schema.  Both of these datasources can be easily obtained by looking up the datasource names in the ***CRC_DB_LOOKUP*** table and the ***ONT_DB_LOOKUP*** table of the i2b2hive schema.
+
+### Product List URL
+
+The URL to the ontology product list is stored in the i2b2 ***HIVE_CELL_PARAMS*** table in the i2b2 database.
+
+Below is a table of a column values to store the URL in the i2b2 ***HIVE_CELL_PARAMS*** table:
+
+| Column        | Value                                                        |
+|---------------|--------------------------------------------------------------|
+| datatype_cd   | T                                                            |
+| cell_id       | ONTSTORE                                                     |
+| param_name_cd | ontstore.product.list.url                                    |
+| value         | https://ontology-store-v2.s3.amazonaws.com/product-list.json |
+| status_cd     | A                                                            |
 
 To download the ontology, the cell fetch the list of ontology products and get the URL for the ontology package from the ***file*** attribute.  The cell download the package onto server in the location specified in the **pm_cell_params** table of the i2b2 database. The cell ensures that the file downloaded is not corrupted by computing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute.
