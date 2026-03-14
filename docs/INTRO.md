@@ -15,7 +15,7 @@ ontologies to download and install, and hiding (disabled) installed ontologies.
     <figcaption><b>Figure 1: </b>OntologyStore Flow Diagram</figcaption>
 </figure>
 
-## Ontology Files
+## Ontology
 
 The ontology consists of the following tab-delimited (tsv) files.
 
@@ -24,7 +24,7 @@ The ontology consists of the following tab-delimited (tsv) files.
 - **Schemes**: Data will be directly imported into the i2b2 ***SCHEMES*** table.
 - **Table Access**: Data will be directly imported into the i2b2 ***TABLE_ACCESS*** table.
 
-## Ontology Package
+### Ontology Package
 
 The ontology package is a zip file containing the ontology files along with a JSON file called ***package.json***.
 
@@ -53,7 +53,7 @@ The package.json tell the OntologyStore cell which files are the metadata files,
     <figcaption><b>Figure 2: </b>An example of package.json</figcaption>
 </figure>
 
-## Ontology Product
+### Ontology Product
 
 The ontology product is a JSON object containing the description of the ontology and the URL to download the ontology package.
 
@@ -89,7 +89,7 @@ The ontology product contains the following information (attributes):
 </figure>
 
 
-## Ontology Product List
+### Ontology Product List
 
 The Ontology product list is a JSON object containing a list of the ontology products.  This is what the OntologyStore cell fetches to get the list of onotologies.
 
@@ -129,9 +129,11 @@ The Ontology product list is a JSON object containing a list of the ontology pro
 
 The OntologyStore cell install the ontology by fetching the list of ontology products from **AWS S3**, downloading the ontology package from the list of products into the **download directory** on the server, and import the ontology from the package into the **i2b2 database**.  See Figure 1.
 
-### Datasource
+### Data Source
 
-Like all other cells in i2b2, the OntologyStore cell access the i2b2 database through configurations set in the XML file ***ontstore-ds.xml***.
+Like all other cells in i2b2, the OntologyStore cell needs to communicate with your i2b2 database. The data source configuration is stored in the XML file ***ontstore-ds.xml***.
+
+The data source, **OntologyStoreBootStrapDS**, has access to the tables in the **i2b2hive** schema.
 
 An example datasource XML file for Oracle database:
 
@@ -167,7 +169,8 @@ An example datasource XML file for Oracle database:
 </datasources>
 ```
 
-The datasource to the i2b2hive schema is the only datasource the cell initially needs.  The cell also needs the datasource to the i2b2demodata schema and to the i2b2metadata schema.  Both of these datasources can be easily obtained by looking up the datasource names in the ***CRC_DB_LOOKUP*** table and the ***ONT_DB_LOOKUP*** table of the i2b2hive schema.
+In addition to access the **i2b2hive** schema, the cell also access the **i2b2demodata** schema and the **i2b2metadata** schema to import the data for the concept dimension and the metadata.  The cell obtains the data source to these schemas by looking up the data source name in the ***CRC_DB_LOOKUP*** table and the ***ONT_DB_LOOKUP*** table in the **i2b2hive** schema.
+
 
 ### Product List URL
 
@@ -183,4 +186,15 @@ Below is a table of a column values to store the URL in the i2b2 ***HIVE_CELL_PA
 | value         | https://ontology-store-v2.s3.amazonaws.com/product-list.json |
 | status_cd     | A                                                            |
 
-To download the ontology, the cell fetch the list of ontology products and get the URL for the ontology package from the ***file*** attribute.  The cell download the package onto server in the location specified in the **pm_cell_params** table of the i2b2 database. The cell ensures that the file downloaded is not corrupted by computing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute.
+### Download Path
+
+The cell needs to know the location on the server to download the ontology package (zip file) to.  The download path on the server is stored in the table ***PM_CELL_PARAMS*** in the **i2b2pm** schema.
+
+
+### Ontology Download Process
+
+Steps the OntologyStore cell goes through to download an ontology package:
+
+1. Fetch the list of ontology products and extract the URL that points to the ontology package.
+2. Download the ontology package onto the server.
+3. Verify the downloaded package by omputing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute in the ontology product.  See Figure 3.
