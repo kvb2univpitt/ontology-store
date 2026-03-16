@@ -21,9 +21,19 @@
                         </button>
                     </div>
                     <div class="card-body ontstore-border">
-                        <p>A new metadata table and concept dimension table will be created for each ontology. The name for the new concept dimension table will be suffixed with "_cd".</p>
-                        <div class="alert alert-warning p-2" role="alert">
-                            <strong>Note:</strong> The new concept dimension table must be merged with the main concept dimension table to run queries.
+                        <div class="p-3 mb-3 bg-light text-dark">
+                            For each ontology install:
+                            <ul>
+                                <li>The metadata data will be imported into a separate table.</li>
+                                <li>The concept-dimension data will be imported into a separate table suffixed with "_cd".</li>
+                                <li>The schemes data will be imported directly into the i2b2 SCHEMES table.</li>
+                                <li>The table-access data will be imported directly into the i2b2 TABLE_ACCESS table.</li>
+                                <li>The qt-breakdown-path* data will be imported directly into the i2b2 QT_BREAKDOWN_PATH table.</li>
+                            </ul>
+                            <div class="alert alert-warning p-2" role="alert">
+                                <strong>Note:</strong> The separate concept dimension table must be merged with the main i2b2 <b>CONCEPT_DIMENSION</b> table to run queries.
+                            </div>
+                            * Not all ontologies have qt-breakdown-path data.
                         </div>
                         <div class="table-responsive pb-4">
                             <table id="OntologyStore-ProductTable" class="table table-sm table-bordered table-hover w-100">
