@@ -198,3 +198,253 @@ Steps the OntologyStore cell goes through to download an ontology package:
 1. Fetch the list of ontology products and extract the URL that points to the ontology package.
 2. Download the ontology package onto the server.
 3. Verify the downloaded package by omputing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute in the ontology product.  See Figure 3.
+
+### Ontology Install Process
+
+Steps the OntologyStore cell goes through to install an ontology package:
+
+1. Open the ontology package (zip file).
+2. Read the package.json inside the zip file to locate the files for the metadata, concept dimension, etc
+3. Create a new metadata table to import the data from file.  The table name is based on the metadata file name.
+4. Create a new concept dimension to import the data from file.  The table is based on the concept-dimension file name.
+5. Import all other data directly to the i2b2 tables.
+
+> Note: To save space on the server, the cell does not unzip ontology package.  It reads the file directly from file reader stream.
+
+### Disable Installed Ontologies
+
+Ontologies that have been installed can be hide from the users by disabling them.  The cell hide the ontologies by modifying the value of the **C_VISUALATTRIBUTES** column in the i2b2 ***TABLE_ACCESS*** table.
+
+See the i2b2 documentation on [C_VISUALATTRIBUTES](https://community.i2b2.org/wiki/display/ServerSideDesign/C_VISUALATTRIBUTES) for more detail.
+
+## OntologyStore Plugin
+
+The OntologyStore plugin is an i2b2 webclient plugin that lists ontologies hosted on the cloud, enable i2b2 administrators to download ontologies, install ontologies, and disable (hide) installed ontologies from users.
+
+The plugin communicates with the i2b2 Hive via pre-defined XML messages over RESTful services.  The request goes to the PM cell first for authetication, ensure that the user is authenticated and has admin role, and then goes to the OntologyStore cell.  See the i2b2 [Web Client Architecture Guide](https://community.i2b2.org/wiki/display/webclient/Web+Client+Architecture+Guide) for more detail.
+
+### REST Endpoints
+
+The OntologyStore plugin sends XML messages to the following REST endpoints to communicate with the OntologyStore cell:
+
+- **getProducts**: Get the list of ontology products and their current status.
+- **getProductActions**: Request to download, install and disable/enable ontologies.
+
+### REST Endpoint Request and Response Examples
+
+Example of ***getProducts*** request:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>http://localhost:9090/i2b2/services/OntologyStoreService/getProducts</redirect_url>
+        </proxy>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>i2b2 OntologyStore</application_name>
+            <application_version>1.8.2</application_version>
+        </sending_application>
+        ...
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:getProducts/>
+    </message_body>
+</ns3:request>
+```
+
+Example of ***getProducts*** response:
+```xml
+<ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
+              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
+              xmlns:ns3="http://www.i2b2.org/xsd/cell/pm/1.1/">
+    <message_header>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>OntologyStore Cell</application_name>
+            <application_version>1.700</application_version>
+        </sending_application>
+        ...
+    </message_header>
+    <response_header>
+        <result_status>
+            <status type="DONE">OntologyStore processing completed</status>
+        </result_status>
+    </response_header>
+    <message_body>
+        <ns4:products>
+            <product>
+                <id>act_network_ontology_v4</id>
+                <title>ACT Network Ontology</title>
+                <version>V4.0</version>
+                <owner>Pitt</owner>
+                <type>Network Ontology Package</type>
+                <terminologies>
+                    <terminology>CPT4</terminology>
+                    <terminology>LOINC</terminology>
+                    <terminology>ICD10CM</terminology>
+                    <terminology>UMLS</terminology>
+                </terminologies>
+                <include_network_package>true</include_network_package>
+                <downloaded>false</downloaded>
+                <installed>false</installed>
+                <started>false</started>
+                <failed>false</failed>
+                <disabled>false</disabled>
+            </product>
+            <product>
+                <id>act_vax_v42</id>
+                <title>ACT Vaccines</title>
+                <version>V4.2</version>
+                <owner>Pitt</owner>
+                <type>Ontology Package</type>
+                <terminologies>
+                    <terminology>CPT4</terminology>
+                    <terminology>CVX</terminology>
+                    <terminology>CVXGROUP</terminology>
+                    <terminology>NDC</terminology>
+                </terminologies>
+                <include_network_package>false</include_network_package>
+                <downloaded>false</downloaded>
+                <installed>false</installed>
+                <started>false</started>
+                <failed>false</failed>
+                <disabled>false</disabled>
+            </product>
+            <product>
+                <id>act_zipcode_v41</id>
+                <title>ACT Zip Code</title>
+                <version>V4.1</version>
+                <owner>Pitt</owner>
+                <type>Ontology Package</type>
+                <terminologies>
+                    <terminology>DEM|HRR</terminology>
+                    <terminology>DEM|HSA</terminology>
+                    <terminology>DEM|RUCC</terminology>
+                    <terminology>DEM|SameAsSite</terminology>
+                    <terminology>DEM|ZIP3</terminology>
+                    <terminology>DEM|ZIPCODE</terminology>
+                </terminologies>
+                <include_network_package>false</include_network_package>
+                <downloaded>false</downloaded>
+                <installed>false</installed>
+                <started>false</started>
+                <failed>false</failed>
+                <disabled>false</disabled>
+            </product>
+            ...
+        </ns4:products>
+    </message_body>
+</ns2:response>
+```
+
+Example of ***getProductActions*** request for downloading, installing, and disabling:
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
+             xmlns:ns2="http://www.i2b2.org/xsd/hive/plugin/"
+             xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
+    <message_header>
+        <proxy>
+            <redirect_url>http://localhost:9090/i2b2/services/OntologyStoreService/getProductActions</redirect_url>
+        </proxy>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>i2b2 OntologyStore</application_name>
+            <application_version>1.8.2</application_version>
+        </sending_application>
+        ...
+    </message_header>
+    <request_header>
+        <result_waittime_ms>180000</result_waittime_ms>
+    </request_header>
+    <message_body>
+        <ns4:product_actions>
+            <product_action>
+                <id>act_demo_v4</id>
+                <title>ACT Demo</title>
+                <include_network_package>false</include_network_package>
+                <download>true</download>
+                <install>false</install>
+                <disable_enable>false</disable_enable>
+            </product_action>
+            <product_action>
+                <id>act_covid_v4</id>
+                <title>ACT COVID-19 Ontology</title>
+                <include_network_package>false</include_network_package>
+                <download>false</download>
+                <install>true</install>
+                <disable_enable>false</disable_enable>
+            </product_action>
+            <product_action>
+                <id>act_covid_v41</id>
+                <title>ACT COVID-19</title>
+                <include_network_package>false</include_network_package>
+                <download>false</download>
+                <install>false</install>
+                <disable_enable>true</disable_enable>
+            </product_action>
+        </ns4:product_actions>
+    </message_body>
+</ns3:request>
+```
+
+Example of ***getProductActions*** response for downloading, installing, and disabling:
+
+```xml
+<ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
+              xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
+              xmlns:ns3="http://www.i2b2.org/xsd/cell/pm/1.1/">
+    <message_header>
+        <i2b2_version_compatible>1.1</i2b2_version_compatible>
+        <hl7_version_compatible>2.4</hl7_version_compatible>
+        <sending_application>
+            <application_name>OntologyStore Cell</application_name>
+            <application_version>1.700</application_version>
+        </sending_application>
+        ...
+    </message_header>
+    <response_header>
+        <result_status>
+            <status type="DONE">OntologyStore processing completed</status>
+        </result_status>
+    </response_header>
+    <message_body>
+        <ns4:product_actions>
+            <product_action>
+                <id>act_demo_v4</id>
+                <title>ACT Demo</title>
+                <include_network_package>false</include_network_package>
+                <download>true</download>
+                <install>false</install>
+                <disable_enable>false</disable_enable>
+            </product_action>
+            <product_action>
+                <id>act_covid_v4</id>
+                <title>ACT COVID-19 Ontology</title>
+                <include_network_package>false</include_network_package>
+                <download>false</download>
+                <install>true</install>
+                <disable_enable>false</disable_enable>
+            </product_action>
+            <product_action>
+                <id>act_covid_v41</id>
+                <title>ACT COVID-19</title>
+                <include_network_package>false</include_network_package>
+                <download>false</download>
+                <install>false</install>
+                <disable_enable>true</disable_enable>
+            </product_action>
+        </ns4:product_actions>
+    </message_body>
+</ns2:response>
+```
