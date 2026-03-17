@@ -36,7 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -60,7 +59,6 @@ public class OntologyInstallService extends AbstractOntologyService {
     private static final Log LOGGER = LogFactory.getLog(OntologyInstallService.class);
 
     private static final String ACTION_TYPE = "Install";
-    private static final int NUM_THREAD = 4;
 
     private final HiveDBAccess hiveDBAccess;
 
@@ -95,51 +93,35 @@ public class OntologyInstallService extends AbstractOntologyService {
                 .map(productFolder -> Paths.get(downloadDirectory, productFolder))
                 .forEach(productDir -> ontologyFileService.setInstallStarted(productDir));
 
-        if (productsToInstall.size() > 1) {
-            ExecutorService executor = Executors.newFixedThreadPool(NUM_THREAD);
-            productsToInstall.forEach(productItem -> {
-                executor.submit(() -> {
+        if (!productsToInstall.isEmpty()) {
+            try {
+                String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(projectId);
+                String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(projectId);
+                if (ontJNDIName == null || crcJNDIName == null) {
+                    throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", projectId));
+                }
+
+                DataSource ontDataSource = getDataSource(ontJNDIName);
+                DataSource crcDataSource = getDataSource(crcJNDIName);
+                if (ontDataSource == null || crcDataSource == null) {
+                    throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", projectId));
+                }
+
+                JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
+                JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
+
+                productsToInstall.forEach(productItem -> {
                     try {
-                        performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
-                    } catch (InstallationException exception) {
-                        LOGGER.error("Failed to install ontologies.", exception);
+                        install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
+                    } catch (Exception exception) {
+                        LOGGER.error("", exception);
+                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
+                        ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
                     }
                 });
-            });
-            shutdownAndAwaitTermination(executor);
-        } else {
-            productsToInstall.forEach(productItem -> {
-                try {
-                    performInstallationTask(downloadDirectory, projectId, productListUrl, productItem, summaries);
-                } catch (InstallationException exception) {
-                    LOGGER.error("Failed to install ontologies.", exception);
-                }
-            });
-        }
-    }
-
-    public synchronized void performInstallationTask(String downloadDirectory, String project, String productListUrl, ProductItem productItem, List<ActionSummaryType> summaries) throws InstallationException {
-        String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
-        String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(project);
-        if (ontJNDIName == null || crcJNDIName == null) {
-            throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
-        }
-
-        DataSource ontDataSource = getDataSource(ontJNDIName);
-        DataSource crcDataSource = getDataSource(crcJNDIName);
-        if (ontDataSource == null || crcDataSource == null) {
-            throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
-        }
-
-        JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
-        JdbcTemplate crcJdbcTemplate = new JdbcTemplate(crcDataSource);
-
-        try {
-            install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate, summaries);
-        } catch (Exception exception) {
-            LOGGER.error("", exception);
-            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
-            ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
+            } catch (InstallationException exception) {
+                LOGGER.error("Failed to install ontologies.", exception);
+            }
         }
     }
 

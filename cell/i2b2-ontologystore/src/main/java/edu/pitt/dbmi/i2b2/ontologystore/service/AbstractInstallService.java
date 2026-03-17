@@ -75,7 +75,7 @@ public abstract class AbstractInstallService {
     protected static final DateFormat DDMMMYY_DF = new SimpleDateFormat("dd-MMM-yy");
     protected static final DateFormat YYYYMMDD_DASH_DF = new SimpleDateFormat("yyyy-mm-dd");
 
-    protected static final int DEFAULT_BATCH_SIZE = 50;
+    protected static final int DEFAULT_BATCH_SIZE = 100;
 
     protected final FileSystemService fileSystemService;
 
