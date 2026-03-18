@@ -96,19 +96,20 @@ public class ProductActionsRequestHandler extends RequestHandler {
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }
-        summaries.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
-                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
+        summaries.forEach(this::logActionSummary);
 
         CompletableFuture<List<ActionSummaryType>> taskResult = asyncActionService.performActions(projectId, downloadDirectory, productListUrl, actions);
-        taskResult.thenAccept(results -> {
-            results.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
-                    summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
-        });
+        taskResult.thenAccept(results -> results.forEach(this::logActionSummary));
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildProductActionsResponse(messageHeader, productActions);
 
         return MessageFactory.convertToXMLString(responseMessageType);
+    }
+
+    private void logActionSummary(ActionSummaryType summary) {
+        LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
+                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail()));
     }
 
 }
