@@ -53,6 +53,10 @@ body, td, p {
     background-color: #2782a3 !important;
 }
 
+table#OntologyStore-ProductTable tbody tr:hover td {
+    background-color: #fff3cd;
+}
+
 table#OntologyStore-ProductTable th {
     border: 1px solid dimgray;
     text-align: inherit;
