@@ -82,8 +82,9 @@ public class OntologyInstallService extends AbstractOntologyService {
             String projectId,
             String downloadDirectory,
             String productListUrl,
-            List<ProductActionType> actions,
-            List<ActionSummaryType> summaries) {
+            List<ProductActionType> actions) {
+        List<ActionSummaryType> summaries = new LinkedList<>();
+
         List<ProductActionType> installActions = actions.stream().filter(ProductActionType::isInstall).collect(Collectors.toList());
         List<ProductItem> productsToInstall = getValidProductsToInstall(downloadDirectory, productListUrl, installActions, summaries);
 
@@ -123,6 +124,9 @@ public class OntologyInstallService extends AbstractOntologyService {
                 LOGGER.error("Failed to install ontologies.", exception);
             }
         }
+
+        summaries.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
+                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
     }
 
     private void install(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate, List<ActionSummaryType> summaries) throws InstallationException {

@@ -53,13 +53,18 @@ public class OntologyDownloadService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
+    public synchronized void performDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions) {
+        List<ActionSummaryType> summaries = new LinkedList<>();
+
         // get actions that are marked for download
         actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
 
         List<ProductItem> productsToDownload = getValidProductsToDownload(downloadDirectory, productListUrl, actions, summaries);
         productsToDownload = downloadFiles(downloadDirectory, productsToDownload, summaries);
         verifyFileIntegrity(downloadDirectory, productsToDownload, summaries);
+
+        summaries.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
+                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
     }
 
     /**

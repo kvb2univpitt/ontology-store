@@ -68,7 +68,9 @@ public class OntologyDisableService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performDisableEnable(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) throws InstallationException {
+    public synchronized void performDisableEnable(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions) throws InstallationException {
+        List<ActionSummaryType> summaries = new LinkedList<>();
+
         // get actions that are marked for disable/enable
         actions = actions.stream().filter(ProductActionType::isDisableEnable).collect(Collectors.toList());
 
@@ -90,6 +92,9 @@ public class OntologyDisableService extends AbstractOntologyService {
                 disableEnable(downloadDirectory, productItem, ontJdbcTemplate, summaries);
             });
         }
+
+        summaries.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
+                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
     }
 
     private void disableEnable(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {

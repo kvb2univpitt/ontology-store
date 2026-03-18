@@ -24,7 +24,6 @@ import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
@@ -32,9 +31,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -90,26 +87,18 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         List<ProductActionType> actions = productActions.getProductAction();
         String projectId = messageHeader.getProjectId();
-        List<ActionSummaryType> summaries = new LinkedList<>();
         try {
-            ontologyDisableService.performDisableEnable(downloadDirectory, projectId, productListUrl, actions, summaries);
+            ontologyDisableService.performDisableEnable(downloadDirectory, projectId, productListUrl, actions);
         } catch (InstallationException exception) {
             throw new I2B2Exception(exception.getMessage());
         }
-        summaries.forEach(this::logActionSummary);
 
-        CompletableFuture<List<ActionSummaryType>> taskResult = asyncActionService.performActions(projectId, downloadDirectory, productListUrl, actions);
-        taskResult.thenAccept(results -> results.forEach(this::logActionSummary));
+        asyncActionService.performActions(projectId, downloadDirectory, productListUrl, actions);
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildProductActionsResponse(messageHeader, productActions);
 
         return MessageFactory.convertToXMLString(responseMessageType);
-    }
-
-    private void logActionSummary(ActionSummaryType summary) {
-        LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
-                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail()));
     }
 
 }
