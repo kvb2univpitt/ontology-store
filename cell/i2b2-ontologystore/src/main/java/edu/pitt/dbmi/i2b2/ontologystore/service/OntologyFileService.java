@@ -211,6 +211,10 @@ public class OntologyFileService {
         return fileSystemService.hasFile(SystemFiles.getDownloadStartedFile(productDir));
     }
 
+    public boolean isDownloadPending(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getDownloadPendingFile(productDir));
+    }
+
     public boolean isInstallFinshed(Path productDir) {
         return fileSystemService.hasFile(SystemFiles.getInstallFinishedFile(productDir));
     }
@@ -221,6 +225,10 @@ public class OntologyFileService {
 
     public boolean isInstallStarted(Path productDir) {
         return fileSystemService.hasFile(SystemFiles.getInstallStartedFile(productDir));
+    }
+
+    public boolean isInstallPending(Path productDir) {
+        return fileSystemService.hasFile(SystemFiles.getInstallPendingFile(productDir));
     }
 
     public boolean isDisabled(Path productDir) {
@@ -245,6 +253,8 @@ public class OntologyFileService {
             return fileSystemService.moveFile(SystemFiles.getDownloadStartedFile(productDir), downloadFinishedFile);
         } else if (isDownloadFailed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getDownloadFailedFile(productDir), downloadFinishedFile);
+        } else if (isDownloadPending(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadPendingFile(productDir), downloadFinishedFile);
         } else {
             return fileSystemService.createFile(downloadFinishedFile);
         }
@@ -257,6 +267,8 @@ public class OntologyFileService {
             hasFile = fileSystemService.moveFile(SystemFiles.getDownloadStartedFile(productDir), downloadFailedFile);
         } else if (isDownloadFinshed(productDir)) {
             hasFile = fileSystemService.moveFile(SystemFiles.getDownloadFinishedFile(productDir), downloadFailedFile);
+        } else if (isDownloadPending(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadPendingFile(productDir), downloadFailedFile);
         } else {
             hasFile = fileSystemService.createFile(downloadFailedFile);
         }
@@ -266,12 +278,27 @@ public class OntologyFileService {
 
     public boolean setDownloadStarted(Path productDir) {
         Path downloadStartedFile = SystemFiles.getDownloadStartedFile(productDir);
-        if (isDownloadFailed(productDir)) {
+        if (isDownloadPending(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadPendingFile(productDir), downloadStartedFile);
+        } else if (isDownloadFailed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getDownloadFailedFile(productDir), downloadStartedFile);
         } else if (isDownloadFinshed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getDownloadFinishedFile(productDir), downloadStartedFile);
         } else {
             return fileSystemService.createFile(downloadStartedFile);
+        }
+    }
+
+    public boolean setDownloadPending(Path productDir) {
+        Path downloadPendingFile = SystemFiles.getDownloadPendingFile(productDir);
+        if (isDownloadStarted(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadStartedFile(productDir), downloadPendingFile);
+        } else if (isDownloadFailed(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadFailedFile(productDir), downloadPendingFile);
+        } else if (isDownloadFinshed(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getDownloadFinishedFile(productDir), downloadPendingFile);
+        } else {
+            return fileSystemService.createFile(downloadPendingFile);
         }
     }
 
@@ -281,6 +308,8 @@ public class OntologyFileService {
             return fileSystemService.moveFile(SystemFiles.getInstallStartedFile(productDir), installFinishedFile);
         } else if (isInstallFailed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getInstallFailedFile(productDir), installFinishedFile);
+        } else if (isInstallPending(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getInstallPendingFile(productDir), installFinishedFile);
         } else {
             return fileSystemService.createFile(installFinishedFile);
         }
@@ -293,6 +322,10 @@ public class OntologyFileService {
             hasFile = fileSystemService.moveFile(SystemFiles.getInstallStartedFile(productDir), installFailedFile);
         } else if (isInstallFinshed(productDir)) {
             hasFile = fileSystemService.moveFile(SystemFiles.getInstallFinishedFile(productDir), installFailedFile);
+        } else if (isInstallPending(productDir)) {
+            hasFile = fileSystemService.moveFile(SystemFiles.getInstallPendingFile(productDir), installFailedFile);
+        } else if (isInstallPending(productDir)) {
+            hasFile = fileSystemService.moveFile(SystemFiles.getInstallPendingFile(productDir), installFailedFile);
         } else {
             hasFile = fileSystemService.createFile(installFailedFile);
         }
@@ -302,12 +335,27 @@ public class OntologyFileService {
 
     public boolean setInstallStarted(Path productDir) {
         Path installStartedFile = SystemFiles.getInstallStartedFile(productDir);
-        if (isInstallFailed(productDir)) {
+        if (isInstallPending(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getInstallPendingFile(productDir), installStartedFile);
+        } else if (isInstallFailed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getInstallFailedFile(productDir), installStartedFile);
         } else if (isInstallFinshed(productDir)) {
             return fileSystemService.moveFile(SystemFiles.getInstallFinishedFile(productDir), installStartedFile);
         } else {
             return fileSystemService.createFile(installStartedFile);
+        }
+    }
+
+    public boolean setInstallPending(Path productDir) {
+        Path installPendingFile = SystemFiles.getInstallPendingFile(productDir);
+        if (isInstallStarted(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getInstallStartedFile(productDir), installPendingFile);
+        } else if (isInstallFailed(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getInstallFailedFile(productDir), installPendingFile);
+        } else if (isInstallFinshed(productDir)) {
+            return fileSystemService.moveFile(SystemFiles.getInstallFinishedFile(productDir), installPendingFile);
+        } else {
+            return fileSystemService.createFile(installPendingFile);
         }
     }
 

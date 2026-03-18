@@ -44,6 +44,7 @@ public final class SystemFiles {
     public static final String DOWNLOAD_STARTED = "download.started";
     public static final String DOWNLOAD_FAILED = "download.failed";
     public static final String DOWNLOAD_FINISHED = "download.finished";
+    public static final String DOWNLOAD_PENDING = "download.pending";
 
     /**
      * Install status indicator files.
@@ -51,6 +52,7 @@ public final class SystemFiles {
     public static final String INSTALL_STARTED = "install.started";
     public static final String INSTALL_FAILED = "install.failed";
     public static final String INSTALL_FINISHED = "install.finished";
+    public static final String INSTALL_PENDING = "install.pending";
 
     /**
      * Disabled status indicator files.
@@ -88,6 +90,10 @@ public final class SystemFiles {
         return parentDir.resolve(DOWNLOAD_FINISHED);
     }
 
+    public static final Path getDownloadPendingFile(Path parentDir) {
+        return parentDir.resolve(DOWNLOAD_PENDING);
+    }
+
     public static final Path getInstallStartedFile(Path parentDir) {
         return parentDir.resolve(INSTALL_STARTED);
     }
@@ -98,6 +104,10 @@ public final class SystemFiles {
 
     public static final Path getInstallFinishedFile(Path parentDir) {
         return parentDir.resolve(INSTALL_FINISHED);
+    }
+
+    public static final Path getInstallPendingFile(Path parentDir) {
+        return parentDir.resolve(INSTALL_PENDING);
     }
 
     public static final Path getDisabledFile(Path parentDir) {
