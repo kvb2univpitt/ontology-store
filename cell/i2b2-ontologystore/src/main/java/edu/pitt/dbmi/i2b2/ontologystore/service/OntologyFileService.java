@@ -103,27 +103,39 @@ public class OntologyFileService {
         Path productDir = Paths.get(downloadDirectory, productFolder);
         Path productFile = getProductFile(productDir, productItem);
         if (hasDirectory(productDir)) {
-            if (isDownloadCompletelyFinshed(productDir, productFile)) {
+            if (isDownloadPending(productDir)) {
+                product.setDownloadPending(true);
+
+                if (hasNetworkFiles(productItem.getNetworkFiles()) && hasNetworkFileDirectory(productDir)) {
+                    product.setIncludeNetworkPackage(false);
+                }
+            } else if (isDownloadStarted(productDir)) {
+                product.setStarted(true);
+            } else if (isDownloadFailed(productDir)) {
+                product.setFailed(true);
+                product.setStatusDetail(getDownloadFailedMessage(productDir));
+            } else if (isDownloadCompletelyFinshed(productDir, productFile)) {
                 product.setDownloaded(true);
                 product.setIncludeNetworkPackage(hasNetworkFileDirectory(productDir));
 
-                if (isInstallFinshed(productDir)) {
+                if (isInstallPending(productDir)) {
+                    product.setInstallPending(true);
+                } else if (isInstallStarted(productDir)) {
+                    product.setStarted(true);
+                } else if (isInstallFailed(productDir)) {
+                    product.setFailed(true);
+                    product.setStatusDetail(getInstallFailedMessage(productDir));
+                } else if (isInstallFinshed(productDir)) {
                     product.setInstalled(true);
 
                     if (isDisabled(productDir)) {
                         product.setDisabled(true);
                     }
-                } else if (isInstallFailed(productDir)) {
-                    product.setFailed(true);
-                    product.setStatusDetail(getInstallFailedMessage(productDir));
-                } else if (isInstallStarted(productDir)) {
-                    product.setStarted(true);
                 }
-            } else if (isDownloadFailed(productDir)) {
-                product.setFailed(true);
-                product.setStatusDetail(getDownloadFailedMessage(productDir));
-            } else if (isDownloadStarted(productDir)) {
-                product.setStarted(true);
+            }
+
+            if (isInstallPending(productDir)) {
+                product.setInstallPending(true);
             }
         }
     }
