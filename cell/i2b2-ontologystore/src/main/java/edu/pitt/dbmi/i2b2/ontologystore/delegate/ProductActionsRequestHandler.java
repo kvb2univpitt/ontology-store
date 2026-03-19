@@ -27,11 +27,16 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.ProductActionDataMessage;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -46,18 +51,27 @@ public class ProductActionsRequestHandler extends RequestHandler {
     private static final Log LOGGER = LogFactory.getLog(ProductActionsRequestHandler.class);
 
     private final ProductActionDataMessage productActionDataMsg;
-    private final AsyncActionService asyncActionService;
+    private final OntologyFileService ontologyFileService;
+    private final OntologyDownloadService ontologyDownloadService;
+    private final OntologyInstallService ontologyInstallService;
     private final OntologyDisableService ontologyDisableService;
+    private final AsyncActionService asyncActionService;
 
     public ProductActionsRequestHandler(
             ProductActionDataMessage productActionDataMsg,
-            AsyncActionService asyncActionService,
+            OntologyFileService ontologyFileService,
+            OntologyDownloadService ontologyDownloadService,
+            OntologyInstallService ontologyInstallService,
             OntologyDisableService ontologyDisableService,
+            AsyncActionService asyncActionService,
             PmDBAccess pmDBAccess) {
         super(pmDBAccess);
         this.productActionDataMsg = productActionDataMsg;
-        this.asyncActionService = asyncActionService;
+        this.ontologyFileService = ontologyFileService;
+        this.ontologyDownloadService = ontologyDownloadService;
+        this.ontologyInstallService = ontologyInstallService;
         this.ontologyDisableService = ontologyDisableService;
+        this.asyncActionService = asyncActionService;
     }
 
     @Override
@@ -72,10 +86,6 @@ public class ProductActionsRequestHandler extends RequestHandler {
             return createNotAdminResponse(messageHeader);
         }
 
-        // get properties
-        String productListUrl = getProductListUrl();
-        String downloadDirectory = getDownloadDirectory(configureType);
-
         ProductActionsType productActions = new ProductActionsType();
         try {
             ProductActionsType productsType = productActionDataMsg.getProductActionsType();
@@ -85,20 +95,37 @@ public class ProductActionsRequestHandler extends RequestHandler {
             throw new I2B2Exception("ProductActionsType not configured");
         }
 
-        List<ProductActionType> actions = productActions.getProductAction();
-        String projectId = messageHeader.getProjectId();
-        try {
-            ontologyDisableService.performDisableEnable(downloadDirectory, projectId, productListUrl, actions);
-        } catch (InstallationException exception) {
-            throw new I2B2Exception(exception.getMessage());
-        }
+        // get properties from database
+        String productListUrl = getProductListUrl();
+        String downloadDirectory = getDownloadDirectory(configureType);
 
-        asyncActionService.performActions(projectId, downloadDirectory, productListUrl, actions);
+        // get data from request
+        String projectId = messageHeader.getProjectId();
+        List<ProductActionType> actions = productActions.getProductAction();
+
+        runEnableDisableTasks(productListUrl, downloadDirectory, projectId, actions);
+        runDownloadInstallTasks(productListUrl, downloadDirectory, projectId, actions);
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildProductActionsResponse(messageHeader, productActions);
 
         return MessageFactory.convertToXMLString(responseMessageType);
+    }
+
+    private void runDownloadInstallTasks(String productListUrl, String downloadDirectory, String projectId, List<ProductActionType> actions) throws I2B2Exception {
+        Map<String, ProductItem> products = ontologyFileService.getUniqueProductItems(productListUrl);
+        List<ProductItem> productItemsToDownload = ontologyDownloadService.getValidProductsToDownload(downloadDirectory, actions, products);
+        List<ProductItem> productItemsToInstall = ontologyInstallService.getValidProductsToInstall(downloadDirectory, actions, products);
+
+        asyncActionService.performActions(projectId, downloadDirectory, productItemsToDownload, productItemsToInstall);
+    }
+
+    private void runEnableDisableTasks(String productListUrl, String downloadDirectory, String projectId, List<ProductActionType> actions) throws I2B2Exception {
+        try {
+            ontologyDisableService.performDisableEnable(downloadDirectory, projectId, productListUrl, actions);
+        } catch (InstallationException exception) {
+            throw new I2B2Exception(exception.getMessage());
+        }
     }
 
 }

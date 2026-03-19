@@ -18,7 +18,7 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
+import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +47,10 @@ public class AsyncActionService extends AbstractOntologyService {
     public CompletableFuture<Void> performActions(
             String projectId,
             String downloadDirectory,
-            String productListUrl,
-            List<ProductActionType> actions) {
-        ontologyDownloadService.performDownload(downloadDirectory, productListUrl, actions);
-        ontologyInstallService.performInstallation(projectId, downloadDirectory, productListUrl, actions);
+            List<ProductItem> productItemsToDownload,
+            List<ProductItem> productItemsToInstall) {
+        ontologyDownloadService.performDownload(downloadDirectory, productItemsToDownload);
+        ontologyInstallService.performInstallation(projectId, downloadDirectory, productItemsToInstall);
 
         return CompletableFuture.completedFuture(null);
     }

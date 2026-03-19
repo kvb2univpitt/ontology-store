@@ -24,7 +24,9 @@ import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDisableService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyDownloadService;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
+import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyInstallService;
 import javax.xml.stream.XMLStreamException;
 import org.apache.axiom.om.OMElement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,8 @@ public class OntologyStoreService extends AbstractWebService {
 
     private final PmDBAccess pmDBAccess;
     private final OntologyFileService ontologyFileService;
+    private final OntologyDownloadService ontologyDownloadService;
+    private final OntologyInstallService ontologyInstallService;
     private final OntologyDisableService ontologyDisableService;
     private final AsyncActionService asyncActionService;
 
@@ -48,10 +52,14 @@ public class OntologyStoreService extends AbstractWebService {
     public OntologyStoreService(
             PmDBAccess pmDBAccess,
             OntologyFileService ontologyFileService,
+            OntologyDownloadService ontologyDownloadService,
+            OntologyInstallService ontologyInstallService,
             OntologyDisableService ontologyDisableService,
             AsyncActionService asyncActionService) {
         this.pmDBAccess = pmDBAccess;
         this.ontologyFileService = ontologyFileService;
+        this.ontologyDownloadService = ontologyDownloadService;
+        this.ontologyInstallService = ontologyInstallService;
         this.ontologyDisableService = ontologyDisableService;
         this.asyncActionService = asyncActionService;
     }
@@ -82,7 +90,7 @@ public class OntologyStoreService extends AbstractWebService {
         long waitTime = -1;
 
         return execute(
-                new ProductActionsRequestHandler(productActionDataMsg, asyncActionService, ontologyDisableService, pmDBAccess),
+                new ProductActionsRequestHandler(productActionDataMsg, ontologyFileService, ontologyDownloadService, ontologyInstallService, ontologyDisableService, asyncActionService, pmDBAccess),
                 waitTime);
     }
 

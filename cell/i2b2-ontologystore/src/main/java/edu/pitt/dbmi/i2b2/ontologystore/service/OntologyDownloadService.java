@@ -27,7 +27,6 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,18 +52,9 @@ public class OntologyDownloadService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions) {
-        List<ActionSummaryType> summaries = new LinkedList<>();
-
-        // get actions that are marked for download
-        actions = actions.stream().filter(e -> e.isDownload()).collect(Collectors.toList());
-
-        List<ProductItem> productsToDownload = getValidProductsToDownload(downloadDirectory, productListUrl, actions, summaries);
-        productsToDownload = downloadFiles(downloadDirectory, productsToDownload, summaries);
-        verifyFileIntegrity(downloadDirectory, productsToDownload, summaries);
-
-        summaries.forEach(summary -> LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
-                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
+    public synchronized void performDownload(String downloadDirectory, List<ProductItem> productItemsToDownload) {
+        List<ProductItem> downloadedProductItems = downloadFiles(downloadDirectory, productItemsToDownload);
+        verifyFileIntegrity(downloadDirectory, downloadedProductItems);
     }
 
     /**
@@ -74,8 +64,8 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param productsToDownload
      * @param summaries
      */
-    private void verifyFileIntegrity(String downloadDirectory, List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
-        productsToDownload.forEach(productItem -> {
+    private void verifyFileIntegrity(String downloadDirectory, List<ProductItem> downloadedProductItems) {
+        downloadedProductItems.forEach(productItem -> {
             String productFolder = productItem.getId();
 
             String fileURI = productItem.getFile();
@@ -83,11 +73,11 @@ public class OntologyDownloadService extends AbstractOntologyService {
             String sha256Checksum = ontologyFileService.createSha256Checksum(productDir, fileURI);
             if (sha256Checksum.compareTo(productItem.getSha256Checksum()) == 0) {
                 ontologyFileService.setDownloadFinished(productDir);
-                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Downloaded successfully."));
+                logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "Downloaded successfully."));
             } else {
                 String errorMsg = "File verification failed.  SHA-256 checksum does not match.";
                 ontologyFileService.setDownloadFailed(productDir, errorMsg);
-                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
+                logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
             }
         });
     }
@@ -99,13 +89,13 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * @param summaries a list to store download summaries
      * @return a list products that are successfully downloaded
      */
-    private List<ProductItem> downloadFiles(String downloadDirectory, List<ProductItem> productsToDownload, List<ActionSummaryType> summaries) {
+    private List<ProductItem> downloadFiles(String downloadDirectory, List<ProductItem> productsToDownload) {
         List<ProductItem> downloadedProducts = new LinkedList<>();
 
         productsToDownload.forEach(productItem -> {
             String productFolder = productItem.getId();
             Path productDir = Paths.get(downloadDirectory, productFolder);
-            if (ontologyFileService.createDirectory(productDir) && ontologyFileService.setDownloadStarted(productDir)) {
+            if (ontologyFileService.hasDirectory(productDir) && ontologyFileService.setDownloadStarted(productDir)) {
                 try {
                     // download product file
                     ontologyFileService.downloadFile(productItem.getFile(), productDir);
@@ -123,7 +113,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
                                 LOGGER.error("", exception);
                             }
                         } else {
-                            summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
+                            logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
                         }
                     }
                     downloadedProducts.add(productItem);
@@ -131,10 +121,10 @@ public class OntologyDownloadService extends AbstractOntologyService {
                     LOGGER.error("", exception);
                     String errorMsg = "Unable to download from the given URL.";
                     ontologyFileService.setDownloadFailed(productDir, errorMsg);
-                    summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
+                    logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
                 }
             } else {
-                summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to create directories for download."));
+                logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to create directories for download."));
             }
         });
 
@@ -150,20 +140,26 @@ public class OntologyDownloadService extends AbstractOntologyService {
      * the following conditions:
      *
      * <ul>
-     * <li>Products that have not been downloaded.</li>
-     * <li>Products that have not previous failed to download.</li>
-     * <li>Products that are currently been downloaded.</li>
+     * <li>Is not pending for download.</li>
+     * <li>Have not been downloaded.</li>
+     * <li>Have not previous failed to download.</li>
+     * <li>Are not currently downloading</li>
      * </ul>
      *
+     * @param downloadDirectory directory to download product package
+     * @param productListUrl URL to product list on the cloud
      * @param actions a list of download actions
-     * @param summaries a list to store download summaries
+     * @param products unique products from the product list on cloud
      * @return a list of products to download
      */
-    private List<ProductItem> getValidProductsToDownload(String downloadDirectory, String productListUrl, List<ProductActionType> actions, List<ActionSummaryType> summaries) {
-        List<ProductItem> validProductItems = new LinkedList<>();
+    public List<ProductItem> getValidProductsToDownload(String downloadDirectory, List<ProductActionType> actions, Map<String, ProductItem> products) {
+        List<ProductItem> productItems = new LinkedList<>();
 
-        Map<String, ProductItem> products = ontologyFileService.getUniqueProductItems(productListUrl);
-        actions.forEach(action -> {
+        for (ProductActionType action : actions) {
+            if (!action.isDownload()) {
+                continue;
+            }
+
             String productFolder = action.getId();
             if (products.containsKey(productFolder)) {
                 ProductItem productItem = products.get(productFolder);
@@ -171,27 +167,37 @@ public class OntologyDownloadService extends AbstractOntologyService {
                 Path productDir = Paths.get(downloadDirectory, productFolder);
                 Path productFile = ontologyFileService.getProductFile(productDir, productItem);
                 if (ontologyFileService.hasDirectory(productDir)) {
-                    if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
-                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, true, "Already downloaded."));
-                        return;
+                    if (ontologyFileService.isDownloadPending(productDir)) {
+                        logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "Download already pending."));
+                    } else if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
+                        logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "Already downloaded."));
                     } else if (ontologyFileService.isDownloadFailed(productDir)) {
-                        summaries.add(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
-                        return;
+                        logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, ontologyFileService.getDownloadFailedMessage(productDir)));
                     } else if (ontologyFileService.isDownloadStarted(productDir)) {
-                        summaries.add(createActionSummary(productItem, ACTION_TYPE, true, false, "Download already started."));
-                        return;
+                        logActionSummary(createActionSummary(productItem, ACTION_TYPE, true, false, "Download already started."));
                     }
+
+                    continue;
                 }
 
                 if (!action.isIncludeNetworkPackage()) {
                     productItem.setNetworkFiles(new String[0]);
                 }
 
-                validProductItems.add(productItem);
+                if (ontologyFileService.createDirectory(productDir) && ontologyFileService.setDownloadPending(productDir)) {
+                    productItems.add(productItem);
+                } else {
+                    logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable create directory for download."));
+                }
             }
-        });
+        }
 
-        return validProductItems;
+        return productItems;
+    }
+
+    private void logActionSummary(ActionSummaryType summary) {
+        LOGGER.info(String.format("id=%s, title=%s, action=%s, in progress=%s, success=%s, detail=%s",
+                summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail()));
     }
 
 }
