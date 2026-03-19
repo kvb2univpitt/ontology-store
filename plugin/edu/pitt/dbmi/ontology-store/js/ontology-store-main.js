@@ -468,7 +468,6 @@ i2b2.OntologyStore.table.refresh = () => {
 window.addEventListener('I2B2_READY', () => {
     const col = i2b2.OntologyStore.table.columns;
     i2b2.OntologyStore.table.datatables = $('#OntologyStore-ProductTable').DataTable({
-        pageLength: 50,
         columnDefs: [
             {targets: col.title, width: '25%'},
             {targets: col.version, width: '75px'},
