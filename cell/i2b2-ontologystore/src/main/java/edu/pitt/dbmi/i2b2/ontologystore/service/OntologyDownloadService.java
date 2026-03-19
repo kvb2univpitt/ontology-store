@@ -101,19 +101,18 @@ public class OntologyDownloadService extends AbstractOntologyService {
                     ontologyFileService.downloadFile(productItem.getFile(), productDir);
 
                     //download network files, if any
-                    String[] networkFiles = productItem.getNetworkFiles();
-                    if (hasNetworkFiles(networkFiles)) {
-                        Path networkDir = Paths.get(productDir.toString(), "network_files");
+                    if (hasNetworkFiles(productItem.getNetworkFiles())) {
+                        Path networkDir = productDir.resolve("network_files");
                         if (ontologyFileService.createDirectory(networkDir)) {
                             try {
-                                for (String networkFile : networkFiles) {
+                                for (String networkFile : productItem.getNetworkFiles()) {
                                     ontologyFileService.downloadFile(networkFile, networkDir);
                                 }
                             } catch (IOException exception) {
                                 LOGGER.error("", exception);
                             }
                         } else {
-                            logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to download adapter mapping files."));
+                            logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Download adapter mapping files failed."));
                         }
                     }
                     downloadedProducts.add(productItem);
@@ -124,7 +123,7 @@ public class OntologyDownloadService extends AbstractOntologyService {
                     logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, errorMsg));
                 }
             } else {
-                logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable to create directories for download."));
+                logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Create directories for download failed."));
             }
         });
 
@@ -180,14 +179,19 @@ public class OntologyDownloadService extends AbstractOntologyService {
                     continue;
                 }
 
-                if (!action.isIncludeNetworkPackage()) {
+                if (action.isIncludeNetworkPackage() && hasNetworkFiles(productItem.getNetworkFiles())) {
+                    Path networkDir = productDir.resolve("network_files");
+                    if (!ontologyFileService.createDirectory(networkDir)) {
+                        logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Create directory for network files failed."));
+                    }
+                } else {
                     productItem.setNetworkFiles(new String[0]);
                 }
 
                 if (ontologyFileService.createDirectory(productDir) && ontologyFileService.setDownloadPending(productDir)) {
                     productItems.add(productItem);
                 } else {
-                    logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Unable create directory for download."));
+                    logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Create directory for download failed."));
                 }
             }
         }
