@@ -19,6 +19,7 @@
 package edu.pitt.dbmi.i2b2.ontologystore.ws;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
+import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.GetProductsRequestHandler;
 import edu.pitt.dbmi.i2b2.ontologystore.delegate.ProductActionsRequestHandler;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 public class OntologyStoreService extends AbstractWebService {
 
     private final PmDBAccess pmDBAccess;
+    private final HiveDBAccess hiveDBAccess;
     private final OntologyFileService ontologyFileService;
     private final OntologyDownloadService ontologyDownloadService;
     private final OntologyInstallService ontologyInstallService;
@@ -51,12 +53,14 @@ public class OntologyStoreService extends AbstractWebService {
     @Autowired
     public OntologyStoreService(
             PmDBAccess pmDBAccess,
+            HiveDBAccess hiveDBAccess,
             OntologyFileService ontologyFileService,
             OntologyDownloadService ontologyDownloadService,
             OntologyInstallService ontologyInstallService,
             OntologyDisableService ontologyDisableService,
             AsyncActionService asyncActionService) {
         this.pmDBAccess = pmDBAccess;
+        this.hiveDBAccess = hiveDBAccess;
         this.ontologyFileService = ontologyFileService;
         this.ontologyDownloadService = ontologyDownloadService;
         this.ontologyInstallService = ontologyInstallService;
@@ -76,7 +80,7 @@ public class OntologyStoreService extends AbstractWebService {
             waitTime = responseDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new GetProductsRequestHandler(responseDataMsg, ontologyFileService, pmDBAccess), waitTime);
+        return execute(new GetProductsRequestHandler(responseDataMsg, ontologyFileService, pmDBAccess, hiveDBAccess), waitTime);
     }
 
     public OMElement getProductActions(OMElement req) throws XMLStreamException, I2B2Exception {
@@ -90,7 +94,7 @@ public class OntologyStoreService extends AbstractWebService {
         long waitTime = -1;
 
         return execute(
-                new ProductActionsRequestHandler(productActionDataMsg, ontologyFileService, ontologyDownloadService, ontologyInstallService, ontologyDisableService, asyncActionService, pmDBAccess),
+                new ProductActionsRequestHandler(productActionDataMsg, ontologyFileService, ontologyDownloadService, ontologyInstallService, ontologyDisableService, asyncActionService, pmDBAccess, hiveDBAccess),
                 waitTime);
     }
 

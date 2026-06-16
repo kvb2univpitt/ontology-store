@@ -18,35 +18,11 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.db;
 
-import edu.harvard.i2b2.common.exception.I2B2DAOException;
-import edu.harvard.i2b2.common.exception.I2B2Exception;
-import edu.harvard.i2b2.common.util.axis2.ServiceClient;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.CellDataType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.GetUserConfigurationType;
-import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ParamType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ProjectType;
-import edu.pitt.dbmi.i2b2.ontologystore.pm.GetUserConfigurationRequestMessage;
-import edu.pitt.dbmi.i2b2.ontologystore.pm.PMResponseMessage;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MalformedObjectNameException;
-import javax.management.ReflectionException;
-import javax.sql.DataSource;
-import org.apache.axis2.AxisFault;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -59,17 +35,12 @@ import org.springframework.stereotype.Component;
 public class PmDBAccess {
 
     private static final Log LOGGER = LogFactory.getLog(PmDBAccess.class);
-    private static final Log API_LOGGER = LogFactory.getLog(PmDBAccess.class);
 
     public static final String PM_ENDPOINT_REFERENCE = "ontology.ws.pm.url";
     public static final String ONTSTORE_PRODUCT_LIST_URL = "ontstore.product.list.url";
     public static final String DOWNLOAD_DIR_CELL_PARAM = "ontstore.dir.download";
 
-    private final JdbcTemplate hiveJdbcTemplate;
-
-    @Autowired
-    public PmDBAccess(DataSource hiveDataSource) {
-        this.hiveJdbcTemplate = new JdbcTemplate(hiveDataSource);
+    public PmDBAccess() {
     }
 
     public ProjectType getRoleInfo(ConfigureType configureType, MessageHeaderType header) {
@@ -91,133 +62,6 @@ public class PmDBAccess {
         }
 
         return false;
-    }
-
-    public String getDownloadDirectory(ConfigureType configureType) throws I2B2Exception {
-        if (configureType == null) {
-            throw new I2B2Exception("Cell parameters has not been set.");
-        }
-
-        Map<String, String> cellParams = getCellParameters(configureType);
-        if (!cellParams.containsKey(DOWNLOAD_DIR_CELL_PARAM)) {
-            throw new I2B2Exception("Parameter '" + DOWNLOAD_DIR_CELL_PARAM + "' has not been set.");
-        }
-
-        return cellParams.get(DOWNLOAD_DIR_CELL_PARAM);
-    }
-
-    private Map<String, String> getCellParameters(ConfigureType configureType) {
-        Map<String, String> cellParams = new HashMap<>();
-
-        if (configureType != null) {
-            for (CellDataType data : configureType.getCellDatas().getCellData()) {
-                for (ParamType paramType : data.getParam()) {
-                    cellParams.put(paramType.getName(), paramType.getValue());
-                }
-            }
-        }
-
-        return cellParams;
-    }
-
-    public ConfigureType getConfigureType(MessageHeaderType header) {
-        try {
-            PMResponseMessage msg = new PMResponseMessage();
-            String response = getUserConfigurationResponsetMessage(new GetUserConfigurationType(), header);
-            API_LOGGER.debug(response);
-            StatusType procStatus = msg.processResult(response);
-            if (procStatus.getType().equals("ERROR")) {
-                return null;
-            }
-
-            return msg.readUserInfo();
-        } catch (AxisFault e) {
-            LOGGER.error("Cant connect to PM service");
-        } catch (I2B2Exception e) {
-            LOGGER.error("Problem processing PM service address");
-        } catch (Exception e) {
-            LOGGER.error("General PM processing problem:  " + e.getMessage());
-        }
-
-        return null;
-    }
-
-    private String getUserConfigurationResponsetMessage(GetUserConfigurationType userConfig, MessageHeaderType header) throws Exception {
-        GetUserConfigurationRequestMessage reqMsg = new GetUserConfigurationRequestMessage();
-        String getRolesRequestString = reqMsg.doBuildXML(userConfig, header);
-        try {
-            String response = ServiceClient.sendREST(getPmEndpointReference(), getRolesRequestString);
-            LOGGER.debug("PM response = " + response);
-
-            return response;
-        } catch (Exception exception) {
-            LOGGER.error(exception.getMessage());
-            throw exception;
-        }
-    }
-
-    private List<ParamType> getParamTypes(String cellId) throws I2B2Exception {
-        try {
-            String schema = getSchema(hiveJdbcTemplate.getDataSource());
-            String sql = "SELECT * FROM " + schema + ".hive_cell_params WHERE status_cd <> 'D' AND cell_id = '" + cellId + "'";
-
-            return hiveJdbcTemplate.query(sql, new HiveCellParam());
-        } catch (DataAccessException | SQLException exception) {
-            throw new I2B2DAOException("Database error");
-        }
-    }
-
-    private String getPropertyValue(String propertyName, String cellId) throws I2B2Exception {
-        String propertyValue = null;
-        for (ParamType paramType : getParamTypes(cellId)) {
-            String name = paramType.getName();
-            if (name != null && name.equalsIgnoreCase(propertyName)) {
-                String dataType = paramType.getDatatype();
-                if (dataType.equalsIgnoreCase("U")) {
-                    try {
-                        propertyValue = ServiceClient.getContextRoot() + paramType.getValue();
-                    } catch (AttributeNotFoundException | AxisFault
-                            | InstanceNotFoundException | MBeanException
-                            | MalformedObjectNameException | ReflectionException exception) {
-                        exception.printStackTrace(System.err);
-                    }
-                } else {
-                    propertyValue = paramType.getValue();
-                }
-
-                break;
-            }
-        }
-
-        if ((propertyValue == null) || (propertyValue.trim().isEmpty())) {
-            throw new I2B2Exception("Application property file(" + propertyName + " entry");
-        }
-
-        return propertyValue;
-    }
-
-    /**
-     * Return PM cell endpoint reference URL
-     *
-     * @return
-     * @throws I2B2Exception
-     */
-    private String getPmEndpointReference() throws I2B2Exception {
-        return getPropertyValue(PM_ENDPOINT_REFERENCE, "ONT").trim();
-    }
-
-    public String getOntStoreProductListUrl() throws I2B2Exception {
-        return getPropertyValue(ONTSTORE_PRODUCT_LIST_URL, "ONTSTORE").trim();
-    }
-
-    private String getSchema(DataSource dataSource) throws SQLException {
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                return conn.getSchema();
-            }
-        }
-
-        return null;
     }
 
 }

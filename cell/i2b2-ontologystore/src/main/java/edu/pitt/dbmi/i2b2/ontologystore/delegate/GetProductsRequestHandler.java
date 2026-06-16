@@ -23,6 +23,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
+import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
@@ -42,8 +43,9 @@ public class GetProductsRequestHandler extends RequestHandler {
     public GetProductsRequestHandler(
             ResponseDataMessage responseDataMessage,
             OntologyFileService ontologyFileService,
-            PmDBAccess pmDBAccess) {
-        super(pmDBAccess);
+            PmDBAccess pmDBAccess,
+            HiveDBAccess hiveDBAccess) {
+        super(pmDBAccess, hiveDBAccess);
         this.responseDataMessage = responseDataMessage;
         this.ontologyFileService = ontologyFileService;
     }
@@ -62,7 +64,7 @@ public class GetProductsRequestHandler extends RequestHandler {
 
         // get properties
         String productListUrl = getProductListUrl();
-        String downloadDirectory = getDownloadDirectory(configureType);
+        String downloadDirectory = getDownloadDirectory();
 
         ProductsType productsType = new ProductsType();
         productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(downloadDirectory, productListUrl));

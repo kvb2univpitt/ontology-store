@@ -25,6 +25,8 @@ http://www.springframework.org/schema/task http://www.springframework.org/schema
     <!-- datasource -->
     <bean id="hiveDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
         <property name="jndiName" value="OntologyStoreBootStrapDS" />
+        <property name="expectedType" value="javax.sql.DataSource" />
+        <property name="resourceRef" value="true" />
     </bean>
 
     <!-- Axis2 Web Service, but to Spring, its just another bean that has dependencies -->

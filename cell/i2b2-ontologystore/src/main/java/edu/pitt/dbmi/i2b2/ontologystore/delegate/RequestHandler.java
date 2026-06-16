@@ -22,6 +22,7 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
+import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 
@@ -34,9 +35,11 @@ import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
 public abstract class RequestHandler {
 
     protected final PmDBAccess pmDBAccess;
+    protected final HiveDBAccess hiveDBAccess;
 
-    public RequestHandler(PmDBAccess pmDBAccess) {
+    public RequestHandler(PmDBAccess pmDBAccess, HiveDBAccess hiveDBAccess) {
         this.pmDBAccess = pmDBAccess;
+        this.hiveDBAccess = hiveDBAccess;
     }
 
     public abstract String execute() throws I2B2Exception;
@@ -50,15 +53,15 @@ public abstract class RequestHandler {
     }
 
     public String getProductListUrl() throws I2B2Exception {
-        return pmDBAccess.getOntStoreProductListUrl();
+        return hiveDBAccess.getOntStoreProductListUrl();
     }
 
-    public String getDownloadDirectory(ConfigureType configureType) throws I2B2Exception {
-        return pmDBAccess.getDownloadDirectory(configureType);
+    public String getDownloadDirectory() throws I2B2Exception {
+        return hiveDBAccess.getDownloadDirectory();
     }
 
     public ConfigureType getConfigureType(MessageHeaderType header) {
-        return pmDBAccess.getConfigureType(header);
+        return hiveDBAccess.getConfigureType(header);
     }
 
     protected String createInvalidUserResponse(MessageHeaderType messageHeader) throws I2B2Exception {

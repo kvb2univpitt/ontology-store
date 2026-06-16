@@ -26,6 +26,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionsType;
+import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.service.AsyncActionService;
@@ -64,8 +65,9 @@ public class ProductActionsRequestHandler extends RequestHandler {
             OntologyInstallService ontologyInstallService,
             OntologyDisableService ontologyDisableService,
             AsyncActionService asyncActionService,
-            PmDBAccess pmDBAccess) {
-        super(pmDBAccess);
+            PmDBAccess pmDBAccess,
+            HiveDBAccess hiveDBAccess) {
+        super(pmDBAccess, hiveDBAccess);
         this.productActionDataMsg = productActionDataMsg;
         this.ontologyFileService = ontologyFileService;
         this.ontologyDownloadService = ontologyDownloadService;
@@ -97,7 +99,7 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         // get properties from database
         String productListUrl = getProductListUrl();
-        String downloadDirectory = getDownloadDirectory(configureType);
+        String downloadDirectory = getDownloadDirectory();
 
         // get data from request
         String projectId = messageHeader.getProjectId();
