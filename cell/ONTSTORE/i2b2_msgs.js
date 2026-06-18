@@ -109,10 +109,12 @@ i2b2.ONTSTORE.cfg.msgs.GetProducts = `<?xml version="1.0" encoding="UTF-8" stand
         <result_waittime_ms>{{{result_wait_time}}}000</result_waittime_ms>
     </request_header>
     <message_body>
-        <ns4:getProducts/>
+        <ns4:get_products>
+            <project_id>{{{i2b2_project}}}</project_id>
+        </ns4:get_products>
     </message_body>
 </ns3:request>`;
-i2b2.ONTSTORE.ajax._addFunctionCall("GetProducts", "{{{URL}}}getProducts", i2b2.ONTSTORE.cfg.msgs.GetProducts, null, i2b2.ONTSTORE.cfg.parsers.ExtractProductResults);
+i2b2.ONTSTORE.ajax._addFunctionCall("GetProducts", "{{{URL}}}getProducts", i2b2.ONTSTORE.cfg.msgs.GetProducts, ['i2b2_project'], i2b2.ONTSTORE.cfg.parsers.ExtractProductResults);
 
 i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
@@ -160,8 +162,9 @@ i2b2.ONTSTORE.cfg.msgs.PerformProductActions = `<?xml version="1.0" encoding="UT
     </request_header>
     <message_body>
         <ns4:product_actions>
+            <project_id>{{{i2b2_project}}}</project_id>
             {{{products_str_xml}}}
         </ns4:product_actions>
     </message_body>
 </ns3:request>`;
-i2b2.ONTSTORE.ajax._addFunctionCall("PerformProductActions", "{{{URL}}}getProductActions", i2b2.ONTSTORE.cfg.msgs.PerformProductActions, ['products_str_xml'], i2b2.ONTSTORE.cfg.parsers.ExtractProductActionResults);
+i2b2.ONTSTORE.ajax._addFunctionCall("PerformProductActions", "{{{URL}}}getProductActions", i2b2.ONTSTORE.cfg.msgs.PerformProductActions, ['i2b2_project', 'products_str_xml'], i2b2.ONTSTORE.cfg.parsers.ExtractProductActionResults);

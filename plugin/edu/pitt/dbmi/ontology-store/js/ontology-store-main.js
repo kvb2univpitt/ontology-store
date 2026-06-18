@@ -76,8 +76,11 @@ i2b2.OntologyStore.modal = {
 
 // sync-from-cloud functions
 i2b2.OntologyStore.syncFromCloud = {};
-i2b2.OntologyStore.syncFromCloud.action = (successHandler, errorHandler) => {
-    i2b2.ajax.ONTSTORE.GetProducts().then(successHandler).catch(errorHandler);
+i2b2.OntologyStore.syncFromCloud.action = (i2b2Project, successHandler, errorHandler) => {
+    let options = {
+        i2b2_project: i2b2Project
+    };
+    i2b2.ajax.ONTSTORE.GetProducts(options).then(successHandler).catch(errorHandler);
 };
 i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
     let models = [];
@@ -136,6 +139,7 @@ i2b2.OntologyStore.syncFromCloud.errorHandler = () => {
 i2b2.OntologyStore.syncFromCloud.onClick = () => {
     i2b2.OntologyStore.modal.progress.show('Sync From Cloud');
     i2b2.OntologyStore.syncFromCloud.action(
+            $('#i2b2_projects').val(),
             i2b2.OntologyStore.syncFromCloud.successHandler,
             i2b2.OntologyStore.syncFromCloud.errorHandler);
 };
@@ -205,8 +209,9 @@ i2b2.OntologyStore.execute.errorHandler = (error) => {
         i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
     }, 500);
 };
-i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHandler) => {
+i2b2.OntologyStore.execute.action = (i2b2Project, selectedProducts, successHandler, errorHandler) => {
     let options = {
+        i2b2_project: i2b2Project,
         products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
     };
     i2b2.ajax.ONTSTORE.PerformProductActions(options)
@@ -223,6 +228,7 @@ i2b2.OntologyStore.execute.onClick = () => {
                     $('#OntologyStore-ExecuteBtn').prop("disabled", true);
                     i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
                     i2b2.OntologyStore.execute.action(
+                            $('#i2b2_projects').val(),
                             selectedProducts,
                             i2b2.OntologyStore.execute.successHandler,
                             i2b2.OntologyStore.execute.errorHandler);
@@ -477,12 +483,25 @@ window.addEventListener('I2B2_READY', () => {
             {targets: col.installed, className: 'text-center', width: '75px', orderable: false},
             {targets: col.status, className: 'text-center', width: '105px'},
             {targets: col.disabled, className: 'text-center', width: '75px', orderable: false}
-        ]
+        ],
+        initComplete: function () {
+            i2b2.ajax.PM.getAllProject({}).then(xmlString => {
+                const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
+                const projects = doc.getElementsByTagName('project');
+                if (projects.length > 0) {
+                    const projectSelect = document.getElementById('i2b2_projects');
+                    [...projects].forEach(project => {
+                        projectSelect.add(new Option(project.id, project.id.toLowerCase()));
+                    });
+
+                    // fetch ontologies from cloud
+                    i2b2.OntologyStore.syncFromCloud.onClick();
+                }
+            });
+        }
     });
 
     $('#OntologyStore-SyncFromCloud').on('click', i2b2.OntologyStore.syncFromCloud.onClick);
     $('#OntologyStore-ExecuteBtn').on('click', i2b2.OntologyStore.execute.onClick);
-
-    // fetch ontologies from cloud
-    i2b2.OntologyStore.syncFromCloud.onClick();
+    $('#i2b2_projects').on('change', i2b2.OntologyStore.syncFromCloud.onClick);
 });
