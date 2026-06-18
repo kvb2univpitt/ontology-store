@@ -90,19 +90,21 @@ public class ProductActionsRequestHandler extends RequestHandler {
 
         ProductActionsType productActions = new ProductActionsType();
         try {
-            ProductActionsType productsType = productActionDataMsg.getProductActionsType();
-            productActions.getProductAction().addAll(productsType.getProductAction());
+            ProductActionsType requestData = productActionDataMsg.getProductActionsType();
+            productActions.setProjectId(requestData.getProjectId());
+            productActions.getProductAction().addAll(requestData.getProductAction());
         } catch (JAXBUtilException exception) {
             LOGGER.error("Error setting up ProductActionsRequestHandler");
             throw new I2B2Exception("ProductActionsType not configured");
         }
 
         // get properties from database
+        String projectId = productActions.getProjectId().trim();
         String productListUrl = getProductListUrl();
         String downloadDirectory = getDownloadDirectory();
 
         // get data from request
-        String projectId = messageHeader.getProjectId();
+//        String projectId = messageHeader.getProjectId();
         List<ProductActionType> actions = productActions.getProductAction();
 
         runEnableDisableTasks(productListUrl, downloadDirectory, projectId, actions);
@@ -115,11 +117,13 @@ public class ProductActionsRequestHandler extends RequestHandler {
     }
 
     private void runDownloadInstallTasks(String productListUrl, String downloadDirectory, String projectId, List<ProductActionType> actions) throws I2B2Exception {
+        String projectFolder = projectId.toLowerCase();
+
         Map<String, ProductItem> products = ontologyFileService.getUniqueProductItems(productListUrl);
         List<ProductItem> productItemsToDownload = ontologyDownloadService.getValidProductsToDownload(downloadDirectory, actions, products);
-        List<ProductItem> productItemsToInstall = ontologyInstallService.getValidProductsToInstall(downloadDirectory, actions, products);
+        List<ProductItem> productItemsToInstall = ontologyInstallService.getValidProductsToInstall(projectFolder, downloadDirectory, actions, products);
 
-        asyncActionService.performActions(projectId, downloadDirectory, productItemsToDownload, productItemsToInstall);
+        asyncActionService.performActions(projectId, projectFolder, downloadDirectory, productItemsToDownload, productItemsToInstall);
     }
 
     private void runEnableDisableTasks(String productListUrl, String downloadDirectory, String projectId, List<ProductActionType> actions) throws I2B2Exception {

@@ -19,15 +19,19 @@
 package edu.pitt.dbmi.i2b2.ontologystore.delegate;
 
 import edu.harvard.i2b2.common.exception.I2B2Exception;
+import edu.harvard.i2b2.common.util.jaxb.JAXBUtilException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.GetProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductsType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.service.OntologyFileService;
+import edu.pitt.dbmi.i2b2.ontologystore.ws.GetProductsDataMessage;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
-import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -37,23 +41,25 @@ import edu.pitt.dbmi.i2b2.ontologystore.ws.ResponseDataMessage;
  */
 public class GetProductsRequestHandler extends RequestHandler {
 
-    private final ResponseDataMessage responseDataMessage;
+    private static final Log LOGGER = LogFactory.getLog(GetProductsRequestHandler.class);
+
+    private final GetProductsDataMessage getProductsDataMessage;
     private final OntologyFileService ontologyFileService;
 
     public GetProductsRequestHandler(
-            ResponseDataMessage responseDataMessage,
+            GetProductsDataMessage getProductsDataMessage,
             OntologyFileService ontologyFileService,
             PmDBAccess pmDBAccess,
             HiveDBAccess hiveDBAccess) {
         super(pmDBAccess, hiveDBAccess);
-        this.responseDataMessage = responseDataMessage;
+        this.getProductsDataMessage = getProductsDataMessage;
         this.ontologyFileService = ontologyFileService;
     }
 
     @Override
     public String execute() throws I2B2Exception {
         // authorization check
-        MessageHeaderType messageHeader = MessageFactory.createResponseMessageHeader(responseDataMessage.getMessageHeaderType());
+        MessageHeaderType messageHeader = MessageFactory.createResponseMessageHeader(getProductsDataMessage.getMessageHeaderType());
         ConfigureType configureType = getConfigureType(messageHeader);
         if (isInvalidUser(configureType, messageHeader)) {
             return createInvalidUserResponse(messageHeader);
@@ -62,12 +68,22 @@ public class GetProductsRequestHandler extends RequestHandler {
             return createNotAdminResponse(messageHeader);
         }
 
+        GetProductsType getProductsType = new GetProductsType();
+        try {
+            GetProductsType requestData = getProductsDataMessage.getGetProductsType();
+            getProductsType.setProjectId(requestData.getProjectId());
+        } catch (JAXBUtilException exception) {
+            LOGGER.error("Error setting up GetProductsRequestHandler");
+            throw new I2B2Exception("GetProductsType not configured");
+        }
+
         // get properties
         String productListUrl = getProductListUrl();
         String downloadDirectory = getDownloadDirectory();
+        String projectId = getProductsType.getProjectId();
 
         ProductsType productsType = new ProductsType();
-        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(downloadDirectory, productListUrl));
+        productsType.getProduct().addAll(ontologyFileService.getAvailableProducts(projectId, downloadDirectory, productListUrl));
 
         ResponseMessageType responseMessageType = MessageFactory
                 .buildGetProductsResponse(messageHeader, productsType);

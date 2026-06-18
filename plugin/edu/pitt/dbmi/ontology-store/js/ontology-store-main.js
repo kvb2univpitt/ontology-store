@@ -491,7 +491,9 @@ window.addEventListener('I2B2_READY', () => {
                 if (projects.length > 0) {
                     const projectSelect = document.getElementById('i2b2_projects');
                     [...projects].forEach(project => {
-                        projectSelect.add(new Option(project.id, project.id.toLowerCase()));
+                        const name = project.getElementsByTagName('name')[0].childNodes[0].nodeValue;
+                        const value = project.getElementsByTagName('path')[0].childNodes[0].nodeValue;
+                        projectSelect.add(new Option(name, value.replace('/', '')));
                     });
 
                     // fetch ontologies from cloud

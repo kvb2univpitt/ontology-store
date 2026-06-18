@@ -74,8 +74,8 @@ public class OntologyInstallService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public void performInstallation(String projectId, String downloadDirectory, List<ProductItem> productItemsToInstall) {
-        productItemsToInstall = getValidDownloadedProductsToInstall(downloadDirectory, productItemsToInstall);
+    public void performInstallation(String projectId, String projectFolder, String downloadDirectory, List<ProductItem> productItemsToInstall) {
+        productItemsToInstall = getValidDownloadedProductsToInstall(projectFolder, downloadDirectory, productItemsToInstall);
         if (!productItemsToInstall.isEmpty()) {
             try {
                 String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(projectId);
@@ -95,11 +95,11 @@ public class OntologyInstallService extends AbstractOntologyService {
 
                 productItemsToInstall.forEach(productItem -> {
                     try {
-                        install(downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate);
+                        install(projectFolder, downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate);
                     } catch (Exception exception) {
                         LOGGER.error("", exception);
                         logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
-                        ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId()), exception.getMessage());
+                        ontologyFileService.setInstallFailed(Paths.get(downloadDirectory, productItem.getId(), projectFolder), exception.getMessage());
                     }
                 });
             } catch (InstallationException exception) {
@@ -108,8 +108,9 @@ public class OntologyInstallService extends AbstractOntologyService {
         }
     }
 
-    private void install(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate) throws InstallationException {
+    private void install(String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate) throws InstallationException {
         Path productDir = Paths.get(downloadDirectory, productItem.getId());
+        Path installDir = productDir.resolve(projectFolder);
         File productFile = ontologyFileService.getProductFile(productDir, productItem).toFile();
         try (ZipFile zipFile = new ZipFile(productFile)) {
             Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
@@ -119,7 +120,7 @@ public class OntologyInstallService extends AbstractOntologyService {
 
             String rootFolder = new File(packageJsonZipEntry.getName()).getParent();
 
-            ontologyFileService.setInstallStarted(productDir);
+            ontologyFileService.setInstallStarted(installDir);
             try {
                 metadataInstallService.createMetadata(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
                 metadataInstallService.insertIntoSchemesTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
@@ -147,15 +148,16 @@ public class OntologyInstallService extends AbstractOntologyService {
             throw new InstallationException("", exception);
         }
 
-        ontologyFileService.setInstallFinished(productDir);
+        ontologyFileService.setInstallFinished(installDir);
     }
 
-    private List<ProductItem> getValidDownloadedProductsToInstall(String downloadDirectory, List<ProductItem> downloadedProductItems) {
+    private List<ProductItem> getValidDownloadedProductsToInstall(String projectFolder, String downloadDirectory, List<ProductItem> downloadedProductItems) {
         List<ProductItem> productItems = new LinkedList<>();
 
         for (ProductItem productItem : downloadedProductItems) {
             String productFolder = productItem.getId();
             Path productDir = Paths.get(downloadDirectory, productFolder);
+            Path installDir = productDir.resolve(projectFolder);
             Path productFile = ontologyFileService.getProductFile(productDir, productItem);
             if (ontologyFileService.hasDirectory(productDir)) {
                 if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile)) {
@@ -172,7 +174,7 @@ public class OntologyInstallService extends AbstractOntologyService {
                             productItems.add(productItem);
                         } catch (ZipFileValidationException exception) {
                             logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, exception.getMessage()));
-                            ontologyFileService.setInstallFailed(productDir, exception.getMessage());
+                            ontologyFileService.setInstallFailed(installDir, exception.getMessage());
                         }
                     }
                 } else if (ontologyFileService.isDownloadFailed(productDir)) {
@@ -191,7 +193,7 @@ public class OntologyInstallService extends AbstractOntologyService {
         return productItems;
     }
 
-    public List<ProductItem> getValidProductsToInstall(String downloadDirectory, List<ProductActionType> actions, Map<String, ProductItem> products) {
+    public List<ProductItem> getValidProductsToInstall(String projectFolder, String downloadDirectory, List<ProductActionType> actions, Map<String, ProductItem> products) {
         List<ProductItem> productItems = new LinkedList<>();
 
         for (ProductActionType action : actions) {
@@ -205,15 +207,16 @@ public class OntologyInstallService extends AbstractOntologyService {
 
                 Path productDir = Paths.get(downloadDirectory, productFolder);
                 if (ontologyFileService.hasDirectory(productDir)) {
-                    if (ontologyFileService.isInstallFinshed(productDir)) {
+                    Path installDir = productDir.resolve(projectFolder);
+                    if (ontologyFileService.isInstallFinshed(installDir)) {
                         logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "Already Installed."));
-                    } else if (ontologyFileService.isInstallFailed(productDir)) {
+                    } else if (ontologyFileService.isInstallFailed(installDir)) {
                         logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Installation previously failed."));
-                    } else if (ontologyFileService.isInstallStarted(productDir)) {
+                    } else if (ontologyFileService.isInstallStarted(installDir)) {
                         logActionSummary(createActionSummary(productItem, ACTION_TYPE, true, false, "Installation already started."));
                     } else {
-                        // download pending
-                        if (ontologyFileService.setInstallPending(productDir)) {
+                        // install pending
+                        if (ontologyFileService.createDirectory(installDir) && ontologyFileService.setInstallPending(installDir)) {
                             productItems.add(productItem);
                         } else {
                             logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Set install pending failed."));

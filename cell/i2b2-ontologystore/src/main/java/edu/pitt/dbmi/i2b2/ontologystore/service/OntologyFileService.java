@@ -62,12 +62,13 @@ public class OntologyFileService {
         this.fileSystemService = fileSystemService;
     }
 
-    public List<ProductType> getAvailableProducts(String downloadDirectory, String productListUrl) {
+    public List<ProductType> getAvailableProducts(String projectId, String downloadDirectory, String productListUrl) {
         List<ProductType> productDisplays = new LinkedList<>();
 
         try {
+            String projectFolder = projectId.toLowerCase();
             getProducts(productListUrl).stream()
-                    .map(productItem -> toProductTypes(downloadDirectory, productItem))
+                    .map(productItem -> toProductTypes(projectFolder, downloadDirectory, productItem))
                     .forEach(productDisplays::add);
         } catch (IOException exception) {
             LOGGER.error("", exception);
@@ -76,7 +77,7 @@ public class OntologyFileService {
         return productDisplays;
     }
 
-    private ProductType toProductTypes(String downloadDirectory, ProductItem productItem) {
+    private ProductType toProductTypes(String projectFolder, String downloadDirectory, ProductItem productItem) {
         ProductType productType = new ProductType();
         productType.setId(productItem.getId());
         productType.setTitle(productItem.getTitle());
@@ -89,7 +90,7 @@ public class OntologyFileService {
         terminologies.getTerminology().addAll(Arrays.asList(productItem.getTerminologies()));
         productType.setTerminologies(terminologies);
 
-        getStatus(downloadDirectory, productType, productItem);
+        getStatus(projectFolder, downloadDirectory, productType, productItem);
 
         return productType;
     }
@@ -98,7 +99,7 @@ public class OntologyFileService {
         return !(networkFiles == null || networkFiles.length == 0);
     }
 
-    private void getStatus(String downloadDirectory, ProductType product, ProductItem productItem) {
+    private void getStatus(String projectFolder, String downloadDirectory, ProductType product, ProductItem productItem) {
         String productFolder = product.getId();
         Path productDir = Paths.get(downloadDirectory, productFolder);
         Path productFile = getProductFile(productDir, productItem);
@@ -118,17 +119,18 @@ public class OntologyFileService {
                 product.setDownloaded(true);
                 product.setIncludeNetworkPackage(hasNetworkFileDirectory(productDir));
 
-                if (isInstallPending(productDir)) {
+                Path installDir = productDir.resolve(projectFolder);
+                if (isInstallPending(installDir)) {
                     product.setInstallPending(true);
-                } else if (isInstallStarted(productDir)) {
+                } else if (isInstallStarted(installDir)) {
                     product.setStarted(true);
-                } else if (isInstallFailed(productDir)) {
+                } else if (isInstallFailed(installDir)) {
                     product.setFailed(true);
                     product.setStatusDetail(getInstallFailedMessage(productDir));
-                } else if (isInstallFinshed(productDir)) {
+                } else if (isInstallFinshed(installDir)) {
                     product.setInstalled(true);
 
-                    if (isDisabled(productDir)) {
+                    if (isDisabled(installDir)) {
                         product.setDisabled(true);
                     }
                 }
