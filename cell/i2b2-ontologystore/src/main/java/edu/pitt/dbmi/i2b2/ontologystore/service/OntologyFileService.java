@@ -103,23 +103,30 @@ public class OntologyFileService {
         String productFolder = product.getId();
         Path productDir = Paths.get(downloadDirectory, productFolder);
         Path productFile = getProductFile(productDir, productItem);
+        Path installDir = productDir.resolve(projectFolder);
         if (hasDirectory(productDir)) {
             if (isDownloadPending(productDir)) {
                 product.setDownloadPending(true);
+                if (isInstallPending(installDir)) {
+                    product.setInstallPending(true);
+                }
 
                 if (hasNetworkFiles(productItem.getNetworkFiles()) && hasNetworkFileDirectory(productDir)) {
                     product.setIncludeNetworkPackage(false);
                 }
             } else if (isDownloadStarted(productDir)) {
                 product.setStarted(true);
+                if (isInstallPending(installDir)) {
+                    product.setInstallPending(true);
+                }
             } else if (isDownloadFailed(productDir)) {
                 product.setFailed(true);
                 product.setStatusDetail(getDownloadFailedMessage(productDir));
             } else if (isDownloadCompletelyFinshed(productDir, productFile)) {
                 product.setDownloaded(true);
                 product.setIncludeNetworkPackage(hasNetworkFileDirectory(productDir));
+                product.setFileSize(getFileSize(productFile));
 
-                Path installDir = productDir.resolve(projectFolder);
                 if (isInstallPending(installDir)) {
                     product.setInstallPending(true);
                 } else if (isInstallStarted(installDir)) {
@@ -215,6 +222,10 @@ public class OntologyFileService {
     public boolean isDownloadCompletelyFinshed(Path productDir, Path productFile) {
         return fileSystemService.hasFile(SystemFiles.getDownloadFinishedFile(productDir))
                 && fileSystemService.hasFile(productFile);
+    }
+
+    public long getFileSize(Path file) {
+        return fileSystemService.getFileSize(file);
     }
 
     public boolean isDownloadFailed(Path productDir) {

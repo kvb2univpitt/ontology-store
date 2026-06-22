@@ -4,6 +4,21 @@ if (typeof i2b2 === 'undefined') {
 
 i2b2.OntologyStore = {};
 
+i2b2.OntologyStore.utils = {};
+i2b2.OntologyStore.utils.fileSize = (size) => {
+    const kb = 1024;
+    const mb = Math.pow(kb, 2);
+    const gb = Math.pow(kb, 3);
+
+    if (size < mb) {
+        return `${(size / kb).toFixed(2)} KB`;
+    } else if (size < gb) {
+        return `${(size / mb).toFixed(2)} MB`;
+    } else {
+        return `${(size / gb).toFixed(2)} GB`;
+    }
+};
+
 // ontologies fetched from cloud
 i2b2.OntologyStore.products = [];
 
@@ -66,7 +81,7 @@ i2b2.OntologyStore.modal = {
                 columns[1].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.includeNetworkPackage ? 'checked="checked"' : ''} disabled="disabled" />`;
                 columns[2].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.download ? 'checked="checked"' : ''} disabled="disabled" />`;
                 columns[3].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.install ? 'checked="checked"' : ''} disabled="disabled" />`;
-                columns[col.terminology].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.disableEnable ? 'checked="checked"' : ''} disabled="disabled" />`;
+                columns[4].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.disableEnable ? 'checked="checked"' : ''} disabled="disabled" />`;
             }
 
             $('#OntologyStore-SummaryModal').modal('show');
@@ -98,6 +113,7 @@ i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
         obj.type = product.getElementsByTagName('type')[0].childNodes[0].nodeValue;
         obj.terminologies = [];
         obj.includeNetworkPackage = JSON.parse(product.getElementsByTagName('include_network_package')[0].childNodes[0].nodeValue);
+        obj.fileSize = parseInt(product.getElementsByTagName('file_size')[0].childNodes[0].nodeValue, 10);
         obj.downloadPending = JSON.parse(product.getElementsByTagName('download_pending')[0].childNodes[0].nodeValue);
         obj.installPending = JSON.parse(product.getElementsByTagName('install_pending')[0].childNodes[0].nodeValue);
         obj.downloaded = JSON.parse(product.getElementsByTagName('downloaded')[0].childNodes[0].nodeValue);
@@ -177,10 +193,7 @@ i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
     return models;
 };
 i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
-    i2b2.ajax.ONTSTORE.GetProducts().then((resultXmlStr) => {
-        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
-        i2b2.OntologyStore.table.refresh();
-    });
+    i2b2.OntologyStore.syncFromCloud.onClick();
 
     setTimeout(() => {
         i2b2.OntologyStore.execute.enableDisable();
@@ -391,10 +404,13 @@ i2b2.OntologyStore.table.refresh = () => {
     let datatables = i2b2.OntologyStore.table.datatables;
     datatables.clear();
 
+    const sizeMB = 1024 * 1024;
     const col = i2b2.OntologyStore.table.columns;
     i2b2.OntologyStore.products.forEach((product, index, array) => {
         let columns = [];
-        columns[col.title] = product.title;
+        columns[col.title] = (product.downloaded && product.fileSize > 0)
+                ? `${product.title} <span class="text-success fw-bold">(${i2b2.OntologyStore.utils.fileSize(product.fileSize)})</span>`
+                : product.title;
         columns[col.version] = product.version;
         columns[col.owner] = product.owner;
 //        columns[col.type] = product.type;

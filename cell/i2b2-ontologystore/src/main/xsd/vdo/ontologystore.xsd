@@ -33,6 +33,7 @@
             <xs:element name="type" type="xs:string" />
             <xs:element name="terminologies" type="ontstore:terminologiesType"/>
             <xs:element name="include_network_package" type="xs:boolean" default="false"/>
+            <xs:element name="file_size" type="xs:long" default="-1" />
             <xs:element name="download_pending" type="xs:boolean" default="false"/>
             <xs:element name="install_pending" type="xs:boolean" default="false"/>
             <xs:element name="downloaded" type="xs:boolean" default="false"/>
