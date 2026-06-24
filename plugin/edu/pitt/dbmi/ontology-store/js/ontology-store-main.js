@@ -143,6 +143,7 @@ i2b2.OntologyStore.syncFromCloud.successHandler = (resultXmlStr) => {
         i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
 
         i2b2.OntologyStore.table.refresh();
+        i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
         i2b2.OntologyStore.execute.enableDisable();
         i2b2.OntologyStore.modal.progress.hide();
     }, 500);
@@ -159,6 +160,23 @@ i2b2.OntologyStore.syncFromCloud.onClick = () => {
             i2b2.OntologyStore.syncFromCloud.successHandler,
             i2b2.OntologyStore.syncFromCloud.errorHandler);
 };
+i2b2.OntologyStore.syncFromCloud.refreshProjectSuccessHandler = (resultXmlStr) => {
+    setTimeout(() => {
+        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
+
+        i2b2.OntologyStore.table.refresh();
+        i2b2.OntologyStore.execute.enableDisable();
+        i2b2.OntologyStore.modal.progress.hide();
+    }, 500);
+};
+i2b2.OntologyStore.syncFromCloud.refreshProject = () => {
+    i2b2.OntologyStore.modal.progress.show('Sync From Cloud');
+    i2b2.OntologyStore.syncFromCloud.action(
+            $('#i2b2_projects').val(),
+            i2b2.OntologyStore.syncFromCloud.refreshProjectSuccessHandler,
+            i2b2.OntologyStore.syncFromCloud.errorHandler);
+};
+
 
 // execute button
 i2b2.OntologyStore.execute = {};
@@ -482,8 +500,6 @@ i2b2.OntologyStore.table.refresh = () => {
         datatables.row.add(columns);
     });
     datatables.draw();
-
-    i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
 };
 
 // ---------------------------------------------------------------------------------------
@@ -521,5 +537,5 @@ window.addEventListener('I2B2_READY', () => {
 
     $('#OntologyStore-SyncFromCloud').on('click', i2b2.OntologyStore.syncFromCloud.onClick);
     $('#OntologyStore-ExecuteBtn').on('click', i2b2.OntologyStore.execute.onClick);
-    $('#i2b2_projects').on('change', i2b2.OntologyStore.syncFromCloud.onClick);
+    $('#i2b2_projects').on('change', i2b2.OntologyStore.syncFromCloud.refreshProject);
 });
