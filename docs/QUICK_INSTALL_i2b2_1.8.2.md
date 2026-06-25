@@ -129,7 +129,7 @@ The OntologyStore has two properties that need to be set:
 
 The configuration below tells the OntologyStore cell where to download the ontologies.  Assume that the directory where the ontologies are downloaded to is ```/home/wildfly/ontology```
 
-- Insert the following data to the **pm_cell_params** table to set the additional cell properties:
+- Insert the following data to the **hive_cell_params** table to set the additional cell properties:
 
     | Column        | Value                  |
     |---------------|------------------------|
