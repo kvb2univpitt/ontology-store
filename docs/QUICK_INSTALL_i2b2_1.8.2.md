@@ -135,7 +135,6 @@ The configuration below tells the OntologyStore cell where to download the ontol
     |---------------|------------------------|
     | datatype_cd   | T                      |
     | cell_id       | ONTSTORE               |
-    | project_path  | /                      |
     | param_name_cd | ontstore.dir.download  |
     | value         | /home/wildfly/ontology |
     | status_cd     | A                      |
