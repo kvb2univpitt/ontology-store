@@ -46,11 +46,12 @@ public class AsyncActionService extends AbstractOntologyService {
     @Async
     public CompletableFuture<Void> performActions(
             String projectId,
+            String projectFolder,
             String downloadDirectory,
             List<ProductItem> productItemsToDownload,
             List<ProductItem> productItemsToInstall) {
         ontologyDownloadService.performDownload(downloadDirectory, productItemsToDownload);
-        ontologyInstallService.performInstallation(projectId, downloadDirectory, productItemsToInstall);
+        ontologyInstallService.performInstallation(projectId, projectFolder, downloadDirectory, productItemsToInstall);
 
         return CompletableFuture.completedFuture(null);
     }

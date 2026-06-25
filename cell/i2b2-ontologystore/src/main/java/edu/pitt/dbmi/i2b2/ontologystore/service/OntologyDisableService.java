@@ -68,28 +68,29 @@ public class OntologyDisableService extends AbstractOntologyService {
         this.ontologyFileService = ontologyFileService;
     }
 
-    public synchronized void performDisableEnable(String downloadDirectory, String project, String productListUrl, List<ProductActionType> actions) throws InstallationException {
+    public synchronized void performDisableEnable(String downloadDirectory, String projectId, String productListUrl, List<ProductActionType> actions) throws InstallationException {
         List<ActionSummaryType> summaries = new LinkedList<>();
 
         // get actions that are marked for disable/enable
         actions = actions.stream().filter(ProductActionType::isDisableEnable).collect(Collectors.toList());
 
-        List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(downloadDirectory, actions, summaries, productListUrl);
+        String projectFolder = projectId.toLowerCase();
+        List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(projectFolder, downloadDirectory, actions, summaries, productListUrl);
         if (!productsToDisableEnable.isEmpty()) {
-            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(project);
+            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(projectId);
             if (ontJNDIName == null) {
-                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", project));
+                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", projectId));
             }
 
             DataSource ontDataSource = getDataSource(ontJNDIName);
             if (ontDataSource == null) {
-                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", project));
+                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", projectId));
             }
 
             JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
 
             productsToDisableEnable.forEach(productItem -> {
-                disableEnable(downloadDirectory, productItem, ontJdbcTemplate, summaries);
+                disableEnable(projectFolder, downloadDirectory, productItem, ontJdbcTemplate, summaries);
             });
         }
 
@@ -97,13 +98,14 @@ public class OntologyDisableService extends AbstractOntologyService {
                 summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
     }
 
-    private void disableEnable(String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
+    private void disableEnable(String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
         String productFolder = productItem.getId();
         Path productDir = Paths.get(downloadDirectory, productFolder);
+        Path installDir = productDir.resolve(projectFolder);
         File productFile = ontologyFileService.getProductFile(productDir, productItem).toFile();
 
         // active is true if previously disabled
-        boolean active = ontologyFileService.isDisabled(productDir);
+        boolean active = ontologyFileService.isDisabled(installDir);
 
         try (ZipFile zipFile = new ZipFile(productFile)) {
             Map<String, ZipEntry> zipEntries = ZipFileUtils.getZipFileEntries(zipFile);
@@ -118,10 +120,10 @@ public class OntologyDisableService extends AbstractOntologyService {
                 metadataInstallService.updateTableAccessVisualAttributes(attrs, ontJdbcTemplate);
 
                 if (active) {
-                    ontologyFileService.setEnabled(productDir);
+                    ontologyFileService.setEnabled(installDir);
                     summaries.add(createActionSummary(productItem, ENABLE_ACTION_TYPE, false, true, "Enabled."));
                 } else {
-                    ontologyFileService.setDisabled(productDir);
+                    ontologyFileService.setDisabled(installDir);
                     summaries.add(createActionSummary(productItem, DISABLE_ACTION_TYPE, false, true, "Disabled."));
                 }
             } catch (Exception exception) {
@@ -146,6 +148,7 @@ public class OntologyDisableService extends AbstractOntologyService {
     }
 
     private List<ProductItem> getValidProductsToDisableEnable(
+            String projectFolder,
             String downloadDirectory,
             List<ProductActionType> actions,
             List<ActionSummaryType> summaries,
@@ -165,9 +168,10 @@ public class OntologyDisableService extends AbstractOntologyService {
         productsToDisableEnable.values().forEach(productItem -> {
             String productFolder = productItem.getId();
             Path productDir = Paths.get(downloadDirectory, productFolder);
+            Path installDir = productDir.resolve(projectFolder);
             Path productFile = ontologyFileService.getProductFile(productDir, productItem);
 
-            if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile) && ontologyFileService.isInstallFinshed(productDir)) {
+            if (ontologyFileService.isDownloadCompletelyFinshed(productDir, productFile) && ontologyFileService.isInstallFinshed(installDir)) {
                 validProductItems.add(productItem);
             } else {
                 summaries.add(createActionSummary(productItem, DISABLE_ACTION_TYPE, false, false, "Ontology not installed."));

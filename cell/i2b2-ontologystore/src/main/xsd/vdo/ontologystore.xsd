@@ -3,6 +3,7 @@
            xmlns:ontstore="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
            targetNamespace="http://www.i2b2.org/xsd/cell/ontologystore/1.1/">
 
+    <xs:element name="get_products" type="ontstore:getProductsType"/>
     <xs:element name="terminologies" type="ontstore:terminologiesType"/>
     <xs:element name="product" type="ontstore:productType"/>
     <xs:element name="products" type="ontstore:productsType"/>
@@ -10,6 +11,12 @@
     <xs:element name="product_actions" type="ontstore:productActionsType"/>
     <xs:element name="action_summary" type="ontstore:actionSummaryType"/>
     <xs:element name="action_summaries" type="ontstore:actionSummariesType"/>
+
+    <xs:complexType name="getProductsType">
+        <xs:sequence>
+            <xs:element name="project_id" type="xs:string" />
+        </xs:sequence>
+    </xs:complexType>
 
     <xs:complexType name="terminologiesType">
         <xs:sequence>
@@ -26,6 +33,7 @@
             <xs:element name="type" type="xs:string" />
             <xs:element name="terminologies" type="ontstore:terminologiesType"/>
             <xs:element name="include_network_package" type="xs:boolean" default="false"/>
+            <xs:element name="file_size" type="xs:long" default="-1" />
             <xs:element name="download_pending" type="xs:boolean" default="false"/>
             <xs:element name="install_pending" type="xs:boolean" default="false"/>
             <xs:element name="downloaded" type="xs:boolean" default="false"/>
@@ -67,6 +75,7 @@
 
     <xs:complexType name="productActionsType">
         <xs:sequence>
+            <xs:element name="project_id" type="xs:string" />
             <xs:element name="product_action" type="ontstore:productActionType" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>

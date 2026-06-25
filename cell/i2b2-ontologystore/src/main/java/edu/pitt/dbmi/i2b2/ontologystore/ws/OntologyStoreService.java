@@ -73,14 +73,14 @@ public class OntologyStoreService extends AbstractWebService {
             return getNullRequestResponse();
         }
 
-        ResponseDataMessage responseDataMsg = new ResponseDataMessage(req.toString());
+        GetProductsDataMessage getProductsDataMessage = new GetProductsDataMessage(req.toString());
 
         long waitTime = 0;
-        if ((responseDataMsg.getRequestMessageType() != null) && (responseDataMsg.getRequestMessageType().getRequestHeader() != null)) {
-            waitTime = responseDataMsg.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
+        if ((getProductsDataMessage.getRequestMessageType() != null) && (getProductsDataMessage.getRequestMessageType().getRequestHeader() != null)) {
+            waitTime = getProductsDataMessage.getRequestMessageType().getRequestHeader().getResultWaittimeMs();
         }
 
-        return execute(new GetProductsRequestHandler(responseDataMsg, ontologyFileService, pmDBAccess, hiveDBAccess), waitTime);
+        return execute(new GetProductsRequestHandler(getProductsDataMessage, ontologyFileService, pmDBAccess, hiveDBAccess), waitTime);
     }
 
     public OMElement getProductActions(OMElement req) throws XMLStreamException, I2B2Exception {

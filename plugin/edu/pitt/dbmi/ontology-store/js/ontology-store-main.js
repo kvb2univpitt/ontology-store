@@ -4,6 +4,21 @@ if (typeof i2b2 === 'undefined') {
 
 i2b2.OntologyStore = {};
 
+i2b2.OntologyStore.utils = {};
+i2b2.OntologyStore.utils.fileSize = (size) => {
+    const kb = 1024;
+    const mb = Math.pow(kb, 2);
+    const gb = Math.pow(kb, 3);
+
+    if (size < mb) {
+        return `${(size / kb).toFixed(2)} KB`;
+    } else if (size < gb) {
+        return `${(size / mb).toFixed(2)} MB`;
+    } else {
+        return `${(size / gb).toFixed(2)} GB`;
+    }
+};
+
 // ontologies fetched from cloud
 i2b2.OntologyStore.products = [];
 
@@ -66,7 +81,7 @@ i2b2.OntologyStore.modal = {
                 columns[1].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.includeNetworkPackage ? 'checked="checked"' : ''} disabled="disabled" />`;
                 columns[2].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.download ? 'checked="checked"' : ''} disabled="disabled" />`;
                 columns[3].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.install ? 'checked="checked"' : ''} disabled="disabled" />`;
-                columns[col.terminology].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.disableEnable ? 'checked="checked"' : ''} disabled="disabled" />`;
+                columns[4].innerHTML = `<input type="checkbox" class="form-check-input" ${summary.disableEnable ? 'checked="checked"' : ''} disabled="disabled" />`;
             }
 
             $('#OntologyStore-SummaryModal').modal('show');
@@ -76,8 +91,11 @@ i2b2.OntologyStore.modal = {
 
 // sync-from-cloud functions
 i2b2.OntologyStore.syncFromCloud = {};
-i2b2.OntologyStore.syncFromCloud.action = (successHandler, errorHandler) => {
-    i2b2.ajax.ONTSTORE.GetProducts().then(successHandler).catch(errorHandler);
+i2b2.OntologyStore.syncFromCloud.action = (i2b2Project, successHandler, errorHandler) => {
+    let options = {
+        i2b2_project: i2b2Project
+    };
+    i2b2.ajax.ONTSTORE.GetProducts(options).then(successHandler).catch(errorHandler);
 };
 i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
     let models = [];
@@ -95,6 +113,7 @@ i2b2.OntologyStore.syncFromCloud.parseResults = (resultXmlStr) => {
         obj.type = product.getElementsByTagName('type')[0].childNodes[0].nodeValue;
         obj.terminologies = [];
         obj.includeNetworkPackage = JSON.parse(product.getElementsByTagName('include_network_package')[0].childNodes[0].nodeValue);
+        obj.fileSize = parseInt(product.getElementsByTagName('file_size')[0].childNodes[0].nodeValue, 10);
         obj.downloadPending = JSON.parse(product.getElementsByTagName('download_pending')[0].childNodes[0].nodeValue);
         obj.installPending = JSON.parse(product.getElementsByTagName('install_pending')[0].childNodes[0].nodeValue);
         obj.downloaded = JSON.parse(product.getElementsByTagName('downloaded')[0].childNodes[0].nodeValue);
@@ -124,6 +143,7 @@ i2b2.OntologyStore.syncFromCloud.successHandler = (resultXmlStr) => {
         i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
 
         i2b2.OntologyStore.table.refresh();
+        i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
         i2b2.OntologyStore.execute.enableDisable();
         i2b2.OntologyStore.modal.progress.hide();
     }, 500);
@@ -136,9 +156,27 @@ i2b2.OntologyStore.syncFromCloud.errorHandler = () => {
 i2b2.OntologyStore.syncFromCloud.onClick = () => {
     i2b2.OntologyStore.modal.progress.show('Sync From Cloud');
     i2b2.OntologyStore.syncFromCloud.action(
+            $('#i2b2_projects').val(),
             i2b2.OntologyStore.syncFromCloud.successHandler,
             i2b2.OntologyStore.syncFromCloud.errorHandler);
 };
+i2b2.OntologyStore.syncFromCloud.refreshProjectSuccessHandler = (resultXmlStr) => {
+    setTimeout(() => {
+        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
+
+        i2b2.OntologyStore.table.refresh();
+        i2b2.OntologyStore.execute.enableDisable();
+        i2b2.OntologyStore.modal.progress.hide();
+    }, 500);
+};
+i2b2.OntologyStore.syncFromCloud.refreshProject = () => {
+    i2b2.OntologyStore.modal.progress.show('Sync From Cloud');
+    i2b2.OntologyStore.syncFromCloud.action(
+            $('#i2b2_projects').val(),
+            i2b2.OntologyStore.syncFromCloud.refreshProjectSuccessHandler,
+            i2b2.OntologyStore.syncFromCloud.errorHandler);
+};
+
 
 // execute button
 i2b2.OntologyStore.execute = {};
@@ -173,10 +211,7 @@ i2b2.OntologyStore.execute.parseResults = (resultXmlStr) => {
     return models;
 };
 i2b2.OntologyStore.execute.successHandler = (resultXmlStr) => {
-    i2b2.ajax.ONTSTORE.GetProducts().then((resultXmlStr) => {
-        i2b2.OntologyStore.products = i2b2.OntologyStore.syncFromCloud.parseResults(resultXmlStr);
-        i2b2.OntologyStore.table.refresh();
-    });
+    i2b2.OntologyStore.syncFromCloud.onClick();
 
     setTimeout(() => {
         i2b2.OntologyStore.execute.enableDisable();
@@ -205,8 +240,9 @@ i2b2.OntologyStore.execute.errorHandler = (error) => {
         i2b2.OntologyStore.modal.message.show(msgTitle, msgBody);
     }, 500);
 };
-i2b2.OntologyStore.execute.action = (selectedProducts, successHandler, errorHandler) => {
+i2b2.OntologyStore.execute.action = (i2b2Project, selectedProducts, successHandler, errorHandler) => {
     let options = {
+        i2b2_project: i2b2Project,
         products_str_xml: i2b2.OntologyStore.productsToXml(selectedProducts)
     };
     i2b2.ajax.ONTSTORE.PerformProductActions(options)
@@ -223,6 +259,7 @@ i2b2.OntologyStore.execute.onClick = () => {
                     $('#OntologyStore-ExecuteBtn').prop("disabled", true);
                     i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
                     i2b2.OntologyStore.execute.action(
+                            $('#i2b2_projects').val(),
                             selectedProducts,
                             i2b2.OntologyStore.execute.successHandler,
                             i2b2.OntologyStore.execute.errorHandler);
@@ -385,10 +422,13 @@ i2b2.OntologyStore.table.refresh = () => {
     let datatables = i2b2.OntologyStore.table.datatables;
     datatables.clear();
 
+    const sizeMB = 1024 * 1024;
     const col = i2b2.OntologyStore.table.columns;
     i2b2.OntologyStore.products.forEach((product, index, array) => {
         let columns = [];
-        columns[col.title] = product.title;
+        columns[col.title] = (product.downloaded && product.fileSize > 0)
+                ? `${product.title} <span class="text-success fw-bold">(${i2b2.OntologyStore.utils.fileSize(product.fileSize)})</span>`
+                : product.title;
         columns[col.version] = product.version;
         columns[col.owner] = product.owner;
 //        columns[col.type] = product.type;
@@ -460,8 +500,6 @@ i2b2.OntologyStore.table.refresh = () => {
         datatables.row.add(columns);
     });
     datatables.draw();
-
-    i2b2.authorizedTunnel.function["i2b2.ONT.view.nav.doRefreshAll"]();
 };
 
 // ---------------------------------------------------------------------------------------
@@ -477,12 +515,27 @@ window.addEventListener('I2B2_READY', () => {
             {targets: col.installed, className: 'text-center', width: '75px', orderable: false},
             {targets: col.status, className: 'text-center', width: '105px'},
             {targets: col.disabled, className: 'text-center', width: '75px', orderable: false}
-        ]
+        ],
+        initComplete: function () {
+            i2b2.ajax.PM.getAllProject({}).then(xmlString => {
+                const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
+                const projects = doc.getElementsByTagName('project');
+                if (projects.length > 0) {
+                    const projectSelect = document.getElementById('i2b2_projects');
+                    [...projects].forEach(project => {
+                        const name = project.getElementsByTagName('name')[0].childNodes[0].nodeValue;
+                        const value = project.getElementsByTagName('path')[0].childNodes[0].nodeValue;
+                        projectSelect.add(new Option(name, value.replace('/', '')));
+                    });
+
+                    // fetch ontologies from cloud
+                    i2b2.OntologyStore.syncFromCloud.onClick();
+                }
+            });
+        }
     });
 
     $('#OntologyStore-SyncFromCloud').on('click', i2b2.OntologyStore.syncFromCloud.onClick);
     $('#OntologyStore-ExecuteBtn').on('click', i2b2.OntologyStore.execute.onClick);
-
-    // fetch ontologies from cloud
-    i2b2.OntologyStore.syncFromCloud.onClick();
+    $('#i2b2_projects').on('change', i2b2.OntologyStore.syncFromCloud.refreshProject);
 });

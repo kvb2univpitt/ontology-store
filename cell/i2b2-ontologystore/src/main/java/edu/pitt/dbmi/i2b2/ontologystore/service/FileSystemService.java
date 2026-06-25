@@ -132,6 +132,18 @@ public class FileSystemService {
         return Files.notExists(file);
     }
 
+    public long getFileSize(Path file) {
+        if (Files.exists(file) && Files.isRegularFile(file)) {
+            try {
+                return Files.size(file);
+            } catch (IOException exception) {
+                LOGGER.error(String.format("Failed to get file size '%s'.", file.toString()), exception);
+            }
+        }
+
+        return -1;
+    }
+
     public boolean createDirectoryIfNotExists(Path dir) {
         if (Files.notExists(dir)) {
             try {
