@@ -176,7 +176,7 @@ In addition to access the **i2b2hive** schema, the cell also access the **i2b2de
 
 The URL to the ontology product list is stored in the i2b2 ***HIVE_CELL_PARAMS*** table in the i2b2 database.
 
-Below is a table of a column values to store the URL in the i2b2 ***HIVE_CELL_PARAMS*** table:
+Below is a table of the column values to store the URL in the i2b2 ***HIVE_CELL_PARAMS*** table:
 
 | Column        | Value                                                        |
 |---------------|--------------------------------------------------------------|
@@ -188,8 +188,17 @@ Below is a table of a column values to store the URL in the i2b2 ***HIVE_CELL_PA
 
 ### Download Path
 
-The cell needs to know the location on the server to download the ontology package (zip file) to.  The download path on the server is stored in the table ***PM_CELL_PARAMS*** in the **i2b2pm** schema.
+The cell needs to know the location on the server to download the ontology package (zip file) to.  The download path on the server is stored in the table ***HIVE_CELL_PARAMS*** in the **i2b2pm** schema.
 
+For an example, assume that path to stored the downloaded files is ```/opt/wildfly/shared/download```.  Below is a table of the column values to store the download path in the i2b2 ***HIVE_CELL_PARAMS*** table:
+
+| Column        | Value                        |
+|---------------|------------------------------|
+| datatype_cd   | T                            |
+| cell_id       | ONTSTORE                     |
+| param_name_cd | ontstore.dir.download        |
+| value         | /opt/wildfly/shared/download |
+| status_cd     | A                            |
 
 ### Ontology Download Process
 
@@ -199,17 +208,21 @@ Steps the OntologyStore cell goes through to download an ontology package:
 2. Download the ontology package onto the server.
 3. Verify the downloaded package by omputing a SHA-256 checksum of the file and compare it against the SHA-256 checksum value from ***sha256Checksum*** attribute in the ontology product.  See Figure 3.
 
+***Downloaded ontologies are available to all projects.***
+
 ### Ontology Install Process
 
 Steps the OntologyStore cell goes through to install an ontology package:
 
 1. Open the ontology package (zip file).
 2. Read the package.json inside the zip file to locate the files for the metadata, concept dimension, etc
-3. Create a new metadata table to import the data from file.  The table name is based on the metadata file name.
-4. Create a new concept dimension to import the data from file.  The table is based on the concept-dimension file name.
+3. Create a new metadata table in the database schema specific to the project to import the data from file.  The table name is based on the metadata file name.
+4. Create a new concept dimension table in the database schema specific to the project to import the data from file.  The table is based on the concept-dimension file name.
 5. Import all other data directly to the i2b2 tables.
 
 > Note: To save space on the server, the cell does not unzip ontology package.  It reads the file directly from file reader stream.
+
+***Ontologies are installed to a specific i2b2 project.  The ontology data will be imported under the database schemas specific the i2b2 project.***
 
 ### Disable Installed Ontologies
 
@@ -232,7 +245,7 @@ The OntologyStore plugin sends XML messages to the following REST endpoints to c
 
 ### REST Endpoint Request and Response Examples
 
-Example of ***getProducts*** request:
+Example of ***getProducts*** request for the i2b2 project ***Demo***:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -255,12 +268,12 @@ Example of ***getProducts*** request:
         <result_waittime_ms>180000</result_waittime_ms>
     </request_header>
     <message_body>
-        <ns4:getProducts/>
+        <project_id>Demo</project_id>
     </message_body>
 </ns3:request>
 ```
 
-Example of ***getProducts*** response:
+Example of ***getProducts*** response for the i2b2 project ***Demo***:
 ```xml
 <ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
               xmlns:ns4="http://www.i2b2.org/xsd/cell/ontologystore/1.1/"
@@ -294,6 +307,7 @@ Example of ***getProducts*** response:
                     <terminology>UMLS</terminology>
                 </terminologies>
                 <include_network_package>true</include_network_package>
+                <file_size>0</file_size>
                 <downloaded>false</downloaded>
                 <installed>false</installed>
                 <started>false</started>
@@ -313,6 +327,7 @@ Example of ***getProducts*** response:
                     <terminology>NDC</terminology>
                 </terminologies>
                 <include_network_package>false</include_network_package>
+                <file_size>0</file_size>
                 <downloaded>false</downloaded>
                 <installed>false</installed>
                 <started>false</started>
@@ -334,6 +349,7 @@ Example of ***getProducts*** response:
                     <terminology>DEM|ZIPCODE</terminology>
                 </terminologies>
                 <include_network_package>false</include_network_package>
+                <file_size>2401698</file_size>
                 <downloaded>false</downloaded>
                 <installed>false</installed>
                 <started>false</started>
@@ -346,7 +362,7 @@ Example of ***getProducts*** response:
 </ns2:response>
 ```
 
-Example of ***getProductActions*** request for downloading, installing, and disabling:
+Example of ***getProductActions*** request for downloading, installing, and disabling for the i2b2 project ***Demo***:
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ns3:request xmlns:ns3="http://www.i2b2.org/xsd/hive/msg/1.1/"
@@ -369,6 +385,7 @@ Example of ***getProductActions*** request for downloading, installing, and disa
     </request_header>
     <message_body>
         <ns4:product_actions>
+            <project_id>Demo</project_id>
             <product_action>
                 <id>act_demo_v4</id>
                 <title>ACT Demo</title>
@@ -398,7 +415,7 @@ Example of ***getProductActions*** request for downloading, installing, and disa
 </ns3:request>
 ```
 
-Example of ***getProductActions*** response for downloading, installing, and disabling:
+Example of ***getProductActions*** response for downloading, installing, and disabling for the i2b2 project ***Demo***:
 
 ```xml
 <ns2:response xmlns:ns2="http://www.i2b2.org/xsd/hive/msg/1.1/"
@@ -420,6 +437,7 @@ Example of ***getProductActions*** response for downloading, installing, and dis
     </response_header>
     <message_body>
         <ns4:product_actions>
+            <project_id>Demo</project_id>
             <product_action>
                 <id>act_demo_v4</id>
                 <title>ACT Demo</title>
