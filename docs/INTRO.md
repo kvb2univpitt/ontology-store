@@ -125,6 +125,10 @@ The Ontology product list is a JSON object containing a list of the ontology pro
     <figcaption><b>Figure 4: </b>An example of an ontology product list</figcaption>
 </figure>
 
+## OntologyStore i2b2 Role
+
+As mentioned before, OntologyStore is an administrative tool.  Therefore, it requireds i2b2 administrative role to access.  However, not all i2b2 administrators should be managing the i2b2 ontologies.  The OntologyStore requires the i2b2 administrators be have the role **ONTSTORE_ADMIN**, in addition to the **ADMIN** role, to view the list of ontologies, to download the ontologies, and to install the ontologies.
+
 ## OntologyStore Cell
 
 The OntologyStore cell install the ontology by fetching the list of ontology products from **AWS S3**, downloading the ontology package from the list of products into the **download directory** on the server, and import the ontology from the package into the **i2b2 database**.  See Figure 1.
