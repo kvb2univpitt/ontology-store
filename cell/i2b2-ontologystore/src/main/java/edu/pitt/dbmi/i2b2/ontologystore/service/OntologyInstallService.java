@@ -83,6 +83,8 @@ public class OntologyInstallService extends AbstractOntologyService {
                 if (ontJNDIName == null || crcJNDIName == null) {
                     throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", projectId));
                 }
+                LOGGER.info(String.format("Using datasource %s for project %s", ontJNDIName, projectId));
+                LOGGER.info(String.format("Using datasource %s for project %s", crcJNDIName, projectId));
 
                 DataSource ontDataSource = getDataSource(ontJNDIName);
                 DataSource crcDataSource = getDataSource(crcJNDIName);
