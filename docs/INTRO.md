@@ -125,9 +125,55 @@ The Ontology product list is a JSON object containing a list of the ontology pro
     <figcaption><b>Figure 4: </b>An example of an ontology product list</figcaption>
 </figure>
 
-## OntologyStore i2b2 Role
+## OntologyStore i2b2 Admin Role
 
 As mentioned before, OntologyStore is an administrative tool.  Therefore, it requireds i2b2 administrative role to access.  However, not all i2b2 administrators should be managing the i2b2 ontologies.  The OntologyStore requires the i2b2 administrators be have the role **ONTSTORE_ADMIN**, in addition to the **ADMIN** role, to view the list of ontologies, to download the ontologies, and to install the ontologies.
+
+## OntologyStore i2b2 Database Roles
+
+Dedicated database roles must be created for the OntologyStore to create tables and modified existing tables in the i2b2 database.
+
+### Database Role
+
+The following database roles should be created:
+
+- **i2b2ontstoredata** - This role allows the OntologyStore to create new concept dimension tables with the following permission:
+    - Able to create new tables.  The i2b2 ***i2b2demodata*** role should have read access to the new tables.
+    - Able to read/write to the i2b2 **qt_breakdown_path** table.
+
+- **i2b2ontstoremetadata** - This role allows the OntologyStore to create new metadata tables to import the onotologies with the following permission:
+    - Able to create new tables.  The i2b2 ***i2b2metadata*** role should have read access to the new tables.
+    - Able to read/write to the i2b2 **table_access** table and to the i2b2 **schemes** table.
+
+### i2b2 Lookup Table
+
+The ***i2b2ontstoredata*** role should be added to the i2b2 **crc_db_lookup** table.  For an example:
+
+| Column          | Value                |
+|-----------------|----------------------|
+| c_domain_id     | i2b2demo             |
+| c_project_path  | /Demo/               |
+| c_owner_id      | ontstore             |
+| c_db_fullschema | public               |
+| c_db_datasource | java:/OntstoreDataDS |
+| c_db_servertype | POSTGRESQL           |
+| c_db_nicename   | Demo                 |
+
+The ***i2b2ontstoremetadata*** role should be added to the i2b2 **ont_db_lookup** table.  For an example:
+
+| Column          | Value                    |
+|-----------------|--------------------------|
+| c_domain_id     | i2b2demo                 |
+| c_project_path  | Demo/                    |
+| c_owner_id      | ontstore                 |
+| c_db_fullschema | public                   |
+| c_db_datasource | java:/OntstoreMetadataDS |
+| c_db_servertype | POSTGRESQL               |
+| c_db_nicename   | Metadata                 |
+
+### DataSource Configuration
+
+Both of the roles must be add to the OntologyStore datasource deployment descriptor file  ***ontstore-ds.xml***.  See the ***Data Source*** section for an example.
 
 ## OntologyStore Cell
 
@@ -137,9 +183,9 @@ The OntologyStore cell install the ontology by fetching the list of ontology pro
 
 Like all other cells in i2b2, the OntologyStore cell needs to communicate with your i2b2 database. The data source configuration is stored in the XML file ***ontstore-ds.xml***.
 
-The data source, **OntologyStoreBootStrapDS**, has access to the tables in the **i2b2hive** schema.
+The data source, **OntologyStoreBootStrapDS**, has access to the tables in the i2b2 database.
 
-An example datasource XML file for Oracle database:
+An example datasource XML file for PostgreSQL database:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -148,23 +194,65 @@ An example datasource XML file for Oracle database:
     The bootstrap points to the data source for your database lookup table which is a hivedata table, this is required.
     -->
 
-    <!-- Oracle -->
+    <!-- PostgreSQL -->
     <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
                 pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
-        <connection-url>jdbc:oracle:thin:@localhost:1521:xe</connection-url>
-        <driver-class>oracle.jdbc.OracleDriver</driver-class>
-        <driver>ojdbc11.jar</driver>
+        <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
+        <driver-class>org.postgresql.Driver</driver-class>
+        <driver>postgresql-42.7.8.jar</driver>
         <security>
             <user-name>i2b2hive</user-name>
             <password>demouser</password>
         </security>
         <validation>
-            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
             <validate-on-match>false</validate-on-match>
             <background-validation>true</background-validation>
             <background-validation-millis>60000</background-validation-millis>
             <use-fast-fail>true</use-fast-fail>
-            <check-valid-connection-sql>SELECT 1 FROM DUAL</check-valid-connection-sql>
+            <check-valid-connection-sql>SELECT 1</check-valid-connection-sql>
+        </validation>
+        <statement>
+            <share-prepared-statements>false</share-prepared-statements>
+        </statement>
+    </datasource>
+    <datasource jta="false" jndi-name="java:/OntstoreDataDS"
+                pool-name="OntstoreDataDS" enabled="true" use-ccm="false">
+        <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
+        <driver-class>org.postgresql.Driver</driver-class>
+        <driver>postgresql-42.7.8.jar</driver>
+        <security>
+            <user-name>i2b2ontstoredata</user-name>
+            <password>demouser</password>
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+            <validate-on-match>false</validate-on-match>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <use-fast-fail>true</use-fast-fail>
+            <check-valid-connection-sql>SELECT 1</check-valid-connection-sql>
+        </validation>
+        <statement>
+            <share-prepared-statements>false</share-prepared-statements>
+        </statement>
+    </datasource>
+    <datasource jta="false" jndi-name="java:/OntstoreMetadataDS"
+                pool-name="OntstoreMetadataDS" enabled="true" use-ccm="false">
+        <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
+        <driver-class>org.postgresql.Driver</driver-class>
+        <driver>postgresql-42.7.8.jar</driver>
+        <security>
+            <user-name>i2b2ontstoremetadata</user-name>
+            <password>demouser</password>
+        </security>
+        <validation>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+            <validate-on-match>false</validate-on-match>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <use-fast-fail>true</use-fast-fail>
+            <check-valid-connection-sql>SELECT 1</check-valid-connection-sql>
         </validation>
         <statement>
             <share-prepared-statements>false</share-prepared-statements>
@@ -173,7 +261,7 @@ An example datasource XML file for Oracle database:
 </datasources>
 ```
 
-In addition to access the **i2b2hive** schema, the cell also access the **i2b2demodata** schema and the **i2b2metadata** schema to import the data for the concept dimension and the metadata.  The cell obtains the data source to these schemas by looking up the data source name in the ***CRC_DB_LOOKUP*** table and the ***ONT_DB_LOOKUP*** table in the **i2b2hive** schema.
+In addition to access the datasource for the **i2b2hive** role, the cell also access the datasource for the **i2b2ontstoredata** role and the **i2b2ontstoremetadata** role to import the data for the concept dimension and the metadata.  The OntologyStore obtains these data sources by looking up the data source name in the ***CRC_DB_LOOKUP*** table and the ***ONT_DB_LOOKUP*** table using the **i2b2hive** role.
 
 
 ### Product List URL
