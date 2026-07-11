@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
-DIR=/home/kvb2univpitt/ontology-store/sample_setup/postgresql
+DIR=/home/kvb2/Documents/pitt/shyam/i2b2_harvard/plugin/ontstore/security/postgresql
 
 # Project
 # ##############################################################################

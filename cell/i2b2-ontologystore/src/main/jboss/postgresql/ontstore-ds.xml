@@ -9,57 +9,7 @@
     3) Update the <password> with the database password.
     -->
 
-    <!-- Oracle -->
-    <!--
-    <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
-                pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
-        <connection-url>jdbc:oracle:thin:@localhost:1521:xe</connection-url>
-        <driver-class>oracle.jdbc.OracleDriver</driver-class>
-        <driver>ojdbc11.jar</driver>
-        <security>
-            <user-name>i2b2hive</user-name>
-            <password>demouser</password>
-        </security>
-        <validation>
-            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
-            <validate-on-match>false</validate-on-match>
-            <background-validation>true</background-validation>
-            <background-validation-millis>60000</background-validation-millis>
-            <use-fast-fail>true</use-fast-fail>
-            <check-valid-connection-sql>SELECT 1 FROM DUAL</check-valid-connection-sql>
-        </validation>
-        <statement>
-            <share-prepared-statements>false</share-prepared-statements>
-        </statement>
-    </datasource>
-    -->
-
-    <!-- SQL Server -->
-    <!--
-    <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
-                pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
-        <connection-url>jdbc:sqlserver://localhost:1433</connection-url>
-        <driver-class>com.microsoft.sqlserver.jdbc.SQLServerDriver</driver-class>
-        <driver>mssql-jdbc-12.8.1.jre11.jar</driver>
-        <security>
-            <user-name>i2b2hive</user-name>
-            <password>demouser</password>
-        </security>
-        <validation>
-            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.mssql.MSSQLValidConnectionChecker"/>
-            <validate-on-match>false</validate-on-match>
-            <background-validation>true</background-validation>
-            <background-validation-millis>60000</background-validation-millis>
-            <use-fast-fail>true</use-fast-fail>
-            <check-valid-connection-sql>SELECT 1</check-valid-connection-sql>
-        </validation>
-        <statement>
-            <share-prepared-statements>false</share-prepared-statements>
-        </statement>
-    </datasource>
-    -->
-
-    <!-- PostgreSQL -->
+    <!-- i2b2 -->
     <datasource jta="false" jndi-name="java:/OntologyStoreBootStrapDS"
                 pool-name="OntologyStoreBootStrapDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
@@ -81,8 +31,10 @@
             <share-prepared-statements>false</share-prepared-statements>
         </statement>
     </datasource>
-    <datasource jta="false" jndi-name="java:/OntstoreDataDS"
-                pool-name="OntstoreDataDS" enabled="true" use-ccm="false">
+
+    <!-- OntologyStore Demo project -->
+    <datasource jta="false" jndi-name="java:/OntologyStoreDataDS"
+                pool-name="OntologyStoreDataDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
         <driver-class>org.postgresql.Driver</driver-class>
         <driver>postgresql-42.7.8.jar</driver>
@@ -102,8 +54,8 @@
             <share-prepared-statements>false</share-prepared-statements>
         </statement>
     </datasource>
-    <datasource jta="false" jndi-name="java:/OntstoreMetadataDS"
-                pool-name="OntstoreMetadataDS" enabled="true" use-ccm="false">
+    <datasource jta="false" jndi-name="java:/OntologyStoreMetadataDS"
+                pool-name="OntologyStoreMetadataDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
         <driver-class>org.postgresql.Driver</driver-class>
         <driver>postgresql-42.7.8.jar</driver>
@@ -123,9 +75,11 @@
             <share-prepared-statements>false</share-prepared-statements>
         </statement>
     </datasource>
+
+    <!-- OntologyStore ACT project -->
     <!--
-    <datasource jta="false" jndi-name="java:/OntstoreACTDataDS"
-                pool-name="OntstoreACTDataDS" enabled="true" use-ccm="false">
+    <datasource jta="false" jndi-name="java:/OntologyStoreACTDataDS"
+                pool-name="OntologyStoreACTDataDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
         <driver-class>org.postgresql.Driver</driver-class>
         <driver>postgresql-42.7.8.jar</driver>
@@ -145,8 +99,8 @@
             <share-prepared-statements>false</share-prepared-statements>
         </statement>
     </datasource>
-    <datasource jta="false" jndi-name="java:/OntstoreACTMetadataDS"
-                pool-name="OntstoreACTMetadataDS" enabled="true" use-ccm="false">
+    <datasource jta="false" jndi-name="java:/OntologyStoreACTMetadataDS"
+                pool-name="OntologyStoreACTMetadataDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2?currentSchema=i2b2actdata</connection-url>
         <driver-class>org.postgresql.Driver</driver-class>
         <driver>postgresql-42.7.8.jar</driver>
