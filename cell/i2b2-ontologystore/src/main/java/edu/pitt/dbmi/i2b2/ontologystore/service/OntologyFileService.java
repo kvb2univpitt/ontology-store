@@ -133,7 +133,7 @@ public class OntologyFileService {
                     product.setStarted(true);
                 } else if (isInstallFailed(installDir)) {
                     product.setFailed(true);
-                    product.setStatusDetail(getInstallFailedMessage(productDir));
+                    product.setStatusDetail(getInstallFailedMessage(installDir));
                 } else if (isInstallFinshed(installDir)) {
                     product.setInstalled(true);
 
