@@ -60,8 +60,8 @@ public class HiveDBAccess {
     private static final Log LOGGER = LogFactory.getLog(HiveDBAccess.class);
     private static final Log API_LOGGER = LogFactory.getLog(HiveDBAccess.class);
 
-    private final String QUERY_ONT_DATASOURCE = "SELECT c_db_datasource FROM ont_db_lookup WHERE c_project_path = ? AND c_owner_id = 'ontstore'";
-    private final String QUERY_CRC_DATASOURCE = "SELECT c_db_datasource FROM crc_db_lookup WHERE c_project_path = ? AND c_owner_id = 'ontstore'";
+    private final String QUERY_ONT_DATASOURCE = "SELECT c_db_datasource FROM ont_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
+    private final String QUERY_CRC_DATASOURCE = "SELECT c_db_datasource FROM crc_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
 
     private final JdbcTemplate hiveJdbcTemplate;
 

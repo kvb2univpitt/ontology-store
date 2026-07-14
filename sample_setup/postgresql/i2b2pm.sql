@@ -1,5 +1,5 @@
 -- ontologystore
-INSERT INTO pm_cell_data (cell_id,project_path,"name",method_cd,url,can_override,status_cd) VALUES ('ONTSTORE','/','OntologyStore Cell','REST','http://localhost:9090/i2b2/services/OntologyStoreService/',1,'A');
+INSERT INTO pm_cell_data (cell_id,project_path,"name",method_cd,url,can_override,entry_date,status_cd) VALUES ('ONTSTORE','/','OntologyStore Cell','REST','http://localhost:9090/i2b2/services/OntologyStoreService/',1,current_timestamp,'A');
 
 -- remove SHRINE
 DELETE FROM pm_project_data WHERE project_id = 'SHRINE';
