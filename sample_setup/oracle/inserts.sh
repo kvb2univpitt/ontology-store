@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-DIR=/home/kvb2univpitt/oracle
+DIR=/home/kvb2/Documents/pitt/shyam/i2b2_harvard/plugin/ontstore/security/oracle
 
 # change hostname from Docker container name to localhost
 echo exit | sqlplus i2b2pm/'demouser'@localhost:1521/FREEPDB1 @${DIR}/pm_cell_data.sql
