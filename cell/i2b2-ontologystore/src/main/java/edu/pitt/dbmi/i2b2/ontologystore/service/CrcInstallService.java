@@ -90,27 +90,27 @@ public class CrcInstallService extends AbstractInstallService {
     }
 
     private void importConceptDimension(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        createConceptDimensionTable(jdbcTemplate, tableName);
+        createConceptDimensionTable(crcDbSource, jdbcTemplate, tableName);
         insertIntoConceptDimensionTableTable(crcDbSource, jdbcTemplate, tableName, zipEntry, zipFile);
-        createConceptDimensionTableIndices(jdbcTemplate, tableName);
+        createConceptDimensionTableIndices(crcDbSource, jdbcTemplate, tableName);
     }
 
-    private void createConceptDimensionTableIndices(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "concept_dimension_indices.sql"));
+    private void createConceptDimensionTableIndices(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+        createTableIndexes(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "concept_dimension_indices.sql"));
     }
 
     private void insertIntoConceptDimensionTableTable(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
         batchInsert(crcDbSource, jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
     }
 
-    private void createConceptDimensionTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+    private void createConceptDimensionTable(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
         switch (simplifiedDatabaseVendorName(getDatabaseVendor(jdbcTemplate))) {
             case "postgresql" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "postgresql", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "postgresql", "concept_dimension_table.sql"));
             case "oracle" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "oracle", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "oracle", "concept_dimension_table.sql"));
             case "sqlserver" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "concept_dimension_table.sql"));
         }
     }
 

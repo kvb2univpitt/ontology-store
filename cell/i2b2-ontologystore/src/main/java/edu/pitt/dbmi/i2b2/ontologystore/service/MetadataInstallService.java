@@ -199,27 +199,27 @@ public class MetadataInstallService extends AbstractInstallService {
     }
 
     private void importMetadata(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        createOntologyTable(jdbcTemplate, tableName);
+        createOntologyTable(ontDbSource, jdbcTemplate, tableName);
         insertIntoOntologyTable(ontDbSource, jdbcTemplate, tableName, zipEntry, zipFile);
-        createOntologyTableIndices(jdbcTemplate, tableName);
+        createOntologyTableIndices(ontDbSource, jdbcTemplate, tableName);
     }
 
-    private void createOntologyTableIndices(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "ontology_table_indices.sql"));
+    private void createOntologyTableIndices(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+        createTableIndexes(ontDbSource, jdbcTemplate, tableName, Paths.get("ont", "ontology_table_indices.sql"));
     }
 
     private void insertIntoOntologyTable(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
         batchInsert(ontDbSource, jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
     }
 
-    private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+    private void createOntologyTable(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
         switch (simplifiedDatabaseVendorName(getDatabaseVendor(jdbcTemplate))) {
             case "postgresql" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "postgresql", "ontology_table.sql"));
+                createTable(ontDbSource, jdbcTemplate, tableName, Paths.get("ont", "postgresql", "ontology_table.sql"));
             case "oracle" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "oracle", "ontology_table.sql"));
+                createTable(ontDbSource, jdbcTemplate, tableName, Paths.get("ont", "oracle", "ontology_table.sql"));
             case "sqlserver" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "ontology_table.sql"));
+                createTable(ontDbSource, jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "ontology_table.sql"));
         }
     }
 

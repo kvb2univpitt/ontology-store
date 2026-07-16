@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
@@ -269,9 +270,10 @@ public abstract class AbstractInstallService {
                         pstmt.setString(3, tableName);
                     }
                     case "oracle" -> {
-                        pstmt = conn.prepareStatement("SELECT 1 FROM user_tables WHERE table_name = UPPER(?) OR table_name = LOWER(?)");
-                        pstmt.setString(1, tableName);
-                        pstmt.setString(2, tableName);
+                        DatabaseMetaData meta = conn.getMetaData();
+                        try (ResultSet rs = meta.getTables(null, null, tableName.toUpperCase(), new String[]{"TABLE"})) {
+                            return rs.next();
+                        }
                     }
                     case "sqlserver" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
@@ -283,8 +285,9 @@ public abstract class AbstractInstallService {
 
                 if (pstmt != null) {
                     ResultSet resultSet = pstmt.executeQuery();
+                    boolean ans = resultSet.next();
 
-                    return resultSet.next();
+                    return ans;
                 }
             }
         }
@@ -292,10 +295,15 @@ public abstract class AbstractInstallService {
         return false;
     }
 
-    protected void createTable(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
+    protected void createTable(DbSource dbSource, JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         String query = fileSystemService.getResourceFileContents(file);
+        query = query
+                .replaceAll(";", "")
+                .replaceAll("tableindex", tableName.toLowerCase())
+                .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
+                .trim();
 
-        jdbcTemplate.execute(query.replaceAll("I2B2", tableName));
+        jdbcTemplate.execute(query);
     }
 
     protected String getDatabaseVendor(JdbcTemplate jdbcTemplate) {
@@ -318,7 +326,7 @@ public abstract class AbstractInstallService {
                 .replace("microsoft", "");
     }
 
-    protected void createTableIndexes(JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
+    protected void createTableIndexes(DbSource dbSource, JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
         List<String> queries = fileSystemService.getResourceFileContentByLines(file);
         for (String query : queries) {
             // skip lines that are commented out
@@ -328,8 +336,8 @@ public abstract class AbstractInstallService {
 
             query = query
                     .replaceAll(";", "")
-                    .replaceAll("i2b2", tableName.toLowerCase())
-                    .replaceAll("I2B2", tableName)
+                    .replaceAll("tableindex", tableName.toLowerCase())
+                    .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
                     .trim();
             jdbcTemplate.execute(query);
         }
