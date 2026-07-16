@@ -18,6 +18,7 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
+import edu.pitt.dbmi.i2b2.ontologystore.db.DbSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -83,7 +84,7 @@ public abstract class AbstractInstallService {
         this.fileSystemService = fileSystemService;
     }
 
-    protected void deleteFromTableAccess(JdbcTemplate jdbcTemplate, String table, String columnName, List<String> tableNames) throws SQLException, IOException {
+    protected void deleteFromTableAccess(DbSource dbSource, JdbcTemplate jdbcTemplate, String table, String columnName, List<String> tableNames) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
             return;
@@ -92,7 +93,7 @@ public abstract class AbstractInstallService {
         try (Connection conn = dataSource.getConnection()) {
             tableNames.forEach(tableName -> {
                 try {
-                    String sql = createDeleteStatement(conn.getSchema(), table.toLowerCase(), columnName);
+                    String sql = createDeleteStatement(dbSource.getSchema(), table.toLowerCase(), columnName);
                     PreparedStatement stmt = conn.prepareStatement(sql);
 
                     stmt.setString(1, tableName);
@@ -104,7 +105,7 @@ public abstract class AbstractInstallService {
         }
     }
 
-    protected void batchInsert(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
+    protected void batchInsert(DbSource dbSource, JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, int batchSize) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
             return;
@@ -113,7 +114,7 @@ public abstract class AbstractInstallService {
         try (Connection conn = dataSource.getConnection();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
             // create prepared statement
-            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
+            String sql = createInsertStatement(dbSource.getSchema(), table.toLowerCase(), getHeaders(reader.readLine()));
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 conn.setAutoCommit(false);
 
@@ -168,7 +169,7 @@ public abstract class AbstractInstallService {
         }
     }
 
-    protected void insertUnique(JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
+    protected void insertUnique(DbSource dbSource, JdbcTemplate jdbcTemplate, String table, ZipEntry zipEntry, ZipFile zipFile, String pkColumn) throws SQLException, IOException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource == null) {
             return;
@@ -176,12 +177,12 @@ public abstract class AbstractInstallService {
 
         try (Connection conn = dataSource.getConnection();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(zipEntry)))) {
-            Set<String> pkeys = getColumnData(jdbcTemplate, table, pkColumn);
+            Set<String> pkeys = getColumnData(dbSource, jdbcTemplate, table, pkColumn);
             List<String> columnNames = getHeaders(reader.readLine());
             final int pkIndex = columnNames.indexOf(pkColumn);
 
             // create prepared statement
-            String sql = createInsertStatement(conn.getSchema(), table.toLowerCase(), columnNames);
+            String sql = createInsertStatement(dbSource.getSchema(), table.toLowerCase(), columnNames);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 conn.setAutoCommit(false);
 
@@ -255,7 +256,7 @@ public abstract class AbstractInstallService {
                         .collect(Collectors.toList());
     }
 
-    protected boolean tableExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
+    protected boolean tableExists(DbSource dbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
@@ -263,7 +264,7 @@ public abstract class AbstractInstallService {
                 switch (simplifiedDatabaseVendorName(conn.getMetaData().getDatabaseProductName())) {
                     case "postgresql" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
-                        pstmt.setString(1, conn.getSchema());
+                        pstmt.setString(1, dbSource.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
                     }
@@ -274,7 +275,7 @@ public abstract class AbstractInstallService {
                     }
                     case "sqlserver" -> {
                         pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
-                        pstmt.setString(1, conn.getSchema());
+                        pstmt.setString(1, dbSource.getSchema());
                         pstmt.setString(2, tableName);
                         pstmt.setString(3, tableName);
                     }
@@ -394,13 +395,13 @@ public abstract class AbstractInstallService {
         }
     }
 
-    protected Set<String> getColumnData(JdbcTemplate jdbcTemplate, String table, String column) throws SQLException {
+    protected Set<String> getColumnData(DbSource dbSource, JdbcTemplate jdbcTemplate, String table, String column) throws SQLException {
         Set<String> data = new HashSet<>();
 
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
-                String query = String.format("SELECT %s FROM %s.%s", column, conn.getSchema(), table.toLowerCase());
+                String query = String.format("SELECT %s FROM %s.%s", column, dbSource.getSchema(), table.toLowerCase());
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(query);
                 while (rs.next()) {

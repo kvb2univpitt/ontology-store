@@ -26,9 +26,6 @@ import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.StatusType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.GetUserConfigurationType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ParamType;
-import static edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess.DOWNLOAD_DIR_CELL_PARAM;
-import static edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess.ONTSTORE_PRODUCT_LIST_URL;
-import static edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess.PM_ENDPOINT_REFERENCE;
 import edu.pitt.dbmi.i2b2.ontologystore.pm.GetUserConfigurationRequestMessage;
 import edu.pitt.dbmi.i2b2.ontologystore.pm.PMResponseMessage;
 import java.sql.Connection;
@@ -60,8 +57,8 @@ public class HiveDBAccess {
     private static final Log LOGGER = LogFactory.getLog(HiveDBAccess.class);
     private static final Log API_LOGGER = LogFactory.getLog(HiveDBAccess.class);
 
-    private final String QUERY_ONT_DATASOURCE = "SELECT c_db_datasource FROM ont_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
-    private final String QUERY_CRC_DATASOURCE = "SELECT c_db_datasource FROM crc_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
+    private final String ONT_DATASOURCE_LOOKUP = "SELECT c_db_fullschema,c_db_datasource FROM ont_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
+    private final String CRC_DATASOURCE_LOOKUP = "SELECT c_db_fullschema,c_db_datasource FROM crc_db_lookup WHERE c_project_path = ? AND LOWER(c_owner_id) = 'ontstore'";
 
     private final JdbcTemplate hiveJdbcTemplate;
 
@@ -70,23 +67,37 @@ public class HiveDBAccess {
         this.hiveJdbcTemplate = new JdbcTemplate(hiveDataSource);
     }
 
-    public String getOntDataSourceJNDIName(String project) {
+    public OntDbSource getOntDbSource(String project) {
         String projectPath = String.format("%s/", project);
         try {
-            return hiveJdbcTemplate.queryForObject(QUERY_ONT_DATASOURCE, String.class, new Object[]{projectPath});
+            return hiveJdbcTemplate.queryForObject(
+                    ONT_DATASOURCE_LOOKUP,
+                    (rs, rowNum) -> new OntDbSource(
+                            rs.getString("c_db_fullschema"),
+                            rs.getString("c_db_datasource")
+                    ),
+                    new Object[]{projectPath}
+            );
         } catch (Exception exception) {
-            String errMsg = String.format("Unable to get ONT JNDI name for project %s.", project);
+            String errMsg = String.format("Unable to get datasource info from ont_db_lookup table for project %s.", project);
             LOGGER.error(errMsg, exception);
             return null;
         }
     }
 
-    public String getCrcDataSourceJNDIName(String project) {
+    public CrcDbSource getCrcDbSource(String project) {
         String projectPath = String.format("/%s/", project);
         try {
-            return hiveJdbcTemplate.queryForObject(QUERY_CRC_DATASOURCE, String.class, new Object[]{projectPath});
+            return hiveJdbcTemplate.queryForObject(
+                    CRC_DATASOURCE_LOOKUP,
+                    (rs, rowNum) -> new CrcDbSource(
+                            rs.getString("c_db_fullschema"),
+                            rs.getString("c_db_datasource")
+                    ),
+                    new Object[]{projectPath}
+            );
         } catch (Exception exception) {
-            String errMsg = String.format("Unable to get CRC JNDI name for project %s.", project);
+            String errMsg = String.format("Unable to get datasource info from crc_db_lookup table for project %s.", project);
             LOGGER.error(errMsg, exception);
             return null;
         }
@@ -175,15 +186,15 @@ public class HiveDBAccess {
      * @throws I2B2Exception
      */
     private String getPmEndpointReference() throws I2B2Exception {
-        return getPropertyValue(PM_ENDPOINT_REFERENCE, "ONT").trim();
+        return getPropertyValue(PmDBAccess.PM_ENDPOINT_REFERENCE, "ONT").trim();
     }
 
     public String getOntStoreProductListUrl() throws I2B2Exception {
-        return getPropertyValue(ONTSTORE_PRODUCT_LIST_URL, "ONTSTORE").trim();
+        return getPropertyValue(PmDBAccess.ONTSTORE_PRODUCT_LIST_URL, "ONTSTORE").trim();
     }
 
     public String getDownloadDirectory() throws I2B2Exception {
-        return getPropertyValue(DOWNLOAD_DIR_CELL_PARAM, "ONTSTORE").trim();
+        return getPropertyValue(PmDBAccess.DOWNLOAD_DIR_CELL_PARAM, "ONTSTORE").trim();
     }
 
     private String getSchema(DataSource dataSource) throws SQLException {

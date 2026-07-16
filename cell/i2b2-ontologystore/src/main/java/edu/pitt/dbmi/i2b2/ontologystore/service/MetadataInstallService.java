@@ -19,6 +19,7 @@
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
+import edu.pitt.dbmi.i2b2.ontologystore.db.OntDbSource;
 import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -66,14 +67,14 @@ public class MetadataInstallService extends AbstractInstallService {
         super(fileSystemService);
     }
 
-    public void updateTableAccessVisualAttributes(Map<String, String> attrs, JdbcTemplate ontJdbcTemplate) throws SQLException {
+    public void updateTableAccessVisualAttributes(OntDbSource ontDbSource, Map<String, String> attrs, JdbcTemplate ontJdbcTemplate) throws SQLException {
         DataSource dataSource = ontJdbcTemplate.getDataSource();
         if (dataSource == null) {
             return;
         }
 
         try (Connection conn = dataSource.getConnection()) {
-            String sql = String.format("UPDATE %s.table_access SET c_visualattributes = ? WHERE c_table_name = ?", conn.getSchema());
+            String sql = String.format("UPDATE %s.table_access SET c_visualattributes = ? WHERE c_table_name = ?", ontDbSource.getSchema());
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 for (String tableName : attrs.keySet()) {
                     stmt.setString(1, attrs.get(tableName));
@@ -85,7 +86,7 @@ public class MetadataInstallService extends AbstractInstallService {
         }
     }
 
-    public Map<String, String> getTableAccessVisualAttributes(PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws SQLException {
+    public Map<String, String> getTableAccessVisualAttributes(OntDbSource ontDbSource, PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws SQLException {
         DataSource dataSource = ontJdbcTemplate.getDataSource();
         if (dataSource == null) {
             return Collections.EMPTY_MAP;
@@ -93,7 +94,7 @@ public class MetadataInstallService extends AbstractInstallService {
 
         try (Connection conn = dataSource.getConnection()) {
             try {
-                String sql = String.format("SELECT c_table_name,c_visualattributes FROM %s.table_access WHERE c_table_name IN (:values)", conn.getSchema());
+                String sql = String.format("SELECT c_table_name,c_visualattributes FROM %s.table_access WHERE c_table_name IN (:values)", ontDbSource.getSchema());
 
                 NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(ontJdbcTemplate);
                 return namedParameterJdbcTemplate.query(sql, new MapSqlParameterSource("values", getMetadataTableNames(packageFile)), (ResultSet rs) -> {
@@ -112,18 +113,18 @@ public class MetadataInstallService extends AbstractInstallService {
         return Collections.EMPTY_MAP;
     }
 
-    public void deleteFromTableAccessTable(PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws IOException, SQLException {
+    public void deleteFromTableAccessTable(OntDbSource ontDbSource, PackageFile packageFile, JdbcTemplate ontJdbcTemplate) throws IOException, SQLException {
         List<String> tableNames = getMetadataTableNames(packageFile);
-        deleteFromTableAccess(ontJdbcTemplate, TABLE_ACCESS_TABLE_NAME, TABLE_ACCESS_TABLE_NAME_COLUMN, tableNames);
+        deleteFromTableAccess(ontDbSource, ontJdbcTemplate, TABLE_ACCESS_TABLE_NAME, TABLE_ACCESS_TABLE_NAME_COLUMN, tableNames);
     }
 
-    public void insertIntoTableAccessTable(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
+    public void insertIntoTableAccessTable(OntDbSource ontDbSource, PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         String[] tableAccessFiles = packageFile.getTableAccess();
         for (String tableAccessFile : tableAccessFiles) {
             Path zipFilePath = Paths.get(rootFolder, tableAccessFile);
             try {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
-                insertTableAccess(ontJdbcTemplate, zipEntry, zipFile);
+                insertTableAccess(ontDbSource, ontJdbcTemplate, zipEntry, zipFile);
             } catch (SQLException | IOException exception) {
                 LOGGER.error("", exception);
                 throw new InstallationException(exception.getMessage());
@@ -131,13 +132,13 @@ public class MetadataInstallService extends AbstractInstallService {
         }
     }
 
-    public void insertIntoSchemesTable(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
+    public void insertIntoSchemesTable(OntDbSource ontDbSource, PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         String[] schemeFiles = packageFile.getSchemes();
         for (String schemeFile : schemeFiles) {
             Path zipFilePath = Paths.get(rootFolder, schemeFile);
             try {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
-                insertSchemes(ontJdbcTemplate, zipEntry, zipFile);
+                insertSchemes(ontDbSource, ontJdbcTemplate, zipEntry, zipFile);
             } catch (SQLException | IOException exception) {
                 LOGGER.error("", exception);
                 throw new InstallationException(exception.getMessage());
@@ -145,29 +146,29 @@ public class MetadataInstallService extends AbstractInstallService {
         }
     }
 
-    public void createMetadata(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
+    public void createMetadata(OntDbSource ontDbSource, PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         String[] ontologyFiles = packageFile.getDomainOntologies();
         for (String ontologyFile : ontologyFiles) {
             String file = ontologyFile.toLowerCase().trim();
             String dbVendor = simplifiedDatabaseVendorName(getDatabaseVendor(ontJdbcTemplate));
             if (file.contains("postgresql") || file.contains("oracle") || file.contains("sqlserver")) {
                 if (file.contains(dbVendor)) {
-                    installMetadata(ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                    installMetadata(ontDbSource, ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
                 }
             } else {
-                installMetadata(ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                installMetadata(ontDbSource, ontologyFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
             }
         }
     }
 
-    private void installMetadata(String ontologyFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
+    private void installMetadata(OntDbSource ontDbSource, String ontologyFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate ontJdbcTemplate) throws InstallationException {
         Path zipFilePath = Paths.get(rootFolder, ontologyFile);
         try {
             String tableName = getTableNameFromFileName(zipFilePath);
-            if (!metadataExists(ontJdbcTemplate, tableName)) {
+            if (!metadataExists(ontDbSource, ontJdbcTemplate, tableName)) {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
 
-                importMetadata(ontJdbcTemplate, tableName, zipEntry, zipFile);
+                importMetadata(ontDbSource, ontJdbcTemplate, tableName, zipEntry, zipFile);
             }
         } catch (SQLException | IOException exception) {
             LOGGER.error("", exception);
@@ -189,17 +190,17 @@ public class MetadataInstallService extends AbstractInstallService {
         return tableNames;
     }
 
-    private void insertTableAccess(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        insertUnique(jdbcTemplate, TABLE_ACCESS_TABLE_NAME, zipEntry, zipFile, TABLE_ACCESS_TABLE_PK);
+    private void insertTableAccess(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        insertUnique(ontDbSource, jdbcTemplate, TABLE_ACCESS_TABLE_NAME, zipEntry, zipFile, TABLE_ACCESS_TABLE_PK);
     }
 
-    private void insertSchemes(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        insertUnique(jdbcTemplate, SCHEMES_TABLE_NAME, zipEntry, zipFile, SCHEMES_TABLE_PK);
+    private void insertSchemes(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        insertUnique(ontDbSource, jdbcTemplate, SCHEMES_TABLE_NAME, zipEntry, zipFile, SCHEMES_TABLE_PK);
     }
 
-    private void importMetadata(JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+    private void importMetadata(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
         createOntologyTable(jdbcTemplate, tableName);
-        insertIntoOntologyTable(jdbcTemplate, tableName, zipEntry, zipFile);
+        insertIntoOntologyTable(ontDbSource, jdbcTemplate, tableName, zipEntry, zipFile);
         createOntologyTableIndices(jdbcTemplate, tableName);
     }
 
@@ -207,8 +208,8 @@ public class MetadataInstallService extends AbstractInstallService {
         createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "ontology_table_indices.sql"));
     }
 
-    private void insertIntoOntologyTable(JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        batchInsert(jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
+    private void insertIntoOntologyTable(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        batchInsert(ontDbSource, jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
     }
 
     private void createOntologyTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
@@ -222,8 +223,8 @@ public class MetadataInstallService extends AbstractInstallService {
         }
     }
 
-    private boolean metadataExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
-        return tableExists(jdbcTemplate, tableName);
+    private boolean metadataExists(OntDbSource ontDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
+        return tableExists(ontDbSource, jdbcTemplate, tableName);
     }
 
 }
