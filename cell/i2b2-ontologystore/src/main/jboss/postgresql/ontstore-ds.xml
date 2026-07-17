@@ -77,6 +77,7 @@
     </datasource>
 
     <!-- OntologyStore ACT project -->
+    <!--
     <datasource jta="false" jndi-name="java:/OntologyStoreACTDataDS"
                 pool-name="OntologyStoreACTDataDS" enabled="true" use-ccm="false">
         <connection-url>jdbc:postgresql://localhost:5432/i2b2</connection-url>
@@ -119,4 +120,5 @@
             <share-prepared-statements>false</share-prepared-statements>
         </statement>
     </datasource>
+    -->
 </datasources>

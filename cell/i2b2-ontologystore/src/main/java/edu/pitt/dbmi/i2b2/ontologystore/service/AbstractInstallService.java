@@ -257,37 +257,53 @@ public abstract class AbstractInstallService {
                         .collect(Collectors.toList());
     }
 
+    protected boolean postgresqlTableExists(Connection conn, String schema, String table) throws SQLException {
+        String sql = "SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, schema);
+            pstmt.setString(2, table);
+            pstmt.setString(3, table);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    protected boolean oracleTableExists(Connection conn, String table) throws SQLException {
+        DatabaseMetaData meta = conn.getMetaData();
+        try (ResultSet rs = meta.getTables(null, null, table.toUpperCase(), new String[]{"TABLE"})) {
+            return rs.next();
+        }
+    }
+
+    protected boolean sqlserverTableExists(Connection conn, String schema, String table) throws SQLException {
+        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, schema);
+            pstmt.setString(2, table);
+            pstmt.setString(3, table);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     protected boolean tableExists(DbSource dbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
         DataSource dataSource = jdbcTemplate.getDataSource();
         if (dataSource != null) {
             try (Connection conn = dataSource.getConnection()) {
-                PreparedStatement pstmt = null;
                 switch (simplifiedDatabaseVendorName(conn.getMetaData().getDatabaseProductName())) {
                     case "postgresql" -> {
-                        pstmt = conn.prepareStatement("SELECT 1 FROM pg_tables WHERE schemaname = ? AND (tablename = UPPER(?) OR tablename = LOWER(?))");
-                        pstmt.setString(1, dbSource.getSchema());
-                        pstmt.setString(2, tableName);
-                        pstmt.setString(3, tableName);
+                        return postgresqlTableExists(conn, dbSource.getSchema(), tableName);
                     }
                     case "oracle" -> {
-                        DatabaseMetaData meta = conn.getMetaData();
-                        try (ResultSet rs = meta.getTables(null, null, tableName.toUpperCase(), new String[]{"TABLE"})) {
-                            return rs.next();
-                        }
+                        return oracleTableExists(conn, tableName);
                     }
                     case "sqlserver" -> {
-                        pstmt = conn.prepareStatement("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))");
-                        pstmt.setString(1, dbSource.getSchema());
-                        pstmt.setString(2, tableName);
-                        pstmt.setString(3, tableName);
+                        return sqlserverTableExists(conn, dbSource.getSchema(), tableName);
                     }
-                }
-
-                if (pstmt != null) {
-                    ResultSet resultSet = pstmt.executeQuery();
-                    boolean ans = resultSet.next();
-
-                    return ans;
                 }
             }
         }
