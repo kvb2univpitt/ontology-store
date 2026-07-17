@@ -1,1 +1,0 @@
-CREATE DATABASE i2b2actata;
