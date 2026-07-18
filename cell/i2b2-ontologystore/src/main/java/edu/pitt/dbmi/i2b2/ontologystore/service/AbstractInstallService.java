@@ -278,11 +278,12 @@ public abstract class AbstractInstallService {
     }
 
     protected boolean sqlserverTableExists(Connection conn, String schema, String table) throws SQLException {
-        String sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND (table_name = UPPER(?) OR table_name = LOWER(?))";
+        String schemaId = schema.substring(schema.indexOf('.') + 1, schema.length());
+
+        String sql = "SELECT 1 FROM sys.tables WHERE name = ? AND schema_id = SCHEMA_ID(?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, schema);
-            pstmt.setString(2, table);
-            pstmt.setString(3, table);
+            pstmt.setString(1, table);
+            pstmt.setString(2, schemaId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next();
