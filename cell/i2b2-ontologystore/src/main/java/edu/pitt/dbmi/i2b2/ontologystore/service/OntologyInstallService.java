@@ -22,7 +22,9 @@ import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.ZipFileValidationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
+import edu.pitt.dbmi.i2b2.ontologystore.db.CrcDbSource;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.db.OntDbSource;
 import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileUtils;
@@ -78,16 +80,18 @@ public class OntologyInstallService extends AbstractOntologyService {
         productItemsToInstall = getValidDownloadedProductsToInstall(projectFolder, downloadDirectory, productItemsToInstall);
         if (!productItemsToInstall.isEmpty()) {
             try {
-                String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(projectId);
-                String crcJNDIName = hiveDBAccess.getCrcDataSourceJNDIName(projectId);
-                if (ontJNDIName == null || crcJNDIName == null) {
-                    throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", projectId));
+                OntDbSource ontDbSource = hiveDBAccess.getOntDbSource(projectId);
+                CrcDbSource crcDbSource = hiveDBAccess.getCrcDbSource(projectId);
+                if (ontDbSource == null || crcDbSource == null) {
+                    throw new InstallationException(String.format("No i2b2 datasource associated with project '%s'.", projectId));
                 }
+                LOGGER.info(String.format("Using datasource %s for project %s", ontDbSource.getJndiDatasource(), projectId));
+                LOGGER.info(String.format("Using datasource %s for project %s", crcDbSource.getJndiDatasource(), projectId));
 
-                DataSource ontDataSource = getDataSource(ontJNDIName);
-                DataSource crcDataSource = getDataSource(crcJNDIName);
+                DataSource ontDataSource = getDataSource(ontDbSource.getJndiDatasource());
+                DataSource crcDataSource = getDataSource(crcDbSource.getJndiDatasource());
                 if (ontDataSource == null || crcDataSource == null) {
-                    throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", projectId));
+                    throw new InstallationException(String.format("No i2b2 JNDI datasource found for project '%s'.", projectId));
                 }
 
                 JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
@@ -95,7 +99,7 @@ public class OntologyInstallService extends AbstractOntologyService {
 
                 productItemsToInstall.forEach(productItem -> {
                     try {
-                        install(projectFolder, downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate);
+                        install(ontDbSource, crcDbSource, projectFolder, downloadDirectory, productItem, ontJdbcTemplate, crcJdbcTemplate);
                     } catch (Exception exception) {
                         LOGGER.error("", exception);
                         logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, false, "Metadata Installation Failed."));
@@ -108,7 +112,7 @@ public class OntologyInstallService extends AbstractOntologyService {
         }
     }
 
-    private void install(String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate) throws InstallationException {
+    private void install(OntDbSource ontDbSource, CrcDbSource crcDbSource, String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, JdbcTemplate crcJdbcTemplate) throws InstallationException {
         Path productDir = Paths.get(downloadDirectory, productItem.getId());
         Path installDir = productDir.resolve(projectFolder);
         File productFile = ontologyFileService.getProductFile(productDir, productItem).toFile();
@@ -122,9 +126,9 @@ public class OntologyInstallService extends AbstractOntologyService {
 
             ontologyFileService.setInstallStarted(installDir);
             try {
-                metadataInstallService.createMetadata(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
-                metadataInstallService.insertIntoSchemesTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
-                metadataInstallService.insertIntoTableAccessTable(packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                metadataInstallService.createMetadata(ontDbSource, packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                metadataInstallService.insertIntoSchemesTable(ontDbSource, packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
+                metadataInstallService.insertIntoTableAccessTable(ontDbSource, packageFile, rootFolder, zipEntries, zipFile, ontJdbcTemplate);
 
                 logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "Metadata Installed."));
             } catch (InstallationException exception) {
@@ -134,8 +138,8 @@ public class OntologyInstallService extends AbstractOntologyService {
             }
 
             try {
-                crcInstallService.createConceptDimension(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
-                crcInstallService.insertIntoQtBreakdownPathTable(packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
+                crcInstallService.createConceptDimension(crcDbSource, packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
+                crcInstallService.insertIntoQtBreakdownPathTable(crcDbSource, packageFile, rootFolder, zipEntries, zipFile, crcJdbcTemplate);
 
                 logActionSummary(createActionSummary(productItem, ACTION_TYPE, false, true, "CRC Data Installed."));
             } catch (InstallationException exception) {

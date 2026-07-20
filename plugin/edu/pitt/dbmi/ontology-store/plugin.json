@@ -5,7 +5,7 @@
     "icons": {
         "size32x32": "OntologyStore_icon_32x32.png"
     },
-    "roles": ["MANAGER"],
+    "roles": ["ONTSTORE_ADMIN"],
     "assetDir": "assets",
     "plugin_version": "1.0",
     "i2b2_version": "1.8.0",
@@ -14,6 +14,7 @@
     "authorizedTunnel": {
         "variables": {
             "i2b2.PM.model.isAdmin": "R",
+            "i2b2.PM.model.userRoles": "RO",
             "i2b2.ONTSTORE.cfg": "RO"
         },
         "functions": [

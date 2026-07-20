@@ -254,19 +254,26 @@ i2b2.OntologyStore.execute.onClick = () => {
     if (products && products.length > 0) {
         i2b2.authorizedTunnel.variable["i2b2.PM.model.isAdmin"].then((isAdmin) => {
             if (isAdmin) {
-                let selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
-                if (selectedProducts.length > 0) {
-                    $('#OntologyStore-ExecuteBtn').prop("disabled", true);
-                    i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
-                    i2b2.OntologyStore.execute.action(
-                            $('#i2b2_projects').val(),
-                            selectedProducts,
-                            i2b2.OntologyStore.execute.successHandler,
-                            i2b2.OntologyStore.execute.errorHandler);
-                } else {
-                    // at least one ontology must be selected to download/install.
-                    i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download, install, or disable.');
-                }
+                i2b2.authorizedTunnel.variable["i2b2.PM.model.userRoles"].then((roles) => {
+                    if (roles.includes('ONTSTORE_ADMIN')) {
+                        let selectedProducts = i2b2.OntologyStore.getSelectedProducts(products);
+                        if (selectedProducts.length > 0) {
+                            $('#OntologyStore-ExecuteBtn').prop("disabled", true);
+                            i2b2.OntologyStore.modal.progress.show('Download/Install Ontology');
+                            i2b2.OntologyStore.execute.action(
+                                    $('#i2b2_projects').val(),
+                                    selectedProducts,
+                                    i2b2.OntologyStore.execute.successHandler,
+                                    i2b2.OntologyStore.execute.errorHandler);
+                        } else {
+                            // at least one ontology must be selected to download/install.
+                            i2b2.OntologyStore.modal.message.show('No Ontology Selected', 'Please select an ontology to download, install, or disable.');
+                        }
+                    } else {
+                        // requires administrative privileges
+                        i2b2.OntologyStore.modal.message.show('Insufficient Privileges', '<p class="text-danger fw-bold">Administrative role for the OntologyStore required!</p>');
+                    }
+                });
             } else {
                 // requires administrative privileges
                 i2b2.OntologyStore.modal.message.show('Insufficient Privileges', '<p class="text-danger fw-bold">Administrative privileges required!</p>');

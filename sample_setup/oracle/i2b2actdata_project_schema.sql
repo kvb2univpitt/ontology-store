@@ -1,0 +1,3 @@
+CREATE USER i2b2actata IDENTIFIED BY demouser;
+
+GRANT ALL PRIVILEGES TO i2b2actata;

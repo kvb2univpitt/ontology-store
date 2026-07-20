@@ -18,12 +18,13 @@
  */
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
+import edu.harvard.i2b2.common.exception.I2B2Exception;
+import edu.harvard.i2b2.common.util.ServiceLocator;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 
 /**
  *
@@ -49,12 +50,21 @@ public abstract class AbstractOntologyService {
 
     protected DataSource getDataSource(String datasourceJNDIName) {
         try {
-            return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
-        } catch (Exception exception) {
+            return ServiceLocator.getInstance().getAppServerDataSource(datasourceJNDIName);
+        } catch (I2B2Exception exception) {
             String errMsg = String.format("Unable to get datasource for JNDI name '%s'.", datasourceJNDIName);
             LOGGER.error(errMsg, exception);
             return null;
         }
     }
 
+//    protected DataSource getDataSource(String datasourceJNDIName) {
+//        try {
+//            return (new JndiDataSourceLookup()).getDataSource(datasourceJNDIName);
+//        } catch (Exception exception) {
+//            String errMsg = String.format("Unable to get datasource for JNDI name '%s'.", datasourceJNDIName);
+//            LOGGER.error(errMsg, exception);
+//            return null;
+//        }
+//    }
 }

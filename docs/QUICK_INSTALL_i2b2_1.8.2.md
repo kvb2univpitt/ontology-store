@@ -11,6 +11,16 @@ The OntologyStore plugin is an i2b2 webclient plugin that allows users to see th
 
 The OntologyStore cell is an i2b2 cell that fetches a list of available ontologies from the cloud, downloads ontologies onto the server, and installs downloaded ontologies.
 
+## Adding the i2b2 OntologyStore Role
+
+In additional to the i2b2 **ADMIN** role, the OntologyStore requires administrators to have the **ONTSTORE_ADMIN** role to view the list of ontologies, to download the ontologies, and to install the ontologies.
+
+Example PostgreSQL query to add the **ONTSTORE_ADMIN** role to the default administrator ***i2b2***.
+
+```sql
+INSERT INTO pm_project_user_roles (project_id,user_id,user_role_cd,entry_date,status_cd) VALUES ('Demo','i2b2','ONTSTORE_ADMIN',current_timestamp,'A');
+```
+
 ## Installing the i2b2 OntologyStore Cell
 
 The following instructions assume that the Wildfly is installed on the server and is located at ```/opt/wildfly```.

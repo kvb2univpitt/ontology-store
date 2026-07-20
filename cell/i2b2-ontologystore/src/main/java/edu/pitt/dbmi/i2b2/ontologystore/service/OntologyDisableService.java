@@ -22,6 +22,7 @@ import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ActionSummaryType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.vdo.ProductActionType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
+import edu.pitt.dbmi.i2b2.ontologystore.db.OntDbSource;
 import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import edu.pitt.dbmi.i2b2.ontologystore.model.ProductItem;
 import edu.pitt.dbmi.i2b2.ontologystore.util.ZipFileUtils;
@@ -77,20 +78,21 @@ public class OntologyDisableService extends AbstractOntologyService {
         String projectFolder = projectId.toLowerCase();
         List<ProductItem> productsToDisableEnable = getValidProductsToDisableEnable(projectFolder, downloadDirectory, actions, summaries, productListUrl);
         if (!productsToDisableEnable.isEmpty()) {
-            String ontJNDIName = hiveDBAccess.getOntDataSourceJNDIName(projectId);
-            if (ontJNDIName == null) {
-                throw new InstallationException(String.format("No i2b2 datasource(s) associated with project '%s'.", projectId));
+            OntDbSource ontDbSource = hiveDBAccess.getOntDbSource(projectId);
+            if (ontDbSource == null) {
+                throw new InstallationException(String.format("No i2b2 datasource associated with project '%s'.", projectId));
             }
+            LOGGER.info(String.format("Using datasource %s for project %s", ontDbSource.getJndiDatasource(), projectId));
 
-            DataSource ontDataSource = getDataSource(ontJNDIName);
+            DataSource ontDataSource = getDataSource(ontDbSource.getJndiDatasource());
             if (ontDataSource == null) {
-                throw new InstallationException(String.format("No i2b2 JNDI datasource(s) found for project '%s'.", projectId));
+                throw new InstallationException(String.format("No i2b2 JNDI datasource found for project '%s'.", projectId));
             }
 
             JdbcTemplate ontJdbcTemplate = new JdbcTemplate(ontDataSource);
 
             productsToDisableEnable.forEach(productItem -> {
-                disableEnable(projectFolder, downloadDirectory, productItem, ontJdbcTemplate, summaries);
+                disableEnable(ontDbSource, projectFolder, downloadDirectory, productItem, ontJdbcTemplate, summaries);
             });
         }
 
@@ -98,7 +100,7 @@ public class OntologyDisableService extends AbstractOntologyService {
                 summary.getId(), summary.getTitle(), summary.getActionType(), summary.isInProgress(), summary.isSuccess(), summary.getDetail())));
     }
 
-    private void disableEnable(String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
+    private void disableEnable(OntDbSource ontDbSource, String projectFolder, String downloadDirectory, ProductItem productItem, JdbcTemplate ontJdbcTemplate, List<ActionSummaryType> summaries) {
         String productFolder = productItem.getId();
         Path productDir = Paths.get(downloadDirectory, productFolder);
         Path installDir = productDir.resolve(projectFolder);
@@ -114,10 +116,10 @@ public class OntologyDisableService extends AbstractOntologyService {
             PackageFile packageFile = ZipFileUtils.getPackageFile(packageJsonZipEntry, zipFile);
 
             try {
-                Map<String, String> attrs = metadataInstallService.getTableAccessVisualAttributes(packageFile, ontJdbcTemplate);
+                Map<String, String> attrs = metadataInstallService.getTableAccessVisualAttributes(ontDbSource, packageFile, ontJdbcTemplate);
                 attrs.forEach((k, v) -> attrs.replace(k, changeVisualAttribute(v, active)));
 
-                metadataInstallService.updateTableAccessVisualAttributes(attrs, ontJdbcTemplate);
+                metadataInstallService.updateTableAccessVisualAttributes(ontDbSource, attrs, ontJdbcTemplate);
 
                 if (active) {
                     ontologyFileService.setEnabled(installDir);

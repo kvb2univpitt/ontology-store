@@ -19,6 +19,7 @@
 package edu.pitt.dbmi.i2b2.ontologystore.service;
 
 import edu.pitt.dbmi.i2b2.ontologystore.InstallationException;
+import edu.pitt.dbmi.i2b2.ontologystore.db.CrcDbSource;
 import edu.pitt.dbmi.i2b2.ontologystore.model.PackageFile;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,16 +53,16 @@ public class CrcInstallService extends AbstractInstallService {
         super(fileSystemService);
     }
 
-    public void createConceptDimension(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate crcJdbcTemplate) throws InstallationException {
+    public void createConceptDimension(CrcDbSource crcDbSource, PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate crcJdbcTemplate) throws InstallationException {
         String[] conceptDimensionFiles = packageFile.getConceptDimensions();
         for (String conceptDimensionFile : conceptDimensionFiles) {
             Path zipFilePath = Paths.get(rootFolder, conceptDimensionFile);
             try {
                 String tableName = getTableNameFromFileName(zipFilePath);
-                if (!conceptDimensionExists(crcJdbcTemplate, tableName)) {
+                if (!conceptDimensionExists(crcDbSource, crcJdbcTemplate, tableName)) {
                     ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
 
-                    importConceptDimension(crcJdbcTemplate, tableName, zipEntry, zipFile);
+                    importConceptDimension(crcDbSource, crcJdbcTemplate, tableName, zipEntry, zipFile);
                 }
             } catch (SQLException | IOException exception) {
                 LOGGER.error("", exception);
@@ -70,13 +71,13 @@ public class CrcInstallService extends AbstractInstallService {
         }
     }
 
-    public void insertIntoQtBreakdownPathTable(PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate crcJdbcTemplate) throws InstallationException {
+    public void insertIntoQtBreakdownPathTable(CrcDbSource crcDbSource, PackageFile packageFile, String rootFolder, Map<String, ZipEntry> zipEntries, ZipFile zipFile, JdbcTemplate crcJdbcTemplate) throws InstallationException {
         String[] breakdownPathFiles = packageFile.getBreakdownPath();
         for (String breakdownPathFile : breakdownPathFiles) {
             Path zipFilePath = Paths.get(rootFolder, breakdownPathFile);
             try {
                 ZipEntry zipEntry = zipEntries.get(zipFilePath.toString());
-                insertQtBreakdownPath(crcJdbcTemplate, zipEntry, zipFile);
+                insertQtBreakdownPath(crcDbSource, crcJdbcTemplate, zipEntry, zipFile);
             } catch (SQLException | IOException exception) {
                 LOGGER.error("", exception);
                 throw new InstallationException(exception.getMessage());
@@ -84,37 +85,37 @@ public class CrcInstallService extends AbstractInstallService {
         }
     }
 
-    private void insertQtBreakdownPath(JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        insertUnique(jdbcTemplate, QT_BREAKDOWN_PATH_TABLE, zipEntry, zipFile, QT_BREAKDOWN_PATH_TABLE_PK);
+    private void insertQtBreakdownPath(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        insertUnique(crcDbSource, jdbcTemplate, QT_BREAKDOWN_PATH_TABLE, zipEntry, zipFile, QT_BREAKDOWN_PATH_TABLE_PK);
     }
 
-    private void importConceptDimension(JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        createConceptDimensionTable(jdbcTemplate, tableName);
-        insertIntoConceptDimensionTableTable(jdbcTemplate, tableName, zipEntry, zipFile);
-        createConceptDimensionTableIndices(jdbcTemplate, tableName);
+    private void importConceptDimension(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        createConceptDimensionTable(crcDbSource, jdbcTemplate, tableName);
+        insertIntoConceptDimensionTableTable(crcDbSource, jdbcTemplate, tableName, zipEntry, zipFile);
+        createConceptDimensionTableIndices(crcDbSource, jdbcTemplate, tableName);
     }
 
-    private void createConceptDimensionTableIndices(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
-        createTableIndexes(jdbcTemplate, tableName, Paths.get("ont", "concept_dimension_indices.sql"));
+    private void createConceptDimensionTableIndices(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+        createTableIndexes(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "concept_dimension_indices.sql"));
     }
 
-    private void insertIntoConceptDimensionTableTable(JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
-        batchInsert(jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
+    private void insertIntoConceptDimensionTableTable(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName, ZipEntry zipEntry, ZipFile zipFile) throws SQLException, IOException {
+        batchInsert(crcDbSource, jdbcTemplate, tableName, zipEntry, zipFile, DEFAULT_BATCH_SIZE);
     }
 
-    private void createConceptDimensionTable(JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
+    private void createConceptDimensionTable(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException, IOException {
         switch (simplifiedDatabaseVendorName(getDatabaseVendor(jdbcTemplate))) {
             case "postgresql" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "postgresql", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "postgresql", "concept_dimension_table.sql"));
             case "oracle" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "oracle", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "oracle", "concept_dimension_table.sql"));
             case "sqlserver" ->
-                createTable(jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "concept_dimension_table.sql"));
+                createTable(crcDbSource, jdbcTemplate, tableName, Paths.get("ont", "sqlserver", "concept_dimension_table.sql"));
         }
     }
 
-    private boolean conceptDimensionExists(JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
-        return tableExists(jdbcTemplate, tableName);
+    private boolean conceptDimensionExists(CrcDbSource crcDbSource, JdbcTemplate jdbcTemplate, String tableName) throws SQLException {
+        return tableExists(crcDbSource, jdbcTemplate, tableName);
     }
 
 }

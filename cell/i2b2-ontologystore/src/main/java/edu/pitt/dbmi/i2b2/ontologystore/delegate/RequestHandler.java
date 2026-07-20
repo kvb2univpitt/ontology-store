@@ -22,6 +22,7 @@ import edu.harvard.i2b2.common.exception.I2B2Exception;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.MessageHeaderType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.i2b2message.ResponseMessageType;
 import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ConfigureType;
+import edu.pitt.dbmi.i2b2.ontologystore.datavo.pm.ProjectType;
 import edu.pitt.dbmi.i2b2.ontologystore.db.HiveDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.db.PmDBAccess;
 import edu.pitt.dbmi.i2b2.ontologystore.ws.MessageFactory;
@@ -44,8 +45,14 @@ public abstract class RequestHandler {
 
     public abstract String execute() throws I2B2Exception;
 
+    protected boolean isValidUser(ConfigureType configureType, MessageHeaderType header) {
+        ProjectType project = pmDBAccess.getRoleInfo(configureType, header);
+
+        return (project != null) && (project.getRole().contains("ONTSTORE_ADMIN"));
+    }
+
     protected boolean isInvalidUser(ConfigureType configureType, MessageHeaderType header) {
-        return pmDBAccess.getRoleInfo(configureType, header) == null;
+        return !isValidUser(configureType, header);
     }
 
     protected boolean isNotAdmin(ConfigureType configureType) {
@@ -65,7 +72,7 @@ public abstract class RequestHandler {
     }
 
     protected String createInvalidUserResponse(MessageHeaderType messageHeader) throws I2B2Exception {
-        return createErrorResponse(messageHeader, "User was not validated.");
+        return createErrorResponse(messageHeader, "User was not validated or does not have proper role.");
     }
 
     protected String createNotAdminResponse(MessageHeaderType messageHeader) throws I2B2Exception {
