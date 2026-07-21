@@ -270,9 +270,9 @@ public abstract class AbstractInstallService {
         }
     }
 
-    protected boolean oracleTableExists(Connection conn, String table) throws SQLException {
+    protected boolean oracleTableExists(Connection conn, String schema, String table) throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
-        try (ResultSet rs = meta.getTables(null, null, table.toUpperCase(), new String[]{"TABLE"})) {
+        try (ResultSet rs = meta.getTables(null, schema.toUpperCase(), table.toUpperCase(), new String[]{"TABLE"})) {
             return rs.next();
         }
     }
@@ -300,7 +300,7 @@ public abstract class AbstractInstallService {
                         return postgresqlTableExists(conn, dbSource.getSchema(), tableName);
                     }
                     case "oracle" -> {
-                        return oracleTableExists(conn, tableName);
+                        return oracleTableExists(conn, dbSource.getSchema(), tableName);
                     }
                     case "sqlserver" -> {
                         return sqlserverTableExists(conn, dbSource.getSchema(), tableName);
@@ -316,7 +316,7 @@ public abstract class AbstractInstallService {
         String query = fileSystemService.getResourceFileContents(file);
         query = query
                 .replaceAll(";", "")
-                .replaceAll("tableindex", tableName.toLowerCase())
+                .replaceAll("tableindex", String.format("%s_%s", dbSource.getSchema(), tableName))
                 .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
                 .trim();
 
@@ -353,7 +353,7 @@ public abstract class AbstractInstallService {
 
             query = query
                     .replaceAll(";", "")
-                    .replaceAll("tableindex", tableName.toLowerCase())
+                    .replaceAll("tableindex", String.format("%s_%s", dbSource.getSchema(), tableName))
                     .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
                     .trim();
             jdbcTemplate.execute(query);
