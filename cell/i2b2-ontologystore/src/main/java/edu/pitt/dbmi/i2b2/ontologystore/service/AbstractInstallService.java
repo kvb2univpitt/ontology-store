@@ -278,9 +278,15 @@ public abstract class AbstractInstallService {
     }
 
     protected boolean sqlserverTableExists(Connection conn, String schema, String table) throws SQLException {
-        String schemaId = schema.substring(schema.indexOf('.') + 1, schema.length());
+        String[] fields = schema.split("\\.");
+        if (fields.length != 2) {
+            return false;
+        }
 
-        String sql = "SELECT 1 FROM sys.tables WHERE name = ? AND schema_id = SCHEMA_ID(?)";
+        String db = fields[0];
+        String schemaId = fields[1];
+
+        String sql = String.format("SELECT 1 FROM %s.sys.tables WHERE name = ? AND schema_id = SCHEMA_ID(?)", db);
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, table);
             pstmt.setString(2, schemaId);
@@ -313,11 +319,14 @@ public abstract class AbstractInstallService {
     }
 
     protected void createTable(DbSource dbSource, JdbcTemplate jdbcTemplate, String tableName, Path file) throws SQLException, IOException {
+        String table = String.format("%s.%s", dbSource.getSchema(), tableName);
+        String index = table.replaceAll("\\.", "_");
+
         String query = fileSystemService.getResourceFileContents(file);
         query = query
                 .replaceAll(";", "")
-                .replaceAll("tableindex", String.format("%s_%s", dbSource.getSchema(), tableName))
-                .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
+                .replaceAll("tableindex", index)
+                .replaceAll("schematable", table)
                 .trim();
 
         jdbcTemplate.execute(query);
@@ -351,10 +360,13 @@ public abstract class AbstractInstallService {
                 continue;
             }
 
+            String table = String.format("%s.%s", dbSource.getSchema(), tableName);
+            String index = table.replaceAll("\\.", "_");
+
             query = query
                     .replaceAll(";", "")
-                    .replaceAll("tableindex", String.format("%s_%s", dbSource.getSchema(), tableName))
-                    .replaceAll("schematable", String.format("%s.%s", dbSource.getSchema(), tableName))
+                    .replaceAll("tableindex", index)
+                    .replaceAll("schematable", table)
                     .trim();
             jdbcTemplate.execute(query);
         }
