@@ -25,9 +25,17 @@ psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/i2b2hive.sql
 
 # Test Cases
 # ###############################################################################
+# ================================================================================
 # test case 1
-psql postgresql://i2b2actata:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/additional_i2b2actdata_project_tables.sql
-psql postgresql://postgres:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/ontstore_ds_xml.sql
-psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/ontstore_i2b2hive.sql
+# ================================================================================
+# psql postgresql://i2b2actata:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/additional_i2b2actdata_project_tables.sql
+# psql postgresql://postgres:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/ontstore_ds_xml.sql
+# psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_1/ontstore_i2b2hive.sql
+# ================================================================================
+# test case 2
+# ================================================================================
+psql postgresql://i2b2actata:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_2/additional_i2b2actdata_project_tables.sql
+psql postgresql://postgres:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_2/ontstore_ds_xml.sql
+psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_2/ontstore_i2b2hive.sql
 
 exit 0

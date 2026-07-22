@@ -20,26 +20,72 @@ The OntologyStore has two primary database datasources for creating tables and i
 
 The following i2b2 projects will be used for testing:
 
-- **Demo**: This is the default i2b2 project that comes with the software.
+- **Demo**: This is the ***main*** i2b2 project.
 - **ACT**: This project is added to the i2b2 project.
 
 > The projects are on different schemas.
 
-## Test Case 1: One Set of Datasources, Import All Same Schema
+### Test Indicators
 
-We will have one set of datasources:
+| Key | Vaue           |
+|-----|----------------|
+| ✅   | Test Passed    |
+| ⬜   | Not Yet Tested |
+| ❌   | Test Failed    |
 
-- **OntologyStoreDataDS** - can import concept-dimension data on either the Demo project or the ACT project.
+## Test Case 1: One Set of Datasources, CRC and Metadata on Same Project Schema
+
+We will have one set of datasources that can access both the Demo project and the ACT project.  Both CRC data and metadata will be imported on the same i2b2 project schema.
+
+Datasources:
+
+- **OntologyStoreDataDS** - can import CRC data on either the Demo project or the ACT project.
 - **OntologyStoreMetadataDS** - can import metadata on either the Demo project or the ACT project.
 
-Both concept-dimension data and metadata will be imported on the same schema as the project.
+Both CRC data and metadata will be imported on the same schema as the project.
 
-### Example Install in PostgreSQL Database
+### Example Install
 
 | Demo Project                                         | ACT Project                                         |
 |------------------------------------------------------|-----------------------------------------------------|
 | ![ Demo project ]( postgresql/test_case_1/demo.png ) | ![ Demo project ]( postgresql/test_case_1/act.png ) |
 
-The ***ACT Laboratory Tests*** ontology is imported in both the Demo project and the ACT project.
+The ***ACT Laboratory Tests*** ontology is installed in the Demo project and the ACT project.  The CRC data (act_loinc_lab_v42_cd) and the metadata (act_loinc_lab_v42) are imported in both the Demo project schema and the ACT project schema.
 
-The ***ACT COVID-19 Ontology*** ontology is imported in the ACT project
+The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.  Both the CRC data (act_covid_v4_cd) and the metadata (act_covid_v4) are imported into the ACT project schema.
+
+### Test Results
+
+| Database   | Passed |
+|------------|--------|
+| PostgreSQL | ✅     |
+| Oracle     | ⬜     |
+| SQL Server | ⬜     |
+
+## Test Case 2: One Set of Datasources, CRC on Same Project Schema and Metadata on Separate Project Schema
+
+We will have one set of datasources:
+
+Datasources:
+
+- **OntologyStoreDataDS** - can import CRC data ***only*** on the Demo project.
+- **OntologyStoreMetadataDS** - can import metadata on either the Demo project or the ACT project.
+
+
+### Example Install
+
+| Demo Project                                         | ACT Project                                         |
+|------------------------------------------------------|-----------------------------------------------------|
+| ![ Demo project ]( postgresql/test_case_2/demo.png ) | ![ Demo project ]( postgresql/test_case_2/act.png ) |
+
+The ***ACT Laboratory Tests*** ontology is installed in the Demo project and the ACT project. The CRC data (act_loinc_lab_v42_cd) is imported in the Demo project schema while the metadata (act_loinc_lab_v42) is imported in the Demo project schema and in the ACT project schema.
+
+The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects. The CRC data (act_covid_v4_cd) is imported into the Demo project schema and the metadata (act_covid_v4) is imported into the ACT project schema.
+
+### Test Results
+
+| Database   | Passed |
+|------------|--------|
+| PostgreSQL | ✅     |
+| Oracle     | ⬜     |
+| SQL Server | ⬜     |
