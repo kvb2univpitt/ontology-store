@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-DIR=/home/kvb2/Documents/pitt/shyam/i2b2_harvard/plugin/ontstore/security/test_cases/postgresql
+DIR=/home/kvb2univpitt/test_cases/postgresql
 
 # ACT Project
 # ##############################################################################
