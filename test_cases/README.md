@@ -29,13 +29,13 @@ The following i2b2 projects will be used for testing:
 
 | Key | Vaue           |
 |-----|----------------|
-| ✅   | Test Passed    |
-| ⬜   | Not Yet Tested |
-| ❌   | Test Failed    |
+| ✅  | Test Passed    |
+| ❌  | Test Failed    |
+| ⬜  | Not Yet Tested |
 
-## Test Case 1: One Set of Datasources, CRC and Metadata on Same Project Schema
+## Test Case 1: One Set of Datasources, CRC Data and Metadata on Same Project Schema
 
-We will have one set of datasources that can access both the Demo project and the ACT project.  Both CRC data and metadata will be imported on the same i2b2 project schema.
+One set of datasources that can access both the Demo project and the ACT project.  Both CRC data and metadata will be imported on the same i2b2 project schema.
 
 Datasources:
 
@@ -62,9 +62,9 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.  Both
 | Oracle     | ⬜     |
 | SQL Server | ⬜     |
 
-## Test Case 2: One Set of Datasources, CRC on Same Project Schema and Metadata on Separate Project Schema
+## Test Case 2: One Set of Datasources, CRC Data on Same Project Schema and Metadata on Separate Project Schema
 
-We will have one set of datasources:
+One set of datasources that can access both the Demo project and the ACT project.  The CRC data for both projects will be imported to the main i2b2 project (Demo) schema.  The metadate for each project will be imported to their own project schema.
 
 Datasources:
 
@@ -81,6 +81,35 @@ Datasources:
 The ***ACT Laboratory Tests*** ontology is installed in the Demo project and the ACT project. The CRC data (act_loinc_lab_v42_cd) is imported in the Demo project schema while the metadata (act_loinc_lab_v42) is imported in the Demo project schema and in the ACT project schema.
 
 The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects. The CRC data (act_covid_v4_cd) is imported into the Demo project schema and the metadata (act_covid_v4) is imported into the ACT project schema.
+
+### Test Results
+
+| Database   | Passed |
+|------------|--------|
+| PostgreSQL | ✅     |
+| Oracle     | ⬜     |
+| SQL Server | ⬜     |
+
+## Test Case 3: Two Set of Datasources For Each Project, CRC Data and Metadata on Same Project Schema
+
+Two sets of datasources, one set for the Demo project and one for the ACT project.
+
+Datasources:
+
+- **OntologyStoreDataDS** - can import CRC data ***only*** on the Demo project.
+- **OntologyStoreMetadataDS** - can import metadata ***only*** on the Demo project.
+- **OntologyStoreACTDataDS** - can import CRC data ***only*** on the ACT project.
+- **OntologyStoreACTMetadataDS** - can import metadata ***only*** on the ACT project.
+
+### Example Install
+
+| Demo Project                                         | ACT Project                                         |
+|------------------------------------------------------|-----------------------------------------------------|
+| ![ Demo project ]( postgresql/test_case_3/demo.png ) | ![ Demo project ]( postgresql/test_case_3/act.png ) |
+
+The ***ACT Laboratory Tests*** ontology is installed in the Demo project and the ACT project.
+
+The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.
 
 ### Test Results
 
