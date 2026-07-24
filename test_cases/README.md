@@ -90,7 +90,7 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects. The C
 | Oracle     | ✅     |
 | SQL Server | ⬜     |
 
-## Test Case 3: Two Set of Datasources For Each Project, CRC Data and Metadata on Same Project Schema
+## Test Case 3: Two Sets of Datasources For Each Project, CRC Data and Metadata on Same Project Schema
 
 Two sets of datasources, one set for the Demo project and one for the ACT project.
 
@@ -119,7 +119,7 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.
 | Oracle     | ✅     |
 | SQL Server | ⬜     |
 
-## Test Case 4: Two Set of Datasources For Each Project, CRC Data on Same Project Schema and Metadata on Separate Project Schema
+## Test Case 4: Two Sets of Datasources For Each Project, CRC Data on Same Project Schema and Metadata on Separate Project Schema
 
 Two sets of datasources, one set for the Demo project and one for the ACT project.
 
