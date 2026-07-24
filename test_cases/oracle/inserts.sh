@@ -39,7 +39,14 @@ echo exit | sqlplus i2b2hive/'demouser'@localhost:1521/FREEPDB1 @${DIR}/i2b2hive
 # ================================================================================
 # test case 2
 # ================================================================================
-echo exit | sqlplus system/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_2/ontstore_ds_xml.sql
-echo exit | sqlplus i2b2hive/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_2/ontstore_i2b2hive.sql
+# echo exit | sqlplus system/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_2/ontstore_ds_xml.sql
+# echo exit | sqlplus i2b2hive/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_2/ontstore_i2b2hive.sql
 # ================================================================================
+# test case 3
+# ================================================================================
+echo exit | sqlplus i2b2actata/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_1/additional_i2b2actdata_project_tables.sql
+echo exit | sqlplus system/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_3/ontstore_ds_xml.sql
+echo exit | sqlplus i2b2hive/'demouser'@localhost:1521/FREEPDB1 @${DIR}/test_case_3/ontstore_i2b2hive.sql
+# ================================================================================
+
 exit 0
