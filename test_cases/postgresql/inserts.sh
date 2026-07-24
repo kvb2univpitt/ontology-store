@@ -45,7 +45,7 @@ psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/i2b2hive.sql
 # ================================================================================
 # test case 4
 # ================================================================================
-psql postgresql://postgres:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_4/ontstore_ds_xml.sql
-psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_4/ontstore_i2b2hive.sql
+# psql postgresql://postgres:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_4/ontstore_ds_xml.sql
+# psql postgresql://i2b2hive:demouser@localhost:5432/i2b2 -f ${DIR}/test_case_4/ontstore_i2b2hive.sql
 
 exit 0

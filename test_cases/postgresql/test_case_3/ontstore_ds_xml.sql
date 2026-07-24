@@ -1,6 +1,6 @@
 -- ################################################################################
 -- Test Case 3:
--- Two set of datasources: One for the Demo project and one for the ACT project.
+-- Two sets of datasources: One for the Demo project and one for the ACT project.
 -- Both the CRC data and the metadata are imported in the same project schema.
 -- ################################################################################
 

@@ -1,7 +1,8 @@
 -- ################################################################################
--- Test Case 3:
+-- Test Case 4:
 -- Two sets of datasources: One for the Demo project and one for the ACT project.
--- Both the CRC data and the metadata are imported in the same project schema.
+-- The CRC data is imported in the main (Demo) project schema for both projects.
+-- The metadata is imported in separate project schema.
 -- ################################################################################
 
 -- create database users for datasources
@@ -25,6 +26,5 @@ GRANT ALL PRIVILEGES TO i2b2ontstoreactmetadata;
 GRANT SELECT ANY TABLE, INSERT ANY TABLE, UPDATE ANY TABLE ON SCHEMA i2b2demodata TO i2b2ontstoredata;
 GRANT SELECT ANY TABLE, INSERT ANY TABLE, UPDATE ANY TABLE ON SCHEMA i2b2metadata TO i2b2ontstoremetadata;
 -- ACT project
-GRANT SELECT ANY TABLE, INSERT ANY TABLE, UPDATE ANY TABLE ON SCHEMA i2b2actata TO i2b2ontstoreactdata;
+GRANT SELECT ANY TABLE, INSERT ANY TABLE, UPDATE ANY TABLE ON SCHEMA i2b2demodata TO i2b2ontstoreactdata;
 GRANT SELECT ANY TABLE, INSERT ANY TABLE, UPDATE ANY TABLE ON SCHEMA i2b2actata TO i2b2ontstoreactmetadata;
-

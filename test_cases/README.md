@@ -59,7 +59,7 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.  Both
 | Database   | Passed |
 |------------|--------|
 | PostgreSQL | ✅     |
-| Oracle     | ⬜     |
+| Oracle     | ✅     |
 | SQL Server | ⬜     |
 
 ## Test Case 2: One Set of Datasources, CRC Data on Same Project Schema and Metadata on Separate Project Schema
@@ -87,7 +87,7 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects. The C
 | Database   | Passed |
 |------------|--------|
 | PostgreSQL | ✅     |
-| Oracle     | ⬜     |
+| Oracle     | ✅     |
 | SQL Server | ⬜     |
 
 ## Test Case 3: Two Set of Datasources For Each Project, CRC Data and Metadata on Same Project Schema
@@ -116,7 +116,7 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects.
 | Database   | Passed |
 |------------|--------|
 | PostgreSQL | ✅     |
-| Oracle     | ⬜     |
+| Oracle     | ✅     |
 | SQL Server | ⬜     |
 
 ## Test Case 4: Two Set of Datasources For Each Project, CRC Data on Same Project Schema and Metadata on Separate Project Schema
@@ -145,5 +145,5 @@ The ***ACT COVID-19 Ontology*** ontology is installed in the ACT projects. The C
 | Database   | Passed |
 |------------|--------|
 | PostgreSQL | ✅     |
-| Oracle     | ⬜     |
+| Oracle     | ✅     |
 | SQL Server | ⬜     |
